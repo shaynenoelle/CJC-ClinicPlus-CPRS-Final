@@ -56,8 +56,8 @@ public class DatabaseManager {
 
     public static List<Patient> getAllPatients() {
         List<Patient> list = new ArrayList<>();
-        // Selects columns based on your verified schema
-        String sql = "SELECT patient_id, full_name, course_dept, year_level FROM Patients";
+        // Selects all columns from Patients table
+        String sql = "SELECT patient_id, full_name, course_dept, year_level, gender, contact_number, birthdate, medical_history FROM Patients";
 
         try (Connection conn = connect();
              Statement stmt = conn.createStatement();
@@ -68,7 +68,11 @@ public class DatabaseManager {
                         rs.getString("patient_id"),
                         rs.getString("full_name"),
                         rs.getString("course_dept"),
-                        rs.getString("year_level")
+                        rs.getString("year_level"),
+                        rs.getString("gender"),
+                        rs.getString("contact_number"),
+                        rs.getString("birthdate"),
+                        rs.getString("medical_history")
                 ));
             }
         } catch (SQLException e) {

@@ -24,11 +24,11 @@
 
     <TableView fx:id="patientTable" VBox.vgrow="ALWAYS">
         <columns>
-            <TableColumn fx:id="colID" prefWidth="80.0" text="ID" />
-            <TableColumn fx:id="colName" prefWidth="250.0" text="Name" />
-            <TableColumn fx:id="colType" prefWidth="120.0" text="Type" />
-            <TableColumn fx:id="colDept" prefWidth="120.0" text="Dept" />
-            <TableColumn prefWidth="150.0" text="Action" />
+            <TableColumn fx:id="colID" prefWidth="100.0" text="ID" />
+            <TableColumn fx:id="colName" prefWidth="300.0" text="Name" />
+            <TableColumn fx:id="colType" prefWidth="150.0" text="Type" />
+            <TableColumn fx:id="colDept" prefWidth="200.0" text="Dept" />
+            <TableColumn fx:id="colAction" prefWidth="250.0" text="Action" />
         </columns>
     </TableView>
 </VBox>
