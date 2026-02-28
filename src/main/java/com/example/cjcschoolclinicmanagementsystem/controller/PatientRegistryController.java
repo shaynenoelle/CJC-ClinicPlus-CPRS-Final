@@ -13,6 +13,8 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.layout.ColumnConstraints;
+import javafx.scene.layout.Priority;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import java.io.IOException;
@@ -57,201 +59,308 @@ public class PatientRegistryController {
         Stage stage = new Stage();
         stage.setTitle("Patient Details - " + patient.getName());
         stage.initModality(Modality.APPLICATION_MODAL);
+        stage.setMaximized(true);
 
-        VBox root = new VBox(15);
-        root.setPadding(new Insets(20));
-        root.setStyle("-fx-background-color: #FFFFFF;");
+        VBox root = new VBox(0);
+        root.setPadding(new Insets(0));
+        root.setStyle("-fx-background-color: #F9F9F9;");
 
-        // Title
-        Label titleLabel = new Label("Patient Information");
-        titleLabel.setStyle("-fx-font-size: 20; -fx-font-weight: bold; -fx-text-fill: #8B0000;");
+        ScrollPane scrollPane = new ScrollPane();
+        scrollPane.setStyle("-fx-control-inner-background: #F9F9F9; -fx-padding: 0;");
+        scrollPane.setFitToWidth(true);
+        VBox contentVBox = new VBox(15);
+        contentVBox.setPadding(new Insets(20));
+        contentVBox.setStyle("-fx-control-inner-background: #F9F9F9;");
 
-        // Create a grid for patient info
-        GridPane grid = new GridPane();
-        grid.setHgap(15);
-        grid.setVgap(10);
-        grid.setPadding(new Insets(10));
-        grid.setStyle("-fx-border-color: #E0E0E0; -fx-border-radius: 5; -fx-padding: 15;");
-
-        // Create text fields for editing
+        // Create field references for all sections so we can enable/disable editing
+        TextField idField = new TextField(patient.getId());
         TextField nameField = new TextField(patient.getName());
-        TextField yearField = new TextField(patient.getYear());
-        TextField courseField = new TextField(patient.getCourse());
+        TextField ageField = new TextField(patient.getAge());
         TextField genderField = new TextField(patient.getGender());
-        TextField contactField = new TextField(patient.getContact());
         TextField birthdateField = new TextField(patient.getBirthdate());
-        TextArea historyArea = new TextArea(patient.getMedicalHistory());
-        historyArea.setWrapText(true);
-        historyArea.setPrefHeight(150);
+        TextField courseField = new TextField(patient.getCourse());
+        TextField yearField = new TextField(patient.getYear());
+        TextField collegeField = new TextField(patient.getCollege());
+        TextField contactField = new TextField(patient.getContact());
+        TextField emailField = new TextField(patient.getEmail());
 
-        // Set all fields to non-editable initially
-        nameField.setEditable(false);
-        yearField.setEditable(false);
-        courseField.setEditable(false);
-        genderField.setEditable(false);
-        contactField.setEditable(false);
-        birthdateField.setEditable(false);
-        historyArea.setEditable(false);
+        TextField emergencyNameField = new TextField(patient.getEmergencyName());
+        TextField relationshipField = new TextField(patient.getRelationship());
+        TextField emergencyContactField = new TextField(patient.getEmergencyContact());
 
-        // Style for view mode
-        styleReadOnlyField(nameField, true);
-        styleReadOnlyField(yearField, true);
-        styleReadOnlyField(courseField, true);
-        styleReadOnlyField(genderField, true);
-        styleReadOnlyField(contactField, true);
-        styleReadOnlyField(birthdateField, true);
-        historyArea.setStyle("-fx-control-inner-background: #F5F5F5;");
+        TextField allergiesField = new TextField(patient.getAllergies());
+        TextField conditionsField = new TextField(patient.getConditions());
+        TextField bloodTypeField = new TextField(patient.getBloodType());
+        TextField heightField = new TextField(patient.getHeight());
+        TextField weightField = new TextField(patient.getWeight());
 
-        // Add detail rows with text fields
-        addEditableDetailRow(grid, 0, "Student ID:", patient.getId(), null);
-        addEditableDetailRow(grid, 1, "Full Name:", null, nameField);
-        addEditableDetailRow(grid, 2, "Year Level:", null, yearField);
-        addEditableDetailRow(grid, 3, "Course/Department:", null, courseField);
-        addEditableDetailRow(grid, 4, "Gender:", null, genderField);
-        addEditableDetailRow(grid, 5, "Contact Number:", null, contactField);
-        addEditableDetailRow(grid, 6, "Birthdate:", null, birthdateField);
+        TextArea medicalRemarksArea = new TextArea(patient.getMedicalRemarks());
+        medicalRemarksArea.setWrapText(true);
+        medicalRemarksArea.setPrefHeight(100);
+        medicalRemarksArea.setEditable(false);
+        medicalRemarksArea.setStyle("-fx-control-inner-background: #F5F5F5; -fx-text-fill: #555;");
 
-        // Medical History label and area
-        Label historyLabel = new Label("Medical History:");
-        historyLabel.setStyle("-fx-font-weight: bold;");
-        grid.add(historyLabel, 0, 7);
-        grid.add(historyArea, 0, 8, 2, 1);
+        // PERSONAL INFORMATION SECTION
+        VBox personalSection = createSection("PERSONAL INFORMATION", "#8B0000");
+        VBox personalContent = new VBox(8);
+        personalContent.setPadding(new Insets(15));
 
-        root.getChildren().addAll(titleLabel, grid);
+        personalContent.getChildren().addAll(
+            createFieldRow("Student ID:", idField),
+            createFieldRow("Full Name:", nameField),
+            createFieldRow("Age:", ageField),
+            createFieldRow("Gender:", genderField),
+            createFieldRow("Birthdate:", birthdateField),
+            createFieldRow("Course/Department:", courseField),
+            createFieldRow("Year Level:", yearField),
+            createFieldRow("College/Department:", collegeField),
+            createFieldRow("Contact #:", contactField),
+            createFieldRow("Email:", emailField)
+        );
+        personalSection.getChildren().add(personalContent);
 
-        // Button container
+        // EMERGENCY CONTACT SECTION
+        VBox emergencySection = createSection("EMERGENCY CONTACT", "#8B0000");
+        VBox emergencyContent = new VBox(8);
+        emergencyContent.setPadding(new Insets(15));
+
+        emergencyContent.getChildren().addAll(
+            createFieldRow("Name:", emergencyNameField),
+            createFieldRow("Relationship:", relationshipField),
+            createFieldRow("Contact #:", emergencyContactField)
+        );
+        emergencySection.getChildren().add(emergencyContent);
+
+        // MEDICAL HISTORY SECTION
+        VBox medicalSection = createSection("MEDICAL HISTORY", "#8B0000");
+        VBox medicalContent = new VBox(8);
+        medicalContent.setPadding(new Insets(15));
+
+        medicalContent.getChildren().addAll(
+            createFieldRow("Allergies:", allergiesField),
+            createFieldRow("Conditions:", conditionsField),
+            createFieldRow("Blood Type:", bloodTypeField),
+            createFieldRow("Height (cm):", heightField),
+            createFieldRow("Weight (kg):", weightField),
+            createFieldRowWithArea("Medical Remarks:", medicalRemarksArea)
+        );
+        medicalSection.getChildren().add(medicalContent);
+
+        contentVBox.getChildren().addAll(personalSection, emergencySection, medicalSection);
+        scrollPane.setContent(contentVBox);
+
+        // Button container - reduced padding
         HBox buttonBox = new HBox(10);
         buttonBox.setAlignment(javafx.geometry.Pos.CENTER_RIGHT);
+        buttonBox.setPadding(new Insets(10, 20, 10, 20));
+        buttonBox.setStyle("-fx-background-color: #F9F9F9; -fx-border-color: #E0E0E0; -fx-border-width: 1 0 0 0;");
 
         Button editBtn = new Button("Edit");
-        Button saveBtn = new Button("Save");
-        Button cancelBtn = new Button("Cancel");
+        Button deleteBtn = new Button("Delete");
         Button closeBtn = new Button("Close");
 
-        editBtn.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-cursor: hand; -fx-padding: 8px 20px;");
-        saveBtn.setStyle("-fx-background-color: #2196F3; -fx-text-fill: white; -fx-cursor: hand; -fx-padding: 8px 20px;");
-        cancelBtn.setStyle("-fx-background-color: #FF9800; -fx-text-fill: white; -fx-cursor: hand; -fx-padding: 8px 20px;");
-        closeBtn.setStyle("-fx-background-color: #8B0000; -fx-text-fill: white; -fx-cursor: hand; -fx-padding: 8px 20px;");
+        editBtn.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-cursor: hand; -fx-padding: 8px 25px; -fx-font-size: 12; -fx-font-weight: bold;");
+        closeBtn.setStyle("-fx-background-color: #8B0000; -fx-text-fill: white; -fx-cursor: hand; -fx-padding: 8px 25px; -fx-font-size: 12; -fx-font-weight: bold;");
 
-        // Initially show Edit and Close buttons
         buttonBox.getChildren().addAll(editBtn, closeBtn);
 
         // Edit button action
         editBtn.setOnAction(e -> {
-            enableEditMode(nameField, yearField, courseField, genderField, contactField, birthdateField, historyArea);
+            enableEditMode(idField, nameField, ageField, genderField, birthdateField, courseField,
+                          yearField, collegeField, contactField, emailField, emergencyNameField,
+                          relationshipField, emergencyContactField, allergiesField, conditionsField,
+                          bloodTypeField, heightField, weightField, medicalRemarksArea);
+
             buttonBox.getChildren().clear();
+            Button saveBtn = new Button("Save");
+            Button cancelBtn = new Button("Cancel");
+            saveBtn.setStyle("-fx-background-color: #2196F3; -fx-text-fill: white; -fx-cursor: hand; -fx-padding: 8px 25px; -fx-font-size: 12; -fx-font-weight: bold;");
+            cancelBtn.setStyle("-fx-background-color: #FF9800; -fx-text-fill: white; -fx-cursor: hand; -fx-padding: 8px 25px; -fx-font-size: 12; -fx-font-weight: bold;");
+
+            saveBtn.setOnAction(save -> {
+                boolean success = DatabaseManager.updatePatient(
+                        patient.getId(),
+                        nameField.getText(),
+                        ageField.getText(),
+                        courseField.getText(),
+                        yearField.getText(),
+                        genderField.getText(),
+                        collegeField.getText(),
+                        contactField.getText(),
+                        emailField.getText(),
+                        birthdateField.getText(),
+                        patient.getType(),
+                        emergencyNameField.getText(),
+                        relationshipField.getText(),
+                        emergencyContactField.getText(),
+                        allergiesField.getText(),
+                        conditionsField.getText(),
+                        bloodTypeField.getText(),
+                        heightField.getText(),
+                        weightField.getText(),
+                        medicalRemarksArea.getText()
+                );
+
+                if (success) {
+                    refreshTable();
+                    showAlert(Alert.AlertType.INFORMATION, "Success", "Patient updated successfully!");
+                    disableEditMode(idField, nameField, ageField, genderField, birthdateField, courseField,
+                                   yearField, collegeField, contactField, emailField, emergencyNameField,
+                                   relationshipField, emergencyContactField, allergiesField, conditionsField,
+                                   bloodTypeField, heightField, weightField, medicalRemarksArea);
+                    buttonBox.getChildren().clear();
+                    buttonBox.getChildren().addAll(editBtn, closeBtn);
+                } else {
+                    showAlert(Alert.AlertType.ERROR, "Error", "Failed to update patient!");
+                }
+            });
+
+            cancelBtn.setOnAction(cancel -> {
+                nameField.setText(patient.getName());
+                ageField.setText(patient.getAge());
+                genderField.setText(patient.getGender());
+                birthdateField.setText(patient.getBirthdate());
+                courseField.setText(patient.getCourse());
+                yearField.setText(patient.getYear());
+                collegeField.setText(patient.getCollege());
+                contactField.setText(patient.getContact());
+                emailField.setText(patient.getEmail());
+                emergencyNameField.setText(patient.getEmergencyName());
+                relationshipField.setText(patient.getRelationship());
+                emergencyContactField.setText(patient.getEmergencyContact());
+                allergiesField.setText(patient.getAllergies());
+                conditionsField.setText(patient.getConditions());
+                bloodTypeField.setText(patient.getBloodType());
+                heightField.setText(patient.getHeight());
+                weightField.setText(patient.getWeight());
+                medicalRemarksArea.setText(patient.getMedicalRemarks());
+
+                disableEditMode(idField, nameField, ageField, genderField, birthdateField, courseField,
+                               yearField, collegeField, contactField, emailField, emergencyNameField,
+                               relationshipField, emergencyContactField, allergiesField, conditionsField,
+                               bloodTypeField, heightField, weightField, medicalRemarksArea);
+                buttonBox.getChildren().clear();
+                buttonBox.getChildren().addAll(editBtn, closeBtn);
+            });
+
             buttonBox.getChildren().addAll(saveBtn, cancelBtn);
         });
 
-        // Save button action
-        saveBtn.setOnAction(e -> {
-            boolean success = DatabaseManager.updatePatient(
-                    patient.getId(),
-                    nameField.getText(),
-                    courseField.getText(),
-                    yearField.getText(),
-                    genderField.getText(),
-                    contactField.getText(),
-                    birthdateField.getText(),
-                    historyArea.getText()
-            );
-
-            if (success) {
-                refreshTable();
-                showAlert(Alert.AlertType.INFORMATION, "Success", "Patient updated successfully!");
-                disableEditMode(nameField, yearField, courseField, genderField, contactField, birthdateField, historyArea);
-                buttonBox.getChildren().clear();
-                buttonBox.getChildren().addAll(editBtn, closeBtn);
-            } else {
-                showAlert(Alert.AlertType.ERROR, "Error", "Failed to update patient!");
-            }
-        });
-
-        // Cancel button action
-        cancelBtn.setOnAction(e -> {
-            nameField.setText(patient.getName());
-            yearField.setText(patient.getYear());
-            courseField.setText(patient.getCourse());
-            genderField.setText(patient.getGender());
-            contactField.setText(patient.getContact());
-            birthdateField.setText(patient.getBirthdate());
-            historyArea.setText(patient.getMedicalHistory());
-            disableEditMode(nameField, yearField, courseField, genderField, contactField, birthdateField, historyArea);
-            buttonBox.getChildren().clear();
-            buttonBox.getChildren().addAll(editBtn, closeBtn);
-        });
-
-        // Close button action
         closeBtn.setOnAction(e -> stage.close());
 
-        root.getChildren().add(buttonBox);
+        root.getChildren().addAll(scrollPane, buttonBox);
+        VBox.setVgrow(scrollPane, Priority.ALWAYS);
 
-        Scene scene = new Scene(root, 700, 800);
+        Scene scene = new Scene(root);
         stage.setScene(scene);
         stage.show();
     }
 
-    private void enableEditMode(TextField nameField, TextField yearField, TextField courseField,
-                                TextField genderField, TextField contactField, TextField birthdateField,
-                                TextArea historyArea) {
-        nameField.setEditable(true);
-        yearField.setEditable(true);
-        courseField.setEditable(true);
-        genderField.setEditable(true);
-        contactField.setEditable(true);
-        birthdateField.setEditable(true);
-        historyArea.setEditable(true);
-
-        nameField.setStyle("-fx-border-color: #8B0000; -fx-border-width: 1; -fx-padding: 5; -fx-control-inner-background: #FFFFFF;");
-        yearField.setStyle("-fx-border-color: #8B0000; -fx-border-width: 1; -fx-padding: 5; -fx-control-inner-background: #FFFFFF;");
-        courseField.setStyle("-fx-border-color: #8B0000; -fx-border-width: 1; -fx-padding: 5; -fx-control-inner-background: #FFFFFF;");
-        genderField.setStyle("-fx-border-color: #8B0000; -fx-border-width: 1; -fx-padding: 5; -fx-control-inner-background: #FFFFFF;");
-        contactField.setStyle("-fx-border-color: #8B0000; -fx-border-width: 1; -fx-padding: 5; -fx-control-inner-background: #FFFFFF;");
-        birthdateField.setStyle("-fx-border-color: #8B0000; -fx-border-width: 1; -fx-padding: 5; -fx-control-inner-background: #FFFFFF;");
-        historyArea.setStyle("-fx-control-inner-background: #FFFFFF;");
+    private void enableEditMode(TextField... fields) {
+        for (TextField field : fields) {
+            field.setEditable(true);
+            field.setStyle("-fx-border-color: #8B0000; -fx-border-width: 2; -fx-padding: 8; -fx-control-inner-background: #FFFFFF;");
+        }
     }
 
-    private void disableEditMode(TextField nameField, TextField yearField, TextField courseField,
-                                 TextField genderField, TextField contactField, TextField birthdateField,
-                                 TextArea historyArea) {
-        nameField.setEditable(false);
-        yearField.setEditable(false);
-        courseField.setEditable(false);
-        genderField.setEditable(false);
-        contactField.setEditable(false);
-        birthdateField.setEditable(false);
-        historyArea.setEditable(false);
-
-        styleReadOnlyField(nameField, true);
-        styleReadOnlyField(yearField, true);
-        styleReadOnlyField(courseField, true);
-        styleReadOnlyField(genderField, true);
-        styleReadOnlyField(contactField, true);
-        styleReadOnlyField(birthdateField, true);
-        historyArea.setStyle("-fx-control-inner-background: #F5F5F5;");
+    private void enableEditMode(Object... fields) {
+        for (Object field : fields) {
+            if (field instanceof TextField) {
+                ((TextField) field).setEditable(true);
+                ((TextField) field).setStyle("-fx-border-color: #8B0000; -fx-border-width: 2; -fx-padding: 8; -fx-control-inner-background: #FFFFFF;");
+            } else if (field instanceof TextArea) {
+                ((TextArea) field).setEditable(true);
+                ((TextArea) field).setStyle("-fx-border-color: #8B0000; -fx-border-width: 2; -fx-padding: 8; -fx-control-inner-background: #FFFFFF;");
+            }
+        }
     }
 
-    private void styleReadOnlyField(TextField field, boolean readOnly) {
-        if (readOnly) {
+    private void disableEditMode(Object... fields) {
+        for (Object field : fields) {
+            if (field instanceof TextField) {
+                ((TextField) field).setEditable(false);
+                ((TextField) field).setStyle("-fx-text-fill: #555; -fx-control-inner-background: #F5F5F5; -fx-padding: 8;");
+            } else if (field instanceof TextArea) {
+                ((TextArea) field).setEditable(false);
+                ((TextArea) field).setStyle("-fx-control-inner-background: #F5F5F5; -fx-text-fill: #555;");
+            }
+        }
+    }
+
+    private HBox createFieldRow(String label, TextField field) {
+        HBox row = new HBox(10);
+        row.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+
+        Label labelNode = new Label(label);
+        labelNode.setStyle("-fx-font-weight: bold; -fx-text-fill: #333; -fx-min-width: 150;");
+
+        field.setEditable(false);
+        field.setStyle("-fx-text-fill: #555; -fx-control-inner-background: #F5F5F5; -fx-padding: 8;");
+        field.setPrefWidth(600);
+
+        row.getChildren().addAll(labelNode, field);
+        return row;
+    }
+
+    private HBox createFieldRowWithArea(String label, TextArea area) {
+        HBox row = new HBox(10);
+        row.setAlignment(javafx.geometry.Pos.TOP_LEFT);
+
+        Label labelNode = new Label(label);
+        labelNode.setStyle("-fx-font-weight: bold; -fx-text-fill: #333; -fx-min-width: 150;");
+
+        area.setPrefWidth(600);
+
+        row.getChildren().addAll(labelNode, area);
+        return row;
+    }
+
+    private VBox createSection(String title, String titleColor) {
+        VBox section = new VBox(10);
+        section.setStyle("-fx-border-color: #CCCCCC; -fx-border-radius: 5; -fx-border-width: 1; -fx-padding: 10;");
+        Label titleLabel = new Label(title);
+        titleLabel.setStyle("-fx-font-size: 14; -fx-font-weight: bold; -fx-text-fill: " + titleColor + ";");
+        Separator separator = new Separator();
+        section.getChildren().addAll(titleLabel, separator);
+        return section;
+    }
+
+    private void setFieldProperties(TextField field, boolean editable) {
+        field.setEditable(editable);
+        field.setPrefWidth(300);
+        if (!editable) {
             field.setStyle("-fx-text-fill: #555; -fx-control-inner-background: #F5F5F5; -fx-padding: 5;");
         }
     }
 
-    private void addEditableDetailRow(GridPane grid, int row, String label, String staticValue, TextField field) {
+    private void addDetailRow(GridPane grid, int row, String label, TextField field) {
         Label labelNode = new Label(label);
         labelNode.setStyle("-fx-font-weight: bold; -fx-text-fill: #333;");
+        grid.add(labelNode, 0, row);
+        grid.add(field, 1, row);
+    }
 
-        if (staticValue != null) {
-            // For Student ID - just a label
-            Label valueNode = new Label(staticValue);
-            valueNode.setStyle("-fx-text-fill: #555;");
-            grid.add(labelNode, 0, row);
-            grid.add(valueNode, 1, row);
-        } else if (field != null) {
-            // For editable fields
-            field.setPrefWidth(300);
-            grid.add(labelNode, 0, row);
-            grid.add(field, 1, row);
+    private void enableEditAllFields(Object... fields) {
+        for (Object field : fields) {
+            if (field instanceof TextField) {
+                ((TextField) field).setEditable(true);
+                ((TextField) field).setStyle("-fx-border-color: #8B0000; -fx-border-width: 1; -fx-padding: 5; -fx-control-inner-background: #FFFFFF;");
+            } else if (field instanceof TextArea) {
+                ((TextArea) field).setEditable(true);
+                ((TextArea) field).setStyle("-fx-border-color: #8B0000; -fx-border-width: 1; -fx-padding: 5; -fx-control-inner-background: #FFFFFF;");
+            }
+        }
+    }
+
+    private void disableEditAllFields(Object... fields) {
+        for (Object field : fields) {
+            if (field instanceof TextField) {
+                ((TextField) field).setEditable(false);
+                setFieldProperties((TextField) field, false);
+            } else if (field instanceof TextArea) {
+                ((TextArea) field).setEditable(false);
+                ((TextArea) field).setStyle("-fx-control-inner-background: #F5F5F5; -fx-text-fill: #555;");
+            }
         }
     }
 
@@ -283,3 +392,8 @@ public class PatientRegistryController {
         refreshTable(); // REFRESH THE LIST IMMEDIATELY
     }
 }
+
+
+
+
+

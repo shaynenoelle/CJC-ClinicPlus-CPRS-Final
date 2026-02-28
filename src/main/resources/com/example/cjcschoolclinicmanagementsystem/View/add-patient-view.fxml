@@ -8,36 +8,115 @@
       xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.cjcschoolclinicmanagementsystem.controller.AddPatientController">
     <padding><Insets bottom="20.0" left="25.0" right="25.0" top="20.0" /></padding>
 
-    <Label text="✚ STUDENT REGISTRATION FORM" textFill="#8B0000">
+    <Label text="✚ REGISTRATION FORM" textFill="#8B0000">
         <font><Font name="System Bold" size="20.0" /></font>
     </Label>
     <Separator />
 
-    <GridPane hgap="15.0" vgap="12.0">
-        <Label text="Student ID:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
-        <TextField fx:id="txtStudentID" promptText="e.g. 2023-0001" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+    <TabPane fx:id="tabPane" tabClosingPolicy="UNAVAILABLE">
 
-        <Label text="Year Level:" GridPane.columnIndex="2" GridPane.rowIndex="0" />
-        <ComboBox fx:id="comboYear" prefWidth="150.0" GridPane.columnIndex="3" GridPane.rowIndex="0" />
+        <!-- Personal Information Tab -->
+        <Tab text="Personal Information" closable="false">
+            <VBox spacing="12.0" style="-fx-padding: 15;">
+                <GridPane hgap="15.0" vgap="12.0">
+                    <columnConstraints>
+                        <ColumnConstraints percentWidth="25.0" />
+                        <ColumnConstraints percentWidth="25.0" />
+                        <ColumnConstraints percentWidth="25.0" />
+                        <ColumnConstraints percentWidth="25.0" />
+                    </columnConstraints>
 
-        <Label text="Full Name:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
-        <TextField fx:id="txtFullName" prefWidth="200.0" promptText="Surname, First Name" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                    <Label text="Student ID:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                    <TextField fx:id="txtStudentID" promptText="2021-00123" GridPane.columnIndex="1" GridPane.rowIndex="0" />
 
-        <Label text="Gender:" GridPane.columnIndex="2" GridPane.rowIndex="1" />
-        <ComboBox fx:id="comboGender" prefWidth="150.0" GridPane.columnIndex="3" GridPane.rowIndex="1" />
+                    <Label text="Age:" GridPane.columnIndex="2" GridPane.rowIndex="0" />
+                    <TextField fx:id="txtAge" promptText="25" GridPane.columnIndex="3" GridPane.rowIndex="0" />
 
-        <Label text="Course/Dept:" GridPane.columnIndex="0" GridPane.rowIndex="2" />
-        <ComboBox fx:id="comboCourse" prefWidth="200.0" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                    <Label text="Full Name:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                    <TextField fx:id="txtFullName" promptText="Surname, First Name" GridPane.columnIndex="1" GridPane.rowIndex="1" GridPane.columnSpan="3" />
 
-        <Label text="Birthdate:" GridPane.columnIndex="2" GridPane.rowIndex="2" />
-        <DatePicker fx:id="dateBirth" GridPane.columnIndex="3" GridPane.rowIndex="2" />
+                    <Label text="Gender:" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+                    <ComboBox fx:id="comboGender" prefWidth="150.0" GridPane.columnIndex="1" GridPane.rowIndex="2" />
 
-        <Label text="Contact #:" GridPane.columnIndex="0" GridPane.rowIndex="3" />
-        <TextField fx:id="txtContact" promptText="09XXXXXXXXX" GridPane.columnIndex="1" GridPane.rowIndex="3" />
-    </GridPane>
+                    <Label text="Birthdate:" GridPane.columnIndex="2" GridPane.rowIndex="2" />
+                    <DatePicker fx:id="dateBirth" GridPane.columnIndex="3" GridPane.rowIndex="2" />
 
-    <Label text="Initial Medical Remarks / History:" />
-    <TextArea fx:id="txtMedicalHistory" prefHeight="100.0" promptText="Allergies, chronic conditions, etc." />
+                    <Label text="College/Dept:" GridPane.columnIndex="0" GridPane.rowIndex="3" />
+                    <ComboBox fx:id="comboCourse" promptText="Choose College Dept" prefWidth="200.0" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+
+                    <Label text="Year Level:" GridPane.columnIndex="2" GridPane.rowIndex="3" />
+                    <ComboBox fx:id="comboYear" promptText="Select Year" prefWidth="150.0" GridPane.columnIndex="3" GridPane.rowIndex="3" />
+
+                    <Label text="Type:" GridPane.columnIndex="0" GridPane.rowIndex="4" />
+                    <ComboBox fx:id="comboType" promptText="Select Type" prefWidth="150.0" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+
+                    <Label text="Course:" GridPane.columnIndex="2" GridPane.rowIndex="4" />
+                    <TextField fx:id="txtCollege" promptText="CCIS" GridPane.columnIndex="3" GridPane.rowIndex="4" />
+
+                    <Label text="Contact #:" GridPane.columnIndex="0" GridPane.rowIndex="5" />
+                    <TextField fx:id="txtContact" promptText="09XXXXXXXXX" GridPane.columnIndex="1" GridPane.rowIndex="5" />
+
+                    <Label text="Email:" GridPane.columnIndex="2" GridPane.rowIndex="5" />
+                    <TextField fx:id="txtEmail" promptText="student@cjc.edu.ph" GridPane.columnIndex="3" GridPane.rowIndex="5" />
+                </GridPane>
+            </VBox>
+        </Tab>
+
+        <!-- Emergency Contact Tab -->
+        <Tab text="Emergency Contact" closable="false">
+            <VBox spacing="12.0" style="-fx-padding: 15;">
+                <GridPane hgap="15.0" vgap="12.0">
+                    <columnConstraints>
+                        <ColumnConstraints percentWidth="25.0" />
+                        <ColumnConstraints percentWidth="25.0" />
+                        <ColumnConstraints percentWidth="25.0" />
+                        <ColumnConstraints percentWidth="25.0" />
+                    </columnConstraints>
+
+                    <Label text="Name:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                    <TextField fx:id="txtEmergencyName" promptText="Maria Dela Cruz" GridPane.columnIndex="1" GridPane.rowIndex="0" GridPane.columnSpan="3" />
+
+                    <Label text="Relationship:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                    <TextField fx:id="txtRelationship" promptText="Mother" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+
+                    <Label text="Contact #:" GridPane.columnIndex="2" GridPane.rowIndex="1" />
+                    <TextField fx:id="txtEmergencyContact" promptText="09XXXXXXXXX" GridPane.columnIndex="3" GridPane.rowIndex="1" />
+                </GridPane>
+            </VBox>
+        </Tab>
+
+        <!-- Medical History Tab -->
+        <Tab text="Medical History" closable="false">
+            <VBox spacing="12.0" style="-fx-padding: 15;">
+                <GridPane hgap="15.0" vgap="12.0">
+                    <columnConstraints>
+                        <ColumnConstraints percentWidth="25.0" />
+                        <ColumnConstraints percentWidth="25.0" />
+                        <ColumnConstraints percentWidth="25.0" />
+                        <ColumnConstraints percentWidth="25.0" />
+                    </columnConstraints>
+
+                    <Label text="Allergies:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                    <TextField fx:id="txtAllergies" promptText="e.g. Amoxicillin" GridPane.columnIndex="1" GridPane.rowIndex="0" GridPane.columnSpan="3" />
+
+                    <Label text="Conditions:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                    <TextField fx:id="txtConditions" promptText="e.g. Asthma" GridPane.columnIndex="1" GridPane.rowIndex="1" GridPane.columnSpan="3" />
+
+                    <Label text="Blood Type:" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+                    <ComboBox fx:id="comboBloodType" prefWidth="150.0" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+
+                    <Label text="Height (cm):" GridPane.columnIndex="2" GridPane.rowIndex="2" />
+                    <TextField fx:id="txtHeight" promptText="170" GridPane.columnIndex="3" GridPane.rowIndex="2" />
+
+                    <Label text="Weight (kg):" GridPane.columnIndex="0" GridPane.rowIndex="3" />
+                    <TextField fx:id="txtWeight" promptText="65" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+
+                    <Label text="Medical Remarks:" GridPane.columnIndex="0" GridPane.rowIndex="4" />
+                    <TextArea fx:id="txtMedicalRemarks" prefHeight="80.0" promptText="Additional medical notes..." GridPane.columnIndex="1" GridPane.rowIndex="4" GridPane.columnSpan="3" />
+                </GridPane>
+            </VBox>
+        </Tab>
+    </TabPane>
 
     <HBox alignment="CENTER_RIGHT" spacing="15.0">
         <Button onAction="#handleSave" prefWidth="120.0" style="-fx-background-color: #8B0000; -fx-text-fill: white; -fx-font-weight: bold;" text="Save to Database" />

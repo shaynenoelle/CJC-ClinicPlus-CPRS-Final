@@ -45,7 +45,7 @@
             <!-- Animated Tagline -->
             <Label fx:id="taglineLabel" text="Always First. Always Ready. Always There" textFill="#7f8c8d" style="-fx-font-size: 13.0; -fx-font-weight: bold; -fx-text-alignment: CENTER; -fx-opacity: 0.0; -fx-wrap-text: true;">
                 <font>
-                    <Font name="System Bold" size="17.0" />
+                    <Font name="System Bold" size="30.0" />
                 </font>
             </Label>
         </VBox>
