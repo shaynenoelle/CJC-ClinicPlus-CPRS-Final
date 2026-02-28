@@ -9,13 +9,23 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.image.Image?>
 <BorderPane fx:id="mainBorderPane" prefHeight="768.0" prefWidth="1024.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/25" fx:controller="com.example.cjcschoolclinicmanagementsystem.controller.DashboardController">
     <left>
         <VBox prefWidth="240.0" spacing="10.0" style="-fx-background-color: #8B0000;">
             <padding><Insets bottom="20.0" left="15.0" right="15.0" top="30.0" /></padding>
-            <Label text="Cor Jesu College Inc." textFill="WHITE">
-                <font><Font name="System Bold" size="18.0" /></font>
-            </Label>
+            <VBox alignment="CENTER" spacing="10">
+                <ImageView fitHeight="50" fitWidth="50" preserveRatio="true">
+                    <image>
+                        <Image url="@../Images/cjclogo.png"/>
+                    </image>
+                </ImageView>
+                <Label text="Cor Jesu College Inc." textFill="WHITE">
+                    <font><Font name="System Bold" size="18.0" /></font>
+                </Label>
+            </VBox>
+
             <Separator opacity="0.2" />
 
             <Button maxWidth="Infinity" onAction="#showDashboard" style="-fx-background-color: transparent; -fx-text-fill: white; -fx-alignment: BASELINE_LEFT; -fx-cursor: hand;" text="✚  Dashboard">
