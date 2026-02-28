@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.PasswordField?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.paint.Color?>
+<?import javafx.scene.paint.RadialGradient?>
+<?import javafx.scene.paint.Stop?>
+<?import javafx.scene.text.Font?>
+
+<VBox alignment="CENTER" spacing="20.0" style="-fx-background-color: #f4f4f4;" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.cjcschoolclinicmanagementsystem.controller.LoginController">
+    <padding>
+        <Insets bottom="50.0" left="50.0" right="50.0" top="50.0" />
+    </padding>
+
+    <HBox alignment="CENTER" spacing="20">
+        <ImageView fx:id="imgClinicLogo" fitHeight="80.0" fitWidth="115.0" pickOnBounds="true" preserveRatio="true">
+         <image>
+             <Image url="@../Images/cliniclogov2.jpeg" />
+         </image></ImageView>
+    </HBox>
+
+    <Label text="CJC School Clinic" textFill="#003366">
+        <font>
+            <Font name="System Bold" size="28.0" />
+        </font>
+    </Label>
+
+    <Separator maxWidth="400.0" />
+
+    <VBox alignment="CENTER" maxWidth="350.0" spacing="10.0">
+        <Label text="Sign in to continue" textFill="#666666" />
+
+        <TextField fx:id="txtUsername" prefHeight="40.0" promptText="Username" style="-fx-background-radius: 5; -fx-border-color: #cccccc; -fx-border-radius: 5;" />
+
+        <PasswordField fx:id="txtPassword" prefHeight="40.0" promptText="Password" style="-fx-background-radius: 5; -fx-border-color: #cccccc; -fx-border-radius: 5;" />
+
+        <Button fx:id="btnLogin" maxWidth="Infinity" onAction="#onLoginClick" prefHeight="45.0" style="-fx-background-color: #003366; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;" text="LOGIN">
+         <textFill>
+            <RadialGradient centerX="0.5" centerY="0.5" radius="0.5">
+               <stops>
+                  <Stop>
+                     <color>
+                        <Color red="0.42105263471603394" green="0.054580897092819214" blue="0.054580897092819214" />
+                     </color>
+                  </Stop>
+                  <Stop offset="1.0">
+                     <color>
+                        <Color red="1.0" green="1.0" blue="1.0" />
+                     </color>
+                  </Stop>
+               </stops>
+            </RadialGradient>
+         </textFill></Button>
+
+        <Label fx:id="lblStatus" textFill="RED" />
+    </VBox>
+
+    <Label text="© 2026 Cor Jesu College Clinic" textFill="#999999">
+        <font>
+            <Font size="10.0" />
+        </font>
+    </Label>
+</VBox>

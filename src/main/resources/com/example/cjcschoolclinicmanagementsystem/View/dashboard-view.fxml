@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+
+<BorderPane prefHeight="768.0" prefWidth="1024.0" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.example.cjcschoolclinicmanagementsystem.controller.DashboardController">
+
+    <left>
+        <VBox spacing="10.0" style="-fx-background-color: #8B0000;" prefWidth="240.0">
+            <padding><Insets top="30.0" left="15.0" right="15.0" /></padding>
+
+            <Label text="Cor Jesu College Inc." textFill="WHITE">
+                <font><Font name="System Bold" size="22.0" /></font>
+            </Label>
+            <Label text="Clinic Management" textFill="#FFCCCC" />
+            <Separator opacity="0.2" />
+
+            <Button text="✚  Dashboard" maxWidth="Infinity"
+                    style="-fx-background-color: transparent; -fx-text-fill: white; -fx-alignment: BASELINE_LEFT; -fx-font-size: 14px;" />
+            <Button text="✚  Patient Registry" maxWidth="Infinity"
+                    style="-fx-background-color: transparent; -fx-text-fill: white; -fx-alignment: BASELINE_LEFT; -fx-font-size: 14px;" />
+            <Button text="✚  Medical Inventory" maxWidth="Infinity"
+                    style="-fx-background-color: transparent; -fx-text-fill: white; -fx-alignment: BASELINE_LEFT; -fx-font-size: 14px;" />
+            <Button text="✚  Medical Logs" maxWidth="Infinity"
+                    style="-fx-background-color: transparent; -fx-text-fill: white; -fx-alignment: BASELINE_LEFT; -fx-font-size: 14px;" />
+
+            <Region VBox.vgrow="ALWAYS" />
+
+            <Button fx:id="btnLogout" onAction="#handleLogout" text="SIGN OUT" maxWidth="Infinity"
+                    style="-fx-background-color: #5D0000; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 10;" />
+            <padding><Insets bottom="20.0" /></padding>
+        </VBox>
+    </left>
+
+    <center>
+        <VBox spacing="20.0" style="-fx-background-color: #FFFFFF;">
+            <padding><Insets top="30.0" left="40.0" right="40.0" bottom="30.0" /></padding>
+            <HBox alignment="CENTER_LEFT">
+                <Label text="Clinical Records" textFill="#8B0000">
+                    <font><Font name="System Bold" size="28.0" /></font>
+                </Label>
+                <Region HBox.hgrow="ALWAYS" />
+                <TextField fx:id="txtSearch" promptText="Search ID..." prefWidth="300.0"
+                           style="-fx-border-color: #8B0000; -fx-border-width: 0 0 2 0; -fx-background-color: transparent;" />
+            </HBox>
+
+            <TableView fx:id="patientTable" VBox.vgrow="ALWAYS">
+            </TableView>
+        </VBox>
+    </center>
+</BorderPane>
