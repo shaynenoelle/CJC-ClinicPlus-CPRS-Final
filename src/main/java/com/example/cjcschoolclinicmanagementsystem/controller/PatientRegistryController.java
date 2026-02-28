@@ -22,7 +22,7 @@ public class PatientRegistryController {
     @FXML private TableView<Patient> patientTable;
     @FXML private TableColumn<Patient, String> colID, colName, colType, colDept;
 
-    private ObservableList<Patient> patientList = FXCollections.observableArrayList();
+    final private ObservableList<Patient> patientList = FXCollections.observableArrayList();
 
     public void initialize() {
         // Link UI columns to the Patient model properties
@@ -84,6 +84,15 @@ public class PatientRegistryController {
         historyArea.setWrapText(true);
         historyArea.setPrefHeight(150);
 
+        // Set all fields to non-editable initially
+        nameField.setEditable(false);
+        yearField.setEditable(false);
+        courseField.setEditable(false);
+        genderField.setEditable(false);
+        contactField.setEditable(false);
+        birthdateField.setEditable(false);
+        historyArea.setEditable(false);
+
         // Style for view mode
         styleReadOnlyField(nameField, true);
         styleReadOnlyField(yearField, true);
@@ -91,7 +100,6 @@ public class PatientRegistryController {
         styleReadOnlyField(genderField, true);
         styleReadOnlyField(contactField, true);
         styleReadOnlyField(birthdateField, true);
-        historyArea.setEditable(false);
         historyArea.setStyle("-fx-control-inner-background: #F5F5F5;");
 
         // Add detail rows with text fields
