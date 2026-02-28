@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+
+<VBox spacing="15.0" style="-fx-background-color: #FFFFFF; -fx-border-color: #8B0000; -fx-border-width: 2;"
+      xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.cjcschoolclinicmanagementsystem.controller.AddPatientController">
+    <padding><Insets bottom="20.0" left="25.0" right="25.0" top="20.0" /></padding>
+
+    <Label text="✚ STUDENT REGISTRATION FORM" textFill="#8B0000">
+        <font><Font name="System Bold" size="20.0" /></font>
+    </Label>
+    <Separator />
+
+    <GridPane hgap="15.0" vgap="12.0">
+        <Label text="Student ID:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+        <TextField fx:id="txtStudentID" promptText="e.g. 2023-0001" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+
+        <Label text="Year Level:" GridPane.columnIndex="2" GridPane.rowIndex="0" />
+        <ComboBox fx:id="comboYear" prefWidth="150.0" GridPane.columnIndex="3" GridPane.rowIndex="0" />
+
+        <Label text="Full Name:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+        <TextField fx:id="txtFullName" prefWidth="200.0" promptText="Surname, First Name" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+
+        <Label text="Gender:" GridPane.columnIndex="2" GridPane.rowIndex="1" />
+        <ComboBox fx:id="comboGender" prefWidth="150.0" GridPane.columnIndex="3" GridPane.rowIndex="1" />
+
+        <Label text="Course/Dept:" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+        <ComboBox fx:id="comboCourse" prefWidth="200.0" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+
+        <Label text="Birthdate:" GridPane.columnIndex="2" GridPane.rowIndex="2" />
+        <DatePicker fx:id="dateBirth" GridPane.columnIndex="3" GridPane.rowIndex="2" />
+
+        <Label text="Contact #:" GridPane.columnIndex="0" GridPane.rowIndex="3" />
+        <TextField fx:id="txtContact" promptText="09XXXXXXXXX" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+    </GridPane>
+
+    <Label text="Initial Medical Remarks / History:" />
+    <TextArea fx:id="txtMedicalHistory" prefHeight="100.0" promptText="Allergies, chronic conditions, etc." />
+
+    <HBox alignment="CENTER_RIGHT" spacing="15.0">
+        <Button onAction="#handleSave" prefWidth="120.0" style="-fx-background-color: #8B0000; -fx-text-fill: white; -fx-font-weight: bold;" text="Save to Database" />
+        <Button onAction="#handleCancel" prefWidth="100.0" style="-fx-background-color: #5D0000; -fx-text-fill: white;" text="Cancel" />
+    </HBox>
+</VBox>
