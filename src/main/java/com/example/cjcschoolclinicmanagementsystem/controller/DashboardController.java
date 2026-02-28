@@ -3,9 +3,11 @@ package com.example.cjcschoolclinicmanagementsystem.controller;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
+import javafx.stage.Stage;
 import java.io.IOException;
 import java.net.URL;
 
@@ -28,7 +30,31 @@ public class DashboardController {
 
     @FXML
     private void handleLogout() {
-        System.exit(0);
+        try {
+            // Load the login screen
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/cjcschoolclinicmanagementsystem/View/login-view.fxml"));
+            Parent root = loader.load();
+
+            // Get current stage
+            Stage stage = (Stage) mainBorderPane.getScene().getWindow();
+
+            // Set the login scene
+            Scene scene = new Scene(root);
+            stage.setScene(scene);
+
+            // Reset window to normal size (not maximized)
+            stage.setMaximized(false);
+            stage.setWidth(1024);
+            stage.setHeight(700);
+            stage.centerOnScreen();
+
+            stage.show();
+
+            System.out.println("[AUDIT LOG] User logged out successfully");
+        } catch (IOException e) {
+            showError("Logout Error", "Could not return to login screen.");
+            System.err.println("Logout Error: " + e.getMessage());
+        }
     }
 
     private void loadView(String fxmlFile) {

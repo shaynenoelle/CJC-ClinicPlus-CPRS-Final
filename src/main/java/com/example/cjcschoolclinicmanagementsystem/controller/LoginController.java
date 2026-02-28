@@ -1,11 +1,15 @@
 package com.example.cjcschoolclinicmanagementsystem.controller;
 
+import javafx.animation.FadeTransition;
+import javafx.animation.SequentialTransition;
+import javafx.animation.PauseTransition;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 import com.example.cjcschoolclinicmanagementsystem.database.DatabaseManager;
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -14,6 +18,65 @@ public class LoginController {
     @FXML private TextField txtUsername;
     @FXML private PasswordField txtPassword;
     @FXML private Label lblStatus;
+    @FXML private Label taglineLabel;
+
+    @FXML
+    public void initialize() {
+        // Animate the tagline with sequential phrases
+        if (taglineLabel != null) {
+            animateTagline();
+        }
+    }
+
+    private void animateTagline() {
+        String[] phrases = {
+            "Always First.",
+            "Always Ready.",
+            "Always There."
+        };
+
+        // Create an infinite loop of animations
+        createSequentialAnimation(phrases);
+    }
+
+    private void createSequentialAnimation(String[] phrases) {
+        SequentialTransition sequence = new SequentialTransition();
+
+        final int[] currentIndex = {0}; // Use array to allow modification in lambda
+
+        for (int i = 0; i < phrases.length; i++) {
+            final int index = i;
+
+            // Fade in
+            FadeTransition fadeIn = new FadeTransition(Duration.millis(600), taglineLabel);
+            fadeIn.setFromValue(0.0);
+            fadeIn.setToValue(1.0);
+
+            // Pause before fade out (text stays visible)
+            PauseTransition hold = new PauseTransition(Duration.millis(1500));
+
+            // Fade out
+            FadeTransition fadeOut = new FadeTransition(Duration.millis(600), taglineLabel);
+            fadeOut.setFromValue(1.0);
+            fadeOut.setToValue(0.0);
+
+            // Update text when fade out completes (before next phrase)
+            fadeOut.setOnFinished(e -> {
+                currentIndex[0] = (currentIndex[0] + 1) % phrases.length;
+                taglineLabel.setText(phrases[currentIndex[0]]);
+            });
+
+            sequence.getChildren().addAll(fadeIn, hold, fadeOut);
+        }
+
+        // Set to loop indefinitely
+        sequence.setCycleCount(javafx.animation.Animation.INDEFINITE);
+
+        // Set initial text
+        taglineLabel.setText(phrases[0]);
+
+        sequence.play();
+    }
 
     @FXML
     protected void onLoginClick() {

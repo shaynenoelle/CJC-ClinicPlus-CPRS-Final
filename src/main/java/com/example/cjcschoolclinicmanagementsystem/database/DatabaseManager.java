@@ -54,6 +54,29 @@ public class DatabaseManager {
     }
 
 
+    public static boolean updatePatient(String id, String name, String course, String year, String gender, String contact, String bday, String history) {
+        String sql = "UPDATE Patients SET full_name = ?, course_dept = ?, year_level = ?, gender = ?, contact_number = ?, birthdate = ?, medical_history = ? WHERE patient_id = ?";
+
+        try (Connection conn = connect();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, name);
+            pstmt.setString(2, course);
+            pstmt.setString(3, year);
+            pstmt.setString(4, gender);
+            pstmt.setString(5, contact);
+            pstmt.setString(6, bday);
+            pstmt.setString(7, history);
+            pstmt.setString(8, id);
+
+            pstmt.executeUpdate();
+            return true;
+        } catch (SQLException e) {
+            System.err.println("Update Patient DB Error: " + e.getMessage());
+            return false;
+        }
+    }
+
     public static List<Patient> getAllPatients() {
         List<Patient> list = new ArrayList<>();
         // Selects all columns from Patients table
