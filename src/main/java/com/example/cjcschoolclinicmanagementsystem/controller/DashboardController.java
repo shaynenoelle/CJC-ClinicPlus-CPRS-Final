@@ -31,6 +31,23 @@ public class DashboardController {
         System.exit(0);
     }
 
+    @FXML
+    private void openSettings() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/cjcschoolclinicmanagementsystem/View/settings-view.fxml"));
+            Parent root = loader.load();
+
+            javafx.stage.Stage stage = new javafx.stage.Stage();
+            stage.setTitle("Settings");
+            stage.setScene(new javafx.scene.Scene(root));
+            stage.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+            stage.showAndWait();
+        } catch (Exception e) {
+            showError("Error", "Failed to open settings: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
     private void loadView(String fxmlFile) {
         try {
             // Ensure the folder "View" matches your resources folder casing exactly

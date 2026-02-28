@@ -46,7 +46,7 @@
             </font></Button>
 
             <Region VBox.vgrow="ALWAYS" />
-            <Button maxWidth="Infinity" style="-fx-background-color: transparent; -fx-text-fill: white; -fx-alignment: BASELINE_LEFT;" text="⚙  Settings">
+            <Button maxWidth="Infinity" onAction="#openSettings" style="-fx-background-color: transparent; -fx-text-fill: white; -fx-alignment: BASELINE_LEFT; -fx-cursor: hand;" text="⚙  Settings">
             <font>
                <Font size="18.0" />
             </font></Button>
@@ -55,7 +55,7 @@
     </left>
     <center>
         <VBox alignment="CENTER" style="-fx-background-color: white;">
-            <Label text="Welcome to GoldenCare" textFill="#8B0000">
+            <Label text="Welcome to CJC School Clinic Patient Management System" textFill="#8B0000">
                 <font><Font name="System Bold" size="24.0" /></font>
             </Label>
         </VBox>
