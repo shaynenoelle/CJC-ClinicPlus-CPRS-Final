@@ -22,7 +22,7 @@ public class AddPatientController {
     @FXML private TabPane tabPane;
 
     public void initialize() {
-        comboCourse.getItems().addAll("CABE", "CCIS", "CHS", "CEDAS", "COE", "CSP", "BED");
+        comboCourse.getItems().addAll("CABE", "CCIS", "CHS", "CEDAS", "COE", "CSP", "BED", "Graduate School");
         comboYear.getItems().addAll("1st Year", "2nd Year", "3rd Year", "4th Year", "5th Year", "6th Year");
         comboGender.getItems().addAll("Male", "Female", "Other");
         comboType.getItems().addAll("Student", "Employee");

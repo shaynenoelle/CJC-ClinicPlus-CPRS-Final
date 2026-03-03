@@ -15,10 +15,14 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 
 public class LoginController {
-    @FXML private TextField txtUsername;
-    @FXML private PasswordField txtPassword;
-    @FXML private Label lblStatus;
-    @FXML private Label taglineLabel;
+    @FXML
+    private TextField txtUsername;
+    @FXML
+    private PasswordField txtPassword;
+    @FXML
+    private Label lblStatus;
+    @FXML
+    private Label taglineLabel;
 
     @FXML
     public void initialize() {
@@ -30,15 +34,25 @@ public class LoginController {
 
     private void animateTagline() {
         String[] phrases = {
-            "Always First.",
-            "Always Ready.",
-            "Always There."
+                "Always First.",
+                "Always Ready.",
+                "Always There."
         };
 
         // Create an infinite loop of animations
         createSequentialAnimation(phrases);
     }
+    // add credits to log in page
 
+    private void tagwithCredits()
+    {
+        String credits = "CJC School Clinic Management System\n" +
+                "Developed by: Bangcailan, Shayne Noelle, Ngojo, Prince Joshua" +
+                "\n"  +
+                "Version: 1.0\n" +
+                "© 2024 CJC School Clinic. All rights reserved.";
+        taglineLabel.setText(credits);
+    } // end of method
     private void createSequentialAnimation(String[] phrases) {
         SequentialTransition sequence = new SequentialTransition();
 
