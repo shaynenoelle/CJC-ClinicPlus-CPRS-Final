@@ -114,6 +114,7 @@ public class DatabaseManager {
             pstmt.setString(18, weight);
             pstmt.setString(19, medicalRemarks);
             pstmt.setString(20, id);
+            // pstmt.setString(21, address); // for address update to be reviewed later
 
             pstmt.executeUpdate();
             return true;
@@ -154,6 +155,7 @@ public class DatabaseManager {
                         rs.getString("height"),
                         rs.getString("weight"),
                         rs.getString("medical_remarks")
+                       // add here for patient address if needed in the future
                 ));
             }
         } catch (SQLException e) {
