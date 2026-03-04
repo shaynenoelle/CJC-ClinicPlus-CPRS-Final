@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+
+<VBox spacing="16"
+      prefWidth="720"
+      style="-fx-background-color: #f5f5f5;"
+      xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.example.cjcschoolclinicmanagementsystem.controller.AttendController">
+    <padding><Insets top="24" bottom="24" left="28" right="28"/></padding>
+
+    <!-- HEADER -->
+    <HBox alignment="CENTER_LEFT" spacing="12">
+        <Label text="✚" style="-fx-text-fill: #8B0000; -fx-font-size: 20;"/>
+        <VBox>
+            <Label text="Recording Visit For:"
+                   style="-fx-font-size: 11; -fx-text-fill: #888;"/>
+            <Label fx:id="lblPatientName"
+                   text="Patient Name"
+                   HBox.hgrow="ALWAYS"
+                   maxWidth="Infinity"
+                   style="-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: #8B0000;"/>
+        </VBox>
+        <Region HBox.hgrow="ALWAYS"/>
+        <HBox spacing="16" alignment="CENTER_RIGHT">
+            <VBox alignment="CENTER_RIGHT">
+                <Label text="Date:" style="-fx-font-size: 11; -fx-text-fill: #888;"/>
+                <Label fx:id="lblDate"
+                       style="-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #333;"/>
+            </VBox>
+            <VBox alignment="CENTER_RIGHT" spacing="2">
+                <Label text="Time In:"
+                       style="-fx-font-size: 11; -fx-text-fill: #888;"/>
+                <HBox spacing="6" alignment="CENTER_RIGHT">
+                    <TextField fx:id="txtTimeIn"
+                               promptText="HH:mm"
+                               prefWidth="80" prefHeight="30"
+                               style="-fx-background-radius: 5;
+                              -fx-border-color: #ddd;
+                              -fx-border-radius: 5;
+                              -fx-padding: 4 8 4 8;
+                              -fx-font-size: 12;"/>
+                    <Button text="⏱ Now"
+                            onAction="#setTimeIn"
+                            style="-fx-background-color: #e8e8e8;
+                           -fx-text-fill: #333;
+                           -fx-background-radius: 5;
+                           -fx-cursor: hand;
+                           -fx-font-size: 11;"/>
+                </HBox>
+            </VBox>
+            <VBox alignment="CENTER_RIGHT" spacing="2">
+                <Label text="Time Out (optional):"
+                       style="-fx-font-size: 11; -fx-text-fill: #888;"/>
+                <HBox spacing="6" alignment="CENTER_RIGHT">
+                    <TextField fx:id="txtTimeOut"
+                               promptText="HH:mm"
+                               prefWidth="80" prefHeight="30"
+                               style="-fx-background-radius: 5;
+                              -fx-border-color: #ddd;
+                              -fx-border-radius: 5;
+                              -fx-padding: 4 8 4 8;
+                              -fx-font-size: 12;"/>
+                    <Button text="⏱ Now"
+                            onAction="#setTimeOut"
+                            style="-fx-background-color: #e8e8e8;
+                           -fx-text-fill: #333;
+                           -fx-background-radius: 5;
+                           -fx-cursor: hand;
+                           -fx-font-size: 11;"/>
+                </HBox>
+            </VBox>
+        </HBox>
+    </HBox>
+
+    <Separator/>
+
+    <!-- TABS -->
+    <TabPane tabClosingPolicy="UNAVAILABLE" VBox.vgrow="ALWAYS">
+
+        <!-- TAB 1: Vital Signs -->
+        <Tab text="Vital Signs">
+            <VBox spacing="14">
+                <padding><Insets top="16" bottom="8" left="4" right="4"/></padding>
+
+                <Label text="⚠ Warning shows if value is outside normal range"
+                       style="-fx-font-size: 11; -fx-text-fill: #e67e22; -fx-font-style: italic;"/>
+
+                <GridPane hgap="16" vgap="12">
+                    <!-- Temperature -->
+                    <Label text="Temperature (°C)" GridPane.rowIndex="0" GridPane.columnIndex="0"
+                           style="-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #444;"/>
+                    <TextField fx:id="txtTemperature"
+                               promptText="e.g. 36.5"
+                               prefWidth="180" prefHeight="38"
+                               onKeyReleased="#validateVitals"
+                               GridPane.rowIndex="0" GridPane.columnIndex="1"
+                               style="-fx-background-radius: 5; -fx-border-color: #ddd;
+                                      -fx-border-radius: 5; -fx-padding: 8; -fx-font-size: 13;"/>
+                    <Label fx:id="lblTempWarning" text=""
+                           GridPane.rowIndex="0" GridPane.columnIndex="2"
+                           style="-fx-text-fill: #e74c3c; -fx-font-size: 11;"/>
+
+                    <!-- Blood Pressure -->
+                    <Label text="Blood Pressure (mmHg)" GridPane.rowIndex="1" GridPane.columnIndex="0"
+                           style="-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #444;"/>
+                    <HBox spacing="6" alignment="CENTER_LEFT"
+                          GridPane.rowIndex="1" GridPane.columnIndex="1">
+                        <TextField fx:id="txtBpSystolic"
+                                   promptText="120"
+                                   prefWidth="80" prefHeight="38"
+                                   onKeyReleased="#validateVitals"
+                                   style="-fx-background-radius: 5; -fx-border-color: #ddd;
+                                          -fx-border-radius: 5; -fx-padding: 8; -fx-font-size: 13;"/>
+                        <Label text="/" style="-fx-font-size: 16; -fx-font-weight: bold;"/>
+                        <TextField fx:id="txtBpDiastolic"
+                                   promptText="80"
+                                   prefWidth="80" prefHeight="38"
+                                   onKeyReleased="#validateVitals"
+                                   style="-fx-background-radius: 5; -fx-border-color: #ddd;
+                                          -fx-border-radius: 5; -fx-padding: 8; -fx-font-size: 13;"/>
+                    </HBox>
+                    <Label fx:id="lblBpWarning" text=""
+                           GridPane.rowIndex="1" GridPane.columnIndex="2"
+                           style="-fx-text-fill: #e74c3c; -fx-font-size: 11;"/>
+
+                    <!-- Heart Rate -->
+                    <Label text="Heart Rate (BPM)" GridPane.rowIndex="2" GridPane.columnIndex="0"
+                           style="-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #444;"/>
+                    <TextField fx:id="txtHeartRate"
+                               promptText="e.g. 75"
+                               prefWidth="180" prefHeight="38"
+                               onKeyReleased="#validateVitals"
+                               GridPane.rowIndex="2" GridPane.columnIndex="1"
+                               style="-fx-background-radius: 5; -fx-border-color: #ddd;
+                                      -fx-border-radius: 5; -fx-padding: 8; -fx-font-size: 13;"/>
+                    <Label fx:id="lblHrWarning" text=""
+                           GridPane.rowIndex="2" GridPane.columnIndex="2"
+                           style="-fx-text-fill: #e74c3c; -fx-font-size: 11;"/>
+
+                    <!-- O2 Sat -->
+                    <Label text="O2 Saturation (%)" GridPane.rowIndex="3" GridPane.columnIndex="0"
+                           style="-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #444;"/>
+                    <TextField fx:id="txtOxygen"
+                               promptText="e.g. 98"
+                               prefWidth="180" prefHeight="38"
+                               onKeyReleased="#validateVitals"
+                               GridPane.rowIndex="3" GridPane.columnIndex="1"
+                               style="-fx-background-radius: 5; -fx-border-color: #ddd;
+                                      -fx-border-radius: 5; -fx-padding: 8; -fx-font-size: 13;"/>
+                    <Label fx:id="lblO2Warning" text=""
+                           GridPane.rowIndex="3" GridPane.columnIndex="2"
+                           style="-fx-text-fill: #e74c3c; -fx-font-size: 11;"/>
+                </GridPane>
+            </VBox>
+        </Tab>
+
+        <!-- TAB 2: Visit Details -->
+        <Tab text="Visit Details">
+            <VBox spacing="12">
+                <padding><Insets top="16" bottom="8" left="4" right="4"/></padding>
+
+                <Label text="Chief Complaint *"
+                       style="-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #444;"/>
+                <TextArea fx:id="txtComplaint"
+                          promptText="What did the patient come in for?"
+                          prefHeight="80" wrapText="true"
+                          style="-fx-background-radius: 5; -fx-border-color: #ddd;
+                                 -fx-border-radius: 5; -fx-font-size: 13;"/>
+
+                <Label text="Diagnosis"
+                       style="-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #444;"/>
+                <TextArea fx:id="txtDiagnosis"
+                          promptText="Identified illness or condition"
+                          prefHeight="80" wrapText="true"
+                          style="-fx-background-radius: 5; -fx-border-color: #ddd;
+                                 -fx-border-radius: 5; -fx-font-size: 13;"/>
+
+                <Label text="Treatment Given"
+                       style="-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #444;"/>
+                <TextArea fx:id="txtTreatment"
+                          promptText="Medication, rest, referral..."
+                          prefHeight="80" wrapText="true"
+                          style="-fx-background-radius: 5; -fx-border-color: #ddd;
+                                 -fx-border-radius: 5; -fx-font-size: 13;"/>
+
+                <Label text="Remarks / Nurse Notes"
+                       style="-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #444;"/>
+                <TextArea fx:id="txtRemarks"
+                          promptText="Additional observations..."
+                          prefHeight="80" wrapText="true"
+                          style="-fx-background-radius: 5; -fx-border-color: #ddd;
+                                 -fx-border-radius: 5; -fx-font-size: 13;"/>
+            </VBox>
+        </Tab>
+    </TabPane>
+
+    <Separator/>
+
+    <!-- BUTTONS -->
+    <HBox spacing="12" alignment="CENTER_RIGHT">
+        <Label fx:id="lblSaveStatus" text=""
+               style="-fx-font-size: 11;" HBox.hgrow="ALWAYS"/>
+        <Button text="Cancel" prefWidth="100" prefHeight="38"
+                onAction="#onCancel"
+                style="-fx-background-color: #e0e0e0;
+                       -fx-text-fill: #333;
+                       -fx-background-radius: 6;
+                       -fx-cursor: hand;"/>
+        <Button text="Save Record" prefWidth="130" prefHeight="38"
+                onAction="#onSaveRecord"
+                style="-fx-background-color: #8B0000;
+                       -fx-text-fill: white;
+                       -fx-font-weight: bold;
+                       -fx-background-radius: 6;
+                       -fx-cursor: hand;"/>
+    </HBox>
+</VBox>

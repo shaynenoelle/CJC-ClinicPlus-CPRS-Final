@@ -47,6 +47,13 @@
             <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
+
+        <dependency>
+            <groupId>eu.hansolo</groupId>
+            <artifactId>charts</artifactId>
+            <version>11.0</version>
+        </dependency>
+
     </dependencies>
 
     <build>
@@ -66,6 +73,7 @@
                 <version>0.0.8</version>
                 <configuration>
                     <mainClass>com.example.cjcschoolclinicmanagementsystem/com.example.cjcschoolclinicmanagementsystem.HelloApplication</mainClass>
+                    <jvmArgs>--enable-native-access=javafx.graphics</jvmArgs>
                 </configuration>
             </plugin>
         </plugins>

@@ -23,6 +23,11 @@ public class LoginController {
     private Label lblStatus;
     @FXML
     private Label taglineLabel;
+    @FXML private TextField txtPasswordVisible;
+    @FXML private CheckBox chkRemember;
+    @FXML private Label btnTogglePassword;
+    private boolean passwordVisible = false;
+
 
     @FXML
     public void initialize() {
@@ -34,9 +39,9 @@ public class LoginController {
 
     private void animateTagline() {
         String[] phrases = {
-                "Always First.",
-                "Always Ready.",
-                "Always There."
+                "Golden Heart.",
+                "Healing Hands.",
+                "In the Service for CJC Community."
         };
 
         // Create an infinite loop of animations
@@ -95,7 +100,8 @@ public class LoginController {
     @FXML
     protected void onLoginClick() {
         String user = txtUsername.getText();
-        String pass = txtPassword.getText();
+        String pass = passwordVisible ?
+                txtPasswordVisible.getText() : txtPassword.getText();
 
         if (DatabaseManager.validateLogin(user, pass)) {
             System.out.println("[AUDIT LOG] Access Granted: " + user + " at " + LocalDateTime.now());
@@ -121,5 +127,27 @@ public class LoginController {
         // Force Maximize to fill the Dell Latitude screen
         stage.setMaximized(true);
         stage.show();
+    }
+
+    @FXML
+    protected void onTogglePassword() {
+        passwordVisible = !passwordVisible;
+        if (passwordVisible) {
+            txtPasswordVisible.setText(txtPassword.getText());
+            txtPasswordVisible.setVisible(true);
+            txtPasswordVisible.setManaged(true);
+            txtPassword.setVisible(false);
+            txtPassword.setManaged(false);
+            // RED = password is visible
+            btnTogglePassword.setStyle("-fx-cursor: hand; -fx-font-size: 16; -fx-text-fill: #c41e3a;");
+        } else {
+            txtPassword.setText(txtPasswordVisible.getText());
+            txtPassword.setVisible(true);
+            txtPassword.setManaged(true);
+            txtPasswordVisible.setVisible(false);
+            txtPasswordVisible.setManaged(false);
+            // GRAY = password is hidden
+            btnTogglePassword.setStyle("-fx-cursor: hand; -fx-font-size: 16; -fx-text-fill: #aaaaaa;");
+        }
     }
 }
