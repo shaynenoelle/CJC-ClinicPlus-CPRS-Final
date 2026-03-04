@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+
+<VBox spacing="0"
+      style="-fx-background-color: #f5f5f5;"
+      xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.example.cjcschoolclinicmanagementsystem.controller.LogbookController">
+
+    <!-- HEADER -->
+    <HBox style="-fx-background-color: white;
+                 -fx-border-color: #e0e0e0;
+                 -fx-border-width: 0 0 1 0;"
+          alignment="CENTER_LEFT">
+        <padding><Insets top="20" bottom="20" left="30" right="30"/></padding>
+        <VBox HBox.hgrow="ALWAYS">
+            <Label text="Services Logbook"
+                   style="-fx-font-size: 22; -fx-font-weight: bold; -fx-text-fill: #8B0000;"/>
+            <Label text="Check-in patients and manage today's visitors"
+                   style="-fx-font-size: 12; -fx-text-fill: #888888;"/>
+        </VBox>
+        <!-- Date filter buttons -->
+        <HBox spacing="8" alignment="CENTER_RIGHT">
+            <Button fx:id="btnToday" text="Today"
+                    onAction="#filterToday"
+                    style="-fx-background-color: #8B0000;
+                           -fx-text-fill: white;
+                           -fx-background-radius: 20;
+                           -fx-cursor: hand;
+                           -fx-font-size: 12;"/>
+            <Button fx:id="btnWeekly" text="Weekly"
+                    onAction="#filterWeekly"
+                    style="-fx-background-color: #e0e0e0;
+                           -fx-text-fill: #555;
+                           -fx-background-radius: 20;
+                           -fx-cursor: hand;
+                           -fx-font-size: 12;"/>
+            <Button fx:id="btnMonthly" text="Monthly"
+                    onAction="#filterMonthly"
+                    style="-fx-background-color: #e0e0e0;
+                           -fx-text-fill: #555;
+                           -fx-background-radius: 20;
+                           -fx-cursor: hand;
+                           -fx-font-size: 12;"/>
+        </HBox>
+    </HBox>
+
+    <HBox spacing="16" VBox.vgrow="ALWAYS">
+        <padding><Insets top="20" bottom="20" left="24" right="24"/></padding>
+
+        <!-- LEFT: Check-in panel -->
+        <VBox spacing="14" prefWidth="380"
+              style="-fx-background-color: white;
+                     -fx-background-radius: 10;
+                     -fx-border-color: #e0e0e0;
+                     -fx-border-radius: 10;
+                     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 8, 0, 0, 2);">
+            <padding><Insets top="24" bottom="24" left="24" right="24"/></padding>
+
+            <Label text="Check-in Patient"
+                   style="-fx-font-size: 16; -fx-font-weight: bold; -fx-text-fill: #333;"/>
+
+            <!-- Search bar -->
+            <HBox spacing="8" alignment="CENTER_LEFT">
+                <TextField fx:id="txtSearch"
+                           promptText="Search name or ID..."
+                           prefHeight="40"
+                           HBox.hgrow="ALWAYS"
+                           onKeyReleased="#onSearchKeyReleased"
+                           style="-fx-background-radius: 6;
+                                  -fx-border-color: #ddd;
+                                  -fx-border-radius: 6;
+                                  -fx-padding: 8 12 8 12;
+                                  -fx-font-size: 13;"/>
+                <Button text="🔍" prefHeight="40" prefWidth="40"
+                        onAction="#onSearch"
+                        style="-fx-background-color: #8B0000;
+                               -fx-text-fill: white;
+                               -fx-background-radius: 6;
+                               -fx-cursor: hand;
+                               -fx-font-size: 14;"/>
+            </HBox>
+
+            <!-- Search results (hidden until search) -->
+            <VBox fx:id="searchResultsPane"
+                  spacing="0" visible="false" managed="false"
+                  style="-fx-background-color: white;
+                         -fx-border-color: #ddd;
+                         -fx-border-radius: 6;
+                         -fx-background-radius: 6;
+                         -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 6, 0, 0, 2);">
+                <TableView fx:id="tblSearchResults"
+                           prefHeight="160"
+                           style="-fx-background-color: transparent;">
+                    <columns>
+                        <TableColumn fx:id="colSearchName" text="Name" prefWidth="180"/>
+                        <TableColumn fx:id="colSearchId" text="Patient ID" prefWidth="120"/>
+                        <TableColumn fx:id="colSearchAction" text="Action" prefWidth="70"/>
+                    </columns>
+                    <columnResizePolicy>
+                        <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
+                    </columnResizePolicy>
+                </TableView>
+            </VBox>
+
+            <!-- Selected patient info -->
+            <VBox fx:id="selectedPatientPane"
+                  spacing="10" visible="false" managed="false"
+                  style="-fx-background-color: #fff8f8;
+                         -fx-border-color: #8B0000;
+                         -fx-border-radius: 8;
+                         -fx-background-radius: 8;">
+                <padding><Insets top="14" bottom="14" left="14" right="14"/></padding>
+
+                <Label text="Selected Patient"
+                       style="-fx-font-size: 11; -fx-text-fill: #888; -fx-font-weight: bold;"/>
+                <Label fx:id="lblSelectedName"
+                       text="—"
+                       style="-fx-font-size: 15; -fx-font-weight: bold; -fx-text-fill: #8B0000;"/>
+                <Label fx:id="lblSelectedId"
+                       text=""
+                       style="-fx-font-size: 11; -fx-text-fill: #666;"/>
+
+                <Separator/>
+
+                <!-- Time In -->
+                <HBox spacing="10" alignment="CENTER_LEFT">
+                    <Label text="Time In:" prefWidth="80"
+                           style="-fx-font-size: 12; -fx-font-weight: bold; -fx-text-fill: #444;"/>
+                    <TextField fx:id="txtTimeIn"
+                               prefHeight="36" prefWidth="130"
+                               style="-fx-background-radius: 5;
+                                      -fx-border-color: #ddd;
+                                      -fx-border-radius: 5;
+                                      -fx-padding: 6 10 6 10;
+                                      -fx-font-size: 12;"/>
+                    <Button text="⏱ Now"
+                            onAction="#setCurrentTime"
+                            style="-fx-background-color: #e8e8e8;
+                                   -fx-text-fill: #333;
+                                   -fx-background-radius: 5;
+                                   -fx-cursor: hand;
+                                   -fx-font-size: 11;"/>
+                </HBox>
+
+                <!-- Purpose -->
+                <HBox spacing="10" alignment="CENTER_LEFT">
+                    <Label text="Purpose:" prefWidth="80"
+                           style="-fx-font-size: 12; -fx-font-weight: bold; -fx-text-fill: #444;"/>
+                    <RadioButton fx:id="rbHealthRelated"
+                                 text="Health-Related"
+                                 style="-fx-font-size: 12;">
+                        <toggleGroup>
+                            <ToggleGroup fx:id="purposeGroup"/>
+                        </toggleGroup>
+                    </RadioButton>
+                    <RadioButton fx:id="rbMedCert"
+                                 text="Med Cert"
+                                 toggleGroup="$purposeGroup"
+                                 style="-fx-font-size: 12;"/>
+                </HBox>
+
+                <!-- Confirm button -->
+                <Button text="✔  Confirm Check-In"
+                        maxWidth="Infinity" prefHeight="40"
+                        onAction="#onConfirmCheckIn"
+                        style="-fx-background-color: #8B0000;
+                               -fx-text-fill: white;
+                               -fx-font-weight: bold;
+                               -fx-font-size: 13;
+                               -fx-background-radius: 6;
+                               -fx-cursor: hand;"/>
+
+                <Label fx:id="lblCheckInStatus"
+                       text="" textFill="#8B0000"
+                       style="-fx-font-size: 11;"/>
+            </VBox>
+
+        </VBox>
+
+        <!-- RIGHT: Today's Visitors table -->
+        <VBox spacing="14" HBox.hgrow="ALWAYS"
+              style="-fx-background-color: white;
+                     -fx-background-radius: 10;
+                     -fx-border-color: #e0e0e0;
+                     -fx-border-radius: 10;
+                     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 8, 0, 0, 2);">
+            <padding><Insets top="24" bottom="24" left="24" right="24"/></padding>
+
+            <HBox alignment="CENTER_LEFT">
+                <VBox HBox.hgrow="ALWAYS">
+                    <Label fx:id="lblLogbookTitle" text="Today's Visitors"
+                           style="-fx-font-size: 16; -fx-font-weight: bold; -fx-text-fill: #333;"/>
+                    <Label fx:id="lblVisitorCount" text="0 patients"
+                           style="-fx-font-size: 12; -fx-text-fill: #888;"/>
+                </VBox>
+                <Button text="⟳ Refresh"
+                        onAction="#refreshLogbook"
+                        style="-fx-background-color: #f0f0f0;
+                               -fx-text-fill: #555;
+                               -fx-background-radius: 6;
+                               -fx-cursor: hand;
+                               -fx-font-size: 12;"/>
+            </HBox>
+
+            <TableView fx:id="tblLogbook"
+                       VBox.vgrow="ALWAYS"
+                       style="-fx-background-color: transparent;">
+                <columns>
+                    <TableColumn fx:id="colId" text="Patient ID" prefWidth="110"/>
+                    <TableColumn fx:id="colName" text="Name" prefWidth="160"/>
+                    <TableColumn fx:id="colTimeIn" text="Time In" prefWidth="80"/>
+                    <TableColumn fx:id="colPurpose" text="Purpose" prefWidth="110"/>
+                    <TableColumn fx:id="colTimeOut" text="Time Out" prefWidth="80"/>
+                    <TableColumn fx:id="colAction" text="Action" prefWidth="100"/>
+                </columns>
+                <columnResizePolicy>
+                    <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
+                </columnResizePolicy>
+            </TableView>
+
+        </VBox>
+    </HBox>
+</VBox>

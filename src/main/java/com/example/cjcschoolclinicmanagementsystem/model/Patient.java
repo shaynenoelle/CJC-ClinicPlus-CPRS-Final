@@ -96,4 +96,7 @@ public class Patient {
     public String getHeight() { return height.get(); }
     public String getWeight() { return weight.get(); }
     public String getMedicalRemarks() { return medicalRemarks.get(); }
+    // Alias getters for compatibility
+    public String getPatientId() { return id.get(); }
+    public String getFullName() { return name.get(); }
 }
