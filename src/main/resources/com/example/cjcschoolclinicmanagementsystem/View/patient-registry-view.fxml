@@ -4,34 +4,95 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.Font?>
 
-<VBox spacing="15.0" style="-fx-background-color: #FFFFFF;"
+<VBox spacing="10.0" style="-fx-background-color: #f5f5f5;"
       xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="com.example.cjcschoolclinicmanagementsystem.controller.PatientRegistryController">
-    <padding><Insets bottom="30.0" left="30.0" right="30.0" top="20.0" /></padding>
+    <padding><Insets bottom="20.0" left="25.0" right="25.0" top="18.0" /></padding>
 
-    <Label text="PATIENT REGISTRY" textFill="#8B0000">
-        <font><Font name="System Bold" size="24.0" /></font>
-    </Label>
-
-    <HBox spacing="10.0" alignment="CENTER_LEFT">
-        <Button onAction="#openAddPatientForm"
-                style="-fx-background-color: #8B0000; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;"
-                text="[ + Add New Patient ]" />
+    <!-- HEADER ROW -->
+    <HBox alignment="CENTER_LEFT" spacing="10.0">
+        <VBox spacing="2">
+            <Label text="Patient List Record" textFill="#8B0000">
+                <font><Font name="System Bold" size="22.0" /></font>
+            </Label>
+            <!-- School Year inline edit -->
+            <HBox spacing="6" alignment="CENTER_LEFT">
+                <Label text="School Year:" style="-fx-font-size: 12; -fx-text-fill: #555;" />
+                <TextField fx:id="txtSchoolYear" prefWidth="110"
+                           style="-fx-font-size: 12; -fx-border-color: #ccc; -fx-border-radius: 4; -fx-background-radius: 4; -fx-padding: 3 6 3 6; -fx-text-fill: #8B0000; -fx-font-weight: bold;" />
+                <Button onAction="#saveSchoolYear" text="Save"
+                        style="-fx-background-color: #8B0000; -fx-text-fill: white; -fx-font-size: 11; -fx-cursor: hand; -fx-background-radius: 4; -fx-padding: 3 10 3 10;" />
+            </HBox>
+        </VBox>
         <Region HBox.hgrow="ALWAYS" />
-        <TextField fx:id="txtSearch" promptText="Search Name/ID..." prefWidth="250.0"
-                   style="-fx-border-color: #8B0000; -fx-border-width: 0 0 2 0; -fx-background-color: transparent;"
-                   onAction="#handleSearch" />
-        <Button onAction="#handleSearch"
-                style="-fx-background-color: #8B0000; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;"
-                text="🔍 Search" />
+        <Button fx:id="btnShowArchived" onAction="#toggleArchived"
+                style="-fx-background-color: #888; -fx-text-fill: white; -fx-font-size: 12; -fx-cursor: hand; -fx-background-radius: 5;"
+                text="📦 Show Archived" />
+        <Button onAction="#openAddPatientForm"
+                style="-fx-background-color: #8B0000; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 13; -fx-cursor: hand; -fx-background-radius: 5; -fx-padding: 7 16 7 16;"
+                text="+ Add Patient" />
     </HBox>
 
-    <TableView fx:id="patientTable" VBox.vgrow="ALWAYS">
+    <!-- SEARCH + FILTER BAR -->
+    <HBox spacing="8.0" alignment="CENTER_LEFT"
+          style="-fx-background-color: white; -fx-border-color: #e0e0e0; -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 10;">
+        <TextField fx:id="txtSearch" promptText="🔍  Search by ID or Name..."
+                   prefWidth="240.0" onKeyReleased="#handleSearch"
+                   style="-fx-border-color: #ccc; -fx-border-radius: 4; -fx-background-radius: 4; -fx-padding: 6;" />
+        <Separator orientation="VERTICAL" />
+        <Label text="College/Dept:" style="-fx-text-fill: #555; -fx-font-size: 12;" />
+        <ComboBox fx:id="cmbCollege" prefWidth="115" onAction="#handleSearch" style="-fx-font-size: 12;" />
+        <Label text="Type:" style="-fx-text-fill: #555; -fx-font-size: 12;" />
+        <ComboBox fx:id="cmbType" prefWidth="110" onAction="#handleSearch" style="-fx-font-size: 12;" />
+        <Label text="Year:" style="-fx-text-fill: #555; -fx-font-size: 12;" />
+        <ComboBox fx:id="cmbYear" prefWidth="130" onAction="#handleSearch" style="-fx-font-size: 12;" />
+        <Separator orientation="VERTICAL" />
+        <Label text="Sort:" style="-fx-text-fill: #555; -fx-font-size: 12;" />
+        <ComboBox fx:id="cmbSort" prefWidth="150" onAction="#handleSearch" style="-fx-font-size: 12;" />
+        <Region HBox.hgrow="ALWAYS" />
+        <Button onAction="#clearFilters"
+                style="-fx-background-color: #eee; -fx-text-fill: #555; -fx-font-size: 11; -fx-cursor: hand; -fx-background-radius: 4;"
+                text="✕ Clear" />
+    </HBox>
+
+    <!-- TABLE — columns matching the clinic Google Sheet -->
+    <TableView fx:id="patientTable" VBox.vgrow="ALWAYS"
+               style="-fx-background-color: white; -fx-border-color: #e0e0e0; -fx-border-radius: 6;">
         <columns>
-            <TableColumn fx:id="colID" prefWidth="100.0" text="ID" />
-            <TableColumn fx:id="colName" prefWidth="350.0" text="Name" />
-            <TableColumn fx:id="colType" prefWidth="150.0" text="Year Level" />
-            <TableColumn fx:id="colDept" prefWidth="250.0" text="Course/Dept" />
+            <TableColumn fx:id="colID"          prefWidth="120.0" text="Patient ID#" />
+            <TableColumn fx:id="colLastName"    prefWidth="120.0" text="Last Name" />
+            <TableColumn fx:id="colFirstName"   prefWidth="110.0" text="First Name" />
+            <TableColumn fx:id="colMI"          prefWidth="42.0"  text="M.I." />
+            <TableColumn fx:id="colGender"      prefWidth="70.0"  text="Gender" />
+            <TableColumn fx:id="colBirthdate"   prefWidth="100.0" text="Birthdate" />
+            <TableColumn fx:id="colYear"        prefWidth="80.0"  text="Year" />
+            <TableColumn fx:id="colCourse"      prefWidth="110.0" text="Course" />
+            <TableColumn fx:id="colDept"        prefWidth="100.0" text="College/Dept" />
+            <TableColumn fx:id="colType"        prefWidth="85.0"  text="Type" />
+            <TableColumn fx:id="colContact"     prefWidth="120.0" text="Contact No." />
+            <TableColumn fx:id="colMedHistory"  prefWidth="200.0" text="Medical History" />
+            <TableColumn fx:id="colStatus"      prefWidth="80.0"  text="Status" />
+            <TableColumn fx:id="colAction"      prefWidth="270.0" text="Action" />
         </columns>
+        <placeholder>
+            <Label text="No patients found." style="-fx-text-fill: #aaa; -fx-font-size: 13;" />
+        </placeholder>
     </TableView>
+
+    <!-- FOOTER -->
+    <HBox alignment="CENTER_LEFT" spacing="12.0"
+          style="-fx-background-color: white; -fx-border-color: #e0e0e0; -fx-border-radius: 6; -fx-padding: 8 14 8 14;">
+        <Label fx:id="lblTotal" text="Total Patients: 0" style="-fx-font-size: 12; -fx-text-fill: #555;" />
+        <Region HBox.hgrow="ALWAYS" />
+        <Button onAction="#refreshTable"
+                style="-fx-background-color: #eee; -fx-cursor: hand; -fx-background-radius: 4; -fx-font-size: 12;"
+                text="⟳ Refresh" />
+        <Button fx:id="btnPrev" onAction="#prevPage"
+                style="-fx-background-color: #8B0000; -fx-text-fill: white; -fx-cursor: hand; -fx-background-radius: 4;"
+                text="◀" />
+        <Label fx:id="lblPage" text="Page 1 of 1" style="-fx-font-size: 12; -fx-text-fill: #333;" />
+        <Button fx:id="btnNext" onAction="#nextPage"
+                style="-fx-background-color: #8B0000; -fx-text-fill: white; -fx-cursor: hand; -fx-background-radius: 4;"
+                text="▶" />
+    </HBox>
 </VBox>

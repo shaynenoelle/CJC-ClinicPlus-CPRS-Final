@@ -23,7 +23,8 @@
             <Label text="Check-in patients and manage today's visitors"
                    style="-fx-font-size: 12; -fx-text-fill: #888888;"/>
         </VBox>
-        <!-- Date filter buttons -->
+
+        <!-- Date filter buttons + custom range -->
         <HBox spacing="8" alignment="CENTER_RIGHT">
             <Button fx:id="btnToday" text="Today"
                     onAction="#filterToday"
@@ -44,6 +45,24 @@
                     style="-fx-background-color: #e0e0e0;
                            -fx-text-fill: #555;
                            -fx-background-radius: 20;
+                           -fx-cursor: hand;
+                           -fx-font-size: 12;"/>
+            <Button fx:id="btnAll" text="All"
+                    onAction="#filterAll"
+                    style="-fx-background-color: #e0e0e0;
+                           -fx-text-fill: #555;
+                           -fx-background-radius: 20;
+                           -fx-cursor: hand;
+                           -fx-font-size: 12;"/>
+            <Separator orientation="VERTICAL" opacity="0.3"/>
+            <Label text="From:" style="-fx-font-size: 12; -fx-text-fill: #555;"/>
+            <DatePicker fx:id="dpFrom" prefWidth="130" prefHeight="32"/>
+            <Label text="To:" style="-fx-font-size: 12; -fx-text-fill: #555;"/>
+            <DatePicker fx:id="dpTo" prefWidth="130" prefHeight="32"/>
+            <Button text="Apply" onAction="#filterCustomRange"
+                    style="-fx-background-color: #555;
+                           -fx-text-fill: white;
+                           -fx-background-radius: 6;
                            -fx-cursor: hand;
                            -fx-font-size: 12;"/>
         </HBox>
@@ -76,7 +95,7 @@
                                   -fx-border-radius: 6;
                                   -fx-padding: 8 12 8 12;
                                   -fx-font-size: 13;"/>
-                <Button text="🔍" prefHeight="40" prefWidth="40"
+                <Button text="&#x1F50D;" prefHeight="40" prefWidth="40"
                         onAction="#onSearch"
                         style="-fx-background-color: #8B0000;
                                -fx-text-fill: white;
@@ -119,7 +138,7 @@
                 <Label text="Selected Patient"
                        style="-fx-font-size: 11; -fx-text-fill: #888; -fx-font-weight: bold;"/>
                 <Label fx:id="lblSelectedName"
-                       text="—"
+                       text="&#x2014;"
                        style="-fx-font-size: 15; -fx-font-weight: bold; -fx-text-fill: #8B0000;"/>
                 <Label fx:id="lblSelectedId"
                        text=""
@@ -138,7 +157,7 @@
                                       -fx-border-radius: 5;
                                       -fx-padding: 6 10 6 10;
                                       -fx-font-size: 12;"/>
-                    <Button text="⏱ Now"
+                    <Button text="&#x23F1; Now"
                             onAction="#setCurrentTime"
                             style="-fx-background-color: #e8e8e8;
                                    -fx-text-fill: #333;
@@ -165,7 +184,7 @@
                 </HBox>
 
                 <!-- Confirm button -->
-                <Button text="✔  Confirm Check-In"
+                <Button text="Confirm Check-In"
                         maxWidth="Infinity" prefHeight="40"
                         onAction="#onConfirmCheckIn"
                         style="-fx-background-color: #8B0000;
@@ -182,7 +201,7 @@
 
         </VBox>
 
-        <!-- RIGHT: Today's Visitors table -->
+        <!-- RIGHT: Visitors table -->
         <VBox spacing="14" HBox.hgrow="ALWAYS"
               style="-fx-background-color: white;
                      -fx-background-radius: 10;
@@ -198,7 +217,7 @@
                     <Label fx:id="lblVisitorCount" text="0 patients"
                            style="-fx-font-size: 12; -fx-text-fill: #888;"/>
                 </VBox>
-                <Button text="⟳ Refresh"
+                <Button text="Refresh"
                         onAction="#refreshLogbook"
                         style="-fx-background-color: #f0f0f0;
                                -fx-text-fill: #555;
@@ -211,17 +230,29 @@
                        VBox.vgrow="ALWAYS"
                        style="-fx-background-color: transparent;">
                 <columns>
-                    <TableColumn fx:id="colId" text="Patient ID" prefWidth="110"/>
-                    <TableColumn fx:id="colName" text="Name" prefWidth="160"/>
-                    <TableColumn fx:id="colTimeIn" text="Time In" prefWidth="80"/>
-                    <TableColumn fx:id="colPurpose" text="Purpose" prefWidth="110"/>
-                    <TableColumn fx:id="colTimeOut" text="Time Out" prefWidth="80"/>
-                    <TableColumn fx:id="colAction" text="Action" prefWidth="100"/>
+                    <TableColumn fx:id="colId"      text="Patient ID" prefWidth="110"/>
+                    <TableColumn fx:id="colName"    text="Name"       prefWidth="160"/>
+                    <TableColumn fx:id="colTimeIn"  text="Time In"    prefWidth="80"/>
+                    <TableColumn fx:id="colPurpose" text="Purpose"    prefWidth="110"/>
+                    <TableColumn fx:id="colTimeOut" text="Time Out"   prefWidth="80"/>
+                    <TableColumn fx:id="colAction"  text="Action"     prefWidth="160"/>
                 </columns>
                 <columnResizePolicy>
                     <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
                 </columnResizePolicy>
             </TableView>
+
+            <!-- Pagination bar -->
+            <HBox spacing="10" alignment="CENTER" style="-fx-padding: 8 0 0 0;">
+                <Button fx:id="btnPrev" text="Prev" onAction="#goToPrevPage"
+                        style="-fx-background-color: #8B0000; -fx-text-fill: white;
+                               -fx-background-radius: 6; -fx-cursor: hand; -fx-font-size: 11;"/>
+                <Label fx:id="lblPage" text="Page 1 of 1"
+                       style="-fx-font-size: 12; -fx-text-fill: #555;"/>
+                <Button fx:id="btnNext" text="Next" onAction="#goToNextPage"
+                        style="-fx-background-color: #8B0000; -fx-text-fill: white;
+                               -fx-background-radius: 6; -fx-cursor: hand; -fx-font-size: 11;"/>
+            </HBox>
 
         </VBox>
     </HBox>

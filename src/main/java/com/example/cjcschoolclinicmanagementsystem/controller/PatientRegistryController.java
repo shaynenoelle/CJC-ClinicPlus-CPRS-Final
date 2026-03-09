@@ -4,427 +4,606 @@ import com.example.cjcschoolclinicmanagementsystem.database.DatabaseManager;
 import com.example.cjcschoolclinicmanagementsystem.model.Patient;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.collections.transformation.FilteredList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
-import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
-import javafx.scene.layout.ColumnConstraints;
-import javafx.scene.layout.Priority;
+import javafx.scene.layout.*;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+
 import java.io.IOException;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class PatientRegistryController {
 
+    // ── FXML bindings ────────────────────────────────────────────
     @FXML private TableView<Patient> patientTable;
-    @FXML private TableColumn<Patient, String> colID, colName, colType, colDept;
-    @FXML private TextField txtSearch;
 
-    final private ObservableList<Patient> patientList = FXCollections.observableArrayList();
-    private FilteredList<Patient> filteredList;
+    // New column set — matches clinic Google Sheet layout
+    @FXML private TableColumn<Patient,String> colID, colLastName, colFirstName, colMI;
+    @FXML private TableColumn<Patient,String> colGender, colBirthdate;
+    @FXML private TableColumn<Patient,String> colYear, colCourse, colDept, colType;
+    @FXML private TableColumn<Patient,String> colContact, colMedHistory;
+    @FXML private TableColumn<Patient,String> colStatus, colAction;
 
+    @FXML private TextField        txtSearch;
+    @FXML private TextField        txtSchoolYear;   // inline school year edit
+    @FXML private ComboBox<String> cmbCollege, cmbType, cmbYear, cmbSort;
+    @FXML private Label            lblTotal, lblPage;
+    @FXML private Button           btnPrev, btnNext, btnShowArchived;
+
+    // ── State ─────────────────────────────────────────────────────
+    private ObservableList<Patient> allPatients = FXCollections.observableArrayList();
+    private ObservableList<Patient> pageItems   = FXCollections.observableArrayList();
+    private boolean showArchived = false;
+    private static final int PAGE_SIZE = 50;
+    private int currentPage = 1;
+    private int totalPages  = 1;
+
+    // ── Init ──────────────────────────────────────────────────────
+    @FXML
     public void initialize() {
-        // Link UI columns to the Patient model properties
-        colID.setCellValueFactory(cellData -> cellData.getValue().idProperty());
-        colName.setCellValueFactory(cellData -> cellData.getValue().nameProperty());
-        colType.setCellValueFactory(cellData -> cellData.getValue().yearProperty());
-        colDept.setCellValueFactory(cellData -> cellData.getValue().courseProperty());
-
-        // Set up filtered list
-        filteredList = new FilteredList<>(patientList, p -> true);
-        patientTable.setItems(filteredList);
-
-        // Live search as user types
-        if (txtSearch != null) {
-            txtSearch.textProperty().addListener((obs, oldVal, newVal) -> applyFilter(newVal));
-        }
-
-        // Add double-click listener to the table for Name column
-        patientTable.setRowFactory(tv -> {
-            TableRow<Patient> row = new TableRow<Patient>() {
-                @Override
-                protected void updateItem(Patient patient, boolean empty) {
-                    super.updateItem(patient, empty);
-                }
-            };
-            row.setOnMouseClicked((MouseEvent event) -> {
-                if (event.getClickCount() == 2 && !row.isEmpty()) {
-                    Patient patient = row.getItem();
-                    showPatientDetails(patient);
-                }
-            });
-            return row;
-        });
-
+        setupColumns();
+        setupFilters();
+        loadSchoolYear();
         refreshTable();
     }
 
-    @FXML
-    private void handleSearch() {
-        applyFilter(txtSearch != null ? txtSearch.getText() : "");
+    // ── School Year inline edit ───────────────────────────────────
+    private void loadSchoolYear() {
+        String sy = DatabaseManager.getSetting("school_year", getCurrentSchoolYear());
+        txtSchoolYear.setText(sy);
     }
 
-    private void applyFilter(String keyword) {
-        if (keyword == null || keyword.isBlank()) {
-            filteredList.setPredicate(p -> true);
-        } else {
-            String lower = keyword.toLowerCase().trim();
-            filteredList.setPredicate(p ->
-                p.getName().toLowerCase().contains(lower) ||
-                p.getId().toLowerCase().contains(lower)
-            );
+    private String getCurrentSchoolYear() {
+        int year  = java.time.LocalDate.now().getYear();
+        int month = java.time.LocalDate.now().getMonthValue();
+        return (month >= 6) ? year + "–" + (year + 1) : (year - 1) + "–" + year;
+    }
+
+    @FXML
+    private void saveSchoolYear() {
+        String val = txtSchoolYear.getText().trim();
+        if (!val.isBlank()) {
+            DatabaseManager.saveSetting("school_year", val);
+            showAlert(Alert.AlertType.INFORMATION, "Saved", "School year updated to: " + val);
         }
     }
 
-    private void showPatientDetails(Patient patient) {
-        System.out.println("Viewing details for: " + patient.getName());
+    // ── Column setup ──────────────────────────────────────────────
+    private void setupColumns() {
+        colID.setCellValueFactory(d -> d.getValue().idProperty());
 
+        // Split "Last, First MI" stored in name field → separate columns
+        colLastName.setCellValueFactory(d -> {
+            String full = d.getValue().getName();
+            if (full != null && full.contains(","))
+                return new javafx.beans.property.SimpleStringProperty(full.split(",")[0].trim());
+            return new javafx.beans.property.SimpleStringProperty(full == null ? "" : full);
+        });
+
+        colFirstName.setCellValueFactory(d -> {
+            String full = d.getValue().getName();
+            if (full != null && full.contains(",")) {
+                String rest = full.split(",", 2)[1].trim();
+                // Strip trailing MI (≤3 chars ending with ".")
+                if (rest.contains(" ")) {
+                    String possible = rest.substring(rest.lastIndexOf(" ") + 1);
+                    if (possible.length() <= 3 && possible.endsWith("."))
+                        return new javafx.beans.property.SimpleStringProperty(
+                                rest.substring(0, rest.lastIndexOf(" ")).trim());
+                }
+                return new javafx.beans.property.SimpleStringProperty(rest);
+            }
+            return new javafx.beans.property.SimpleStringProperty("");
+        });
+
+        colMI.setCellValueFactory(d -> {
+            String full = d.getValue().getName();
+            if (full != null && full.contains(",")) {
+                String rest = full.split(",", 2)[1].trim();
+                if (rest.contains(" ")) {
+                    String possible = rest.substring(rest.lastIndexOf(" ") + 1);
+                    if (possible.length() <= 3 && possible.endsWith("."))
+                        return new javafx.beans.property.SimpleStringProperty(possible);
+                }
+            }
+            return new javafx.beans.property.SimpleStringProperty("");
+        });
+
+        colGender   .setCellValueFactory(d -> d.getValue().genderProperty());
+        colBirthdate.setCellValueFactory(d -> d.getValue().birthdateProperty());
+        colYear     .setCellValueFactory(d -> d.getValue().yearProperty());
+        // college field = course name (BSCS, BSN, Grade 10)
+        colCourse   .setCellValueFactory(d -> d.getValue().collegeProperty());
+        // course field = college/dept abbreviation (CCIS, CHS, BED)
+        colDept     .setCellValueFactory(d -> d.getValue().courseProperty());
+        colType     .setCellValueFactory(d -> d.getValue().typeProperty());
+        colContact  .setCellValueFactory(d -> d.getValue().contactProperty());
+
+        // Medical History = Allergies + Pre-existing Conditions combined
+        colMedHistory.setCellValueFactory(d -> {
+            String a = d.getValue().getAllergies();
+            String c = d.getValue().getConditions();
+            String combined = "";
+            if (a != null && !a.isBlank()) combined += a;
+            if (c != null && !c.isBlank()) combined += (combined.isBlank() ? "" : " | ") + c;
+            return new javafx.beans.property.SimpleStringProperty(combined.isBlank() ? "—" : combined);
+        });
+        // Wrap text in the medical history cell
+        colMedHistory.setCellFactory(col -> new TableCell<>() {
+            private final Label lbl = new Label();
+            { lbl.setWrapText(true); lbl.setStyle("-fx-font-size: 11;"); setGraphic(lbl); }
+            @Override protected void updateItem(String s, boolean empty) {
+                super.updateItem(s, empty);
+                lbl.setText(empty || s == null ? "" : s);
+            }
+        });
+
+        // Status — colored text
+        colStatus.setCellValueFactory(d -> {
+            String active = d.getValue().getIsActive();
+            return new javafx.beans.property.SimpleStringProperty(
+                    "0".equals(active) ? "Archived" : "Active");
+        });
+        colStatus.setCellFactory(col -> new TableCell<>() {
+            @Override protected void updateItem(String s, boolean empty) {
+                super.updateItem(s, empty);
+                if (empty || s == null) { setText(null); setStyle(""); return; }
+                setText(s);
+                setStyle("Archived".equals(s)
+                        ? "-fx-text-fill: #888; -fx-font-style: italic;"
+                        : "-fx-text-fill: #2e7d32; -fx-font-weight: bold;");
+            }
+        });
+
+        // Action column — text buttons (View, Edit, Check-In) + delete
+        colAction.setCellFactory(col -> new TableCell<>() {
+            private final Button btnView    = new Button("View");
+            private final Button btnEdit    = new Button("Edit");
+            private final Button btnCheckin = new Button("Check-In");
+            private final Button btnDelete  = new Button("🗑 Delete");
+            private final HBox   box        = new HBox(4, btnView, btnEdit, btnCheckin, btnDelete);
+            {
+                String base = "-fx-cursor: hand; -fx-background-radius: 4; -fx-padding: 4 10 4 10; -fx-font-size: 11;";
+                btnView   .setStyle(base + "-fx-background-color: #1976D2; -fx-text-fill: white;");
+                btnEdit   .setStyle(base + "-fx-background-color: #388E3C; -fx-text-fill: white;");
+                btnCheckin.setStyle(base + "-fx-background-color: #F57C00; -fx-text-fill: white;");
+                btnDelete .setStyle("-fx-cursor: hand; -fx-background-radius: 4; -fx-padding: 4 8 4 8; -fx-font-size: 12; -fx-background-color: #C62828; -fx-text-fill: white;");
+                box.setAlignment(Pos.CENTER);
+
+                btnView   .setOnAction(e -> openViewProfile(getTableView().getItems().get(getIndex())));
+                btnEdit   .setOnAction(e -> openEditForm(getTableView().getItems().get(getIndex())));
+                btnCheckin.setOnAction(e -> openCheckInAndAttend(getTableView().getItems().get(getIndex())));
+                btnDelete .setOnAction(e -> confirmDelete(getTableView().getItems().get(getIndex())));
+            }
+            @Override protected void updateItem(String s, boolean empty) {
+                super.updateItem(s, empty);
+                setGraphic(empty ? null : box);
+            }
+        });
+
+        patientTable.setItems(pageItems);
+    }
+
+    private void setupFilters() {
+        cmbCollege.setItems(FXCollections.observableArrayList(
+                "All Colleges", "CCIS", "COE", "CABE", "CEDAS", "CHS", "CSP", "BED"));
+        cmbCollege.setValue("All Colleges");
+
+        cmbType.setItems(FXCollections.observableArrayList("All Types", "Student", "Employee"));
+        cmbType.setValue("All Types");
+
+        cmbYear.setItems(FXCollections.observableArrayList(
+                "All Years",
+                "1st Year", "2nd Year", "3rd Year", "4th Year",
+                "Kinder", "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6",
+                "Grade 7", "Grade 8", "Grade 9", "Grade 10", "Grade 11", "Grade 12", "N/A"));
+        cmbYear.setValue("All Years");
+
+        cmbSort.setItems(FXCollections.observableArrayList(
+                "Name A–Z", "Name Z–A", "Patient ID ↑", "Patient ID ↓"));
+        cmbSort.setValue("Name A–Z");
+    }
+
+    // ── Refresh / filter / paginate ───────────────────────────────
+    @FXML
+    public void refreshTable() {
+        allPatients.setAll(DatabaseManager.getAllPatientsWithArchived());
+        applyFiltersAndPaginate();
+    }
+
+    @FXML private void handleSearch() { currentPage = 1; applyFiltersAndPaginate(); }
+
+    @FXML
+    private void clearFilters() {
+        txtSearch.clear();
+        cmbCollege.setValue("All Colleges");
+        cmbType.setValue("All Types");
+        cmbYear.setValue("All Years");
+        cmbSort.setValue("Name A–Z");
+        currentPage = 1;
+        applyFiltersAndPaginate();
+    }
+
+    @FXML
+    private void toggleArchived() {
+        showArchived = !showArchived;
+        btnShowArchived.setText(showArchived ? "🗂 Hide Archived" : "📦 Show Archived");
+        btnShowArchived.setStyle(showArchived
+                ? "-fx-background-color: #8B0000; -fx-text-fill: white; -fx-font-size: 12; -fx-cursor: hand; -fx-background-radius: 5;"
+                : "-fx-background-color: #888; -fx-text-fill: white; -fx-font-size: 12; -fx-cursor: hand; -fx-background-radius: 5;");
+        currentPage = 1;
+        applyFiltersAndPaginate();
+    }
+
+    private void applyFiltersAndPaginate() {
+        String keyword = txtSearch.getText() == null ? "" : txtSearch.getText().trim().toLowerCase();
+        String college = cmbCollege.getValue();
+        String type    = cmbType.getValue();
+        String year    = cmbYear.getValue();
+        String sort    = cmbSort.getValue();
+
+        List<Patient> filtered = allPatients.stream()
+                .filter(p -> showArchived || !"0".equals(p.getIsActive()))
+                .filter(p -> keyword.isEmpty()
+                        || p.getName().toLowerCase().contains(keyword)
+                        || p.getId().toLowerCase().contains(keyword))
+                .filter(p -> "All Colleges".equals(college) || college.equals(p.getCourse()))
+                .filter(p -> "All Types".equals(type)       || type.equals(p.getType()))
+                .filter(p -> "All Years".equals(year)       || year.equals(p.getYear()))
+                .collect(Collectors.toList());
+
+        Comparator<Patient> cmp = switch (sort == null ? "Name A–Z" : sort) {
+            case "Name Z–A"     -> Comparator.comparing(Patient::getName, String.CASE_INSENSITIVE_ORDER).reversed();
+            case "Patient ID ↑" -> Comparator.comparing(Patient::getId);
+            case "Patient ID ↓" -> Comparator.comparing(Patient::getId).reversed();
+            default              -> Comparator.comparing(Patient::getName, String.CASE_INSENSITIVE_ORDER);
+        };
+        filtered.sort(cmp);
+
+        int total = filtered.size();
+        totalPages  = Math.max(1, (int) Math.ceil(total / (double) PAGE_SIZE));
+        currentPage = Math.min(currentPage, totalPages);
+
+        int from = (currentPage - 1) * PAGE_SIZE;
+        int to   = Math.min(from + PAGE_SIZE, total);
+
+        pageItems.setAll(filtered.subList(from, to));
+        lblTotal.setText("Total Patients: " + total + (showArchived ? " (incl. archived)" : ""));
+        lblPage.setText("Page " + currentPage + " of " + totalPages);
+        btnPrev.setDisable(currentPage <= 1);
+        btnNext.setDisable(currentPage >= totalPages);
+    }
+
+    @FXML private void prevPage() { if (currentPage > 1) { currentPage--; applyFiltersAndPaginate(); } }
+    @FXML private void nextPage() { if (currentPage < totalPages) { currentPage++; applyFiltersAndPaginate(); } }
+
+    // ── Add Patient ───────────────────────────────────────────────
+    @FXML
+    private void openAddPatientForm() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource(
+                    "/com/example/cjcschoolclinicmanagementsystem/View/add-patient-view.fxml"));
+            Stage stage = new Stage();
+            stage.setTitle("Add New Patient");
+            stage.initModality(Modality.APPLICATION_MODAL);
+            stage.setScene(new Scene(loader.load()));
+            stage.setResizable(true);
+            stage.showAndWait();
+            refreshTable();
+        } catch (IOException e) {
+            showAlert(Alert.AlertType.ERROR, "Error", "Cannot open Add Patient form:\n" + e.getMessage());
+        }
+    }
+
+    // ── Edit Patient ──────────────────────────────────────────────
+    private void openEditForm(Patient patient) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource(
+                    "/com/example/cjcschoolclinicmanagementsystem/View/add-patient-view.fxml"));
+            Stage stage = new Stage();
+            stage.setTitle("Edit Patient — " + patient.getName());
+            stage.initModality(Modality.APPLICATION_MODAL);
+            stage.setScene(new Scene(loader.load()));
+            stage.setResizable(true);
+            AddPatientController ctrl = loader.getController();
+            ctrl.loadPatientForEdit(patient);
+            stage.showAndWait();
+            refreshTable();
+        } catch (IOException e) {
+            showAlert(Alert.AlertType.ERROR, "Error", "Cannot open Edit form:\n" + e.getMessage());
+        }
+    }
+
+    // ── Check-In → immediately opens Attend form ──────────────────
+    // Flow: Nurse clicks Check-In → enters time + purpose → visit record created →
+    //       Attend form opens right away so nurse can record vitals without going to Logbook
+    private void openCheckInAndAttend(Patient patient) {
+        Stage dlg = new Stage();
+        dlg.setTitle("Check-In: " + patient.getName());
+        dlg.initModality(Modality.APPLICATION_MODAL);
+        dlg.setResizable(false);
+
+        VBox root = new VBox(12);
+        root.setStyle("-fx-padding: 20; -fx-background-color: white;");
+        root.setPrefWidth(340);
+
+        Label title = new Label("Check-In Patient");
+        title.setStyle("-fx-font-size: 15; -fx-font-weight: bold; -fx-text-fill: #8B0000;");
+        Label nameL = new Label(patient.getName() + "  (" + patient.getId() + ")");
+        nameL.setStyle("-fx-font-size: 12; -fx-text-fill: #333;");
+
+        Label timeLabel = new Label("Time In:");
+        timeLabel.setStyle("-fx-font-size: 12; -fx-font-weight: bold;");
+        TextField timeField = new TextField(
+                java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm")));
+        timeField.setStyle("-fx-border-color: #ccc; -fx-border-radius: 4; -fx-padding: 6;");
+
+        Label purpLabel = new Label("Purpose:");
+        purpLabel.setStyle("-fx-font-size: 12; -fx-font-weight: bold;");
+        ComboBox<String> purposeBox = new ComboBox<>(
+                FXCollections.observableArrayList("Health-Related", "Med Cert"));
+        purposeBox.setValue("Health-Related");
+        purposeBox.setPrefWidth(240);
+
+        Label statusLbl = new Label("");
+        statusLbl.setStyle("-fx-text-fill: #c00; -fx-font-size: 11;");
+
+        HBox btns = new HBox(10);
+        btns.setAlignment(Pos.CENTER_RIGHT);
+        Button btnConfirm = new Button("Check-In & Attend →");
+        Button btnCancel  = new Button("Cancel");
+        btnConfirm.setStyle("-fx-background-color: #8B0000; -fx-text-fill: white; -fx-cursor: hand; -fx-background-radius: 4; -fx-padding: 7 16 7 16; -fx-font-weight: bold;");
+        btnCancel .setStyle("-fx-background-color: #888; -fx-text-fill: white; -fx-cursor: hand; -fx-background-radius: 4; -fx-padding: 7 14 7 14;");
+        btns.getChildren().addAll(btnCancel, btnConfirm);
+
+        btnConfirm.setOnAction(e -> {
+            String timeIn = timeField.getText().trim();
+            if (timeIn.isEmpty()) { statusLbl.setText("⚠ Please enter time in."); return; }
+
+            // 1. Create the check-in (inserts a Visits row)
+            boolean ok = DatabaseManager.checkInPatient(
+                    patient.getId(), timeIn, purposeBox.getValue());
+            if (!ok) { statusLbl.setText("⚠ Check-in failed. Try again."); return; }
+            dlg.close();
+
+            // 2. Find the newly created visit row for this patient from today's visits
+            List<Map<String,String>> today = DatabaseManager.getTodayVisits();
+            Map<String,String> visitRow = today.stream()
+                    .filter(v -> patient.getId().equals(v.get("patient_id")))
+                    .findFirst().orElse(null);
+
+            if (visitRow != null) {
+                openAttendForm(visitRow, patient.getName());
+            } else {
+                showAlert(Alert.AlertType.INFORMATION, "Checked In",
+                        patient.getName() + " checked in at " + timeIn
+                                + ".\nUse Logbook → Attend to record vitals.");
+            }
+            refreshTable();
+        });
+
+        btnCancel.setOnAction(e -> dlg.close());
+
+        root.getChildren().addAll(title, nameL, new Separator(),
+                timeLabel, timeField, purpLabel, purposeBox, statusLbl, btns);
+        dlg.setScene(new Scene(root));
+        dlg.show();
+    }
+
+    // Opens attend-view.fxml (reuses AttendController)
+    private void openAttendForm(Map<String,String> visitRow, String patientName) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource(
+                    "/com/example/cjcschoolclinicmanagementsystem/View/attend-view.fxml"));
+            Stage stage = new Stage();
+            stage.setTitle("Attend — " + patientName);
+            stage.initModality(Modality.APPLICATION_MODAL);
+            stage.setScene(new Scene(loader.load()));
+            AttendController ctrl = loader.getController();
+            ctrl.setVisitData(visitRow);
+            stage.showAndWait();
+        } catch (IOException e) {
+            showAlert(Alert.AlertType.ERROR, "Error", "Cannot open Attend form:\n" + e.getMessage());
+        }
+    }
+
+    // ── View Profile ──────────────────────────────────────────────
+    private void openViewProfile(Patient patient) {
         Stage stage = new Stage();
-        stage.setTitle("Patient Details - " + patient.getName());
+        stage.setTitle("Patient Profile — " + patient.getName());
         stage.initModality(Modality.APPLICATION_MODAL);
         stage.setMaximized(true);
 
         VBox root = new VBox(0);
-        root.setPadding(new Insets(0));
-        root.setStyle("-fx-background-color: #F9F9F9;");
+        root.setStyle("-fx-background-color: #f5f5f5;");
 
-        ScrollPane scrollPane = new ScrollPane();
-        scrollPane.setStyle("-fx-control-inner-background: #F9F9F9; -fx-padding: 0;");
-        scrollPane.setFitToWidth(true);
-        VBox contentVBox = new VBox(15);
-        contentVBox.setPadding(new Insets(20));
-        contentVBox.setStyle("-fx-control-inner-background: #F9F9F9;");
+        HBox topBar = new HBox(12);
+        topBar.setAlignment(Pos.CENTER_LEFT);
+        topBar.setStyle("-fx-background-color: #8B0000; -fx-padding: 12 20 12 20;");
+        Button btnBackBtn = new Button("← Back");
+        btnBackBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: white; -fx-cursor: hand; -fx-font-size: 13;");
+        btnBackBtn.setOnAction(e -> stage.close());
+        Label lblTitle = new Label(patient.getId() + "  —  " + patient.getName());
+        lblTitle.setStyle("-fx-text-fill: white; -fx-font-size: 16; -fx-font-weight: bold;");
+        Region spacer = new Region(); HBox.setHgrow(spacer, Priority.ALWAYS);
+        Button btnEditBtn = new Button("Edit");
+        btnEditBtn.setStyle("-fx-background-color: white; -fx-text-fill: #8B0000; -fx-font-weight: bold; -fx-cursor: hand; -fx-background-radius: 4; -fx-padding: 6 16 6 16;");
+        btnEditBtn.setOnAction(e -> { stage.close(); openEditForm(patient); });
+        topBar.getChildren().addAll(btnBackBtn, lblTitle, spacer, btnEditBtn);
 
-        // Create field references for all sections so we can enable/disable editing
-        TextField idField = new TextField(patient.getId());
-        TextField nameField = new TextField(patient.getName());
-        TextField ageField = new TextField(patient.getAge());
-        TextField genderField = new TextField(patient.getGender());
-        TextField birthdateField = new TextField(patient.getBirthdate());
-        TextField courseField = new TextField(patient.getCourse());
-        TextField yearField = new TextField(patient.getYear());
-        TextField collegeField = new TextField(patient.getCollege());
-        TextField contactField = new TextField(patient.getContact());
-        TextField emailField = new TextField(patient.getEmail());
+        ScrollPane scroll = new ScrollPane();
+        scroll.setFitToWidth(true);
+        scroll.setStyle("-fx-background-color: #f5f5f5;");
+        VBox content = new VBox(16);
+        content.setStyle("-fx-padding: 20;");
 
-        TextField emergencyNameField = new TextField(patient.getEmergencyName());
-        TextField relationshipField = new TextField(patient.getRelationship());
-        TextField emergencyContactField = new TextField(patient.getEmergencyContact());
+        // Parse name
+        String lastName = "", firstName = "", mi = "";
+        String full = patient.getName();
+        if (full != null && full.contains(",")) {
+            lastName = full.split(",")[0].trim();
+            String rest = full.split(",", 2)[1].trim();
+            if (rest.contains(" ")) {
+                String possible = rest.substring(rest.lastIndexOf(" ") + 1);
+                if (possible.length() <= 3 && possible.endsWith(".")) {
+                    firstName = rest.substring(0, rest.lastIndexOf(" ")).trim();
+                    mi = possible;
+                } else { firstName = rest; }
+            } else { firstName = rest; }
+        } else { firstName = full == null ? "" : full; }
 
-        TextField allergiesField = new TextField(patient.getAllergies());
-        TextField conditionsField = new TextField(patient.getConditions());
-        TextField bloodTypeField = new TextField(patient.getBloodType());
-        TextField heightField = new TextField(patient.getHeight());
-        TextField weightField = new TextField(patient.getWeight());
-
-        TextArea medicalRemarksArea = new TextArea(patient.getMedicalRemarks());
-        medicalRemarksArea.setWrapText(true);
-        medicalRemarksArea.setPrefHeight(100);
-        medicalRemarksArea.setEditable(false);
-        medicalRemarksArea.setStyle("-fx-control-inner-background: #F5F5F5; -fx-text-fill: #555;");
-
-        // PERSONAL INFORMATION SECTION
-        VBox personalSection = createSection("PERSONAL INFORMATION", "#8B0000");
-        VBox personalContent = new VBox(8);
-        personalContent.setPadding(new Insets(15));
-
-        personalContent.getChildren().addAll(
-            createFieldRow("Student ID:", idField),
-            createFieldRow("Full Name:", nameField),
-            createFieldRow("Age:", ageField),
-            createFieldRow("Gender:", genderField),
-            createFieldRow("Birthdate:", birthdateField),
-            createFieldRow("Course/Department:", courseField),
-            createFieldRow("Year Level:", yearField),
-            createFieldRow("College/Department:", collegeField),
-            createFieldRow("Contact #:", contactField),
-            createFieldRow("Email:", emailField)
+        content.getChildren().addAll(
+                buildProfileSection("👤 Personal Information", new String[][]{
+                        {"Patient ID",     patient.getId()},
+                        {"Last Name",      lastName},
+                        {"First Name",     firstName},
+                        {"Middle Initial", mi},
+                        {"Gender",         patient.getGender()},
+                        {"Birthdate",      patient.getBirthdate()},
+                        {"Age",            patient.getAge()},
+                        {"Blood Type",     patient.getBloodType()},
+                        {"Type",           patient.getType()},
+                        {"College/Dept",   patient.getCourse()},
+                        {"Course",         patient.getCollege()},
+                        {"Year Level",     patient.getYear()},
+                        {"Contact #",      patient.getContact()},
+                        {"Email",          patient.getEmail()},
+                        {"Address",        patient.getAddress()},
+                }),
+                buildProfileSection("👨‍👩‍👧 Family & Emergency Contact", new String[][]{
+                        {"Father's Name",     patient.getFatherName()},
+                        {"Father's Contact",  patient.getFatherContact()},
+                        {"Mother's Name",     patient.getMotherName()},
+                        {"Mother's Contact",  patient.getMotherContact()},
+                        {"Emergency Name",    patient.getEmergencyName()},
+                        {"Relationship",      patient.getRelationship()},
+                        {"Emergency Contact", patient.getEmergencyContact()},
+                }),
+                buildProfileSection("🏥 Medical History", new String[][]{
+                        {"Allergies",       patient.getAllergies()},
+                        {"Conditions",      patient.getConditions()},
+                        {"Blood Type",      patient.getBloodType()},
+                        {"Height (cm)",     patient.getHeight()},
+                        {"Weight (kg)",     patient.getWeight()},
+                        {"Medical Remarks", patient.getMedicalRemarks()},
+                }),
+                buildVisitHistorySection(patient)
         );
-        personalSection.getChildren().add(personalContent);
 
-        // EMERGENCY CONTACT SECTION
-        VBox emergencySection = createSection("EMERGENCY CONTACT", "#8B0000");
-        VBox emergencyContent = new VBox(8);
-        emergencyContent.setPadding(new Insets(15));
-
-        emergencyContent.getChildren().addAll(
-            createFieldRow("Name:", emergencyNameField),
-            createFieldRow("Relationship:", relationshipField),
-            createFieldRow("Contact #:", emergencyContactField)
-        );
-        emergencySection.getChildren().add(emergencyContent);
-
-        // MEDICAL HISTORY SECTION
-        VBox medicalSection = createSection("MEDICAL HISTORY", "#8B0000");
-        VBox medicalContent = new VBox(8);
-        medicalContent.setPadding(new Insets(15));
-
-        medicalContent.getChildren().addAll(
-            createFieldRow("Allergies:", allergiesField),
-            createFieldRow("Conditions:", conditionsField),
-            createFieldRow("Blood Type:", bloodTypeField),
-            createFieldRow("Height (cm):", heightField),
-            createFieldRow("Weight (kg):", weightField),
-            createFieldRowWithArea("Medical Remarks:", medicalRemarksArea)
-        );
-        medicalSection.getChildren().add(medicalContent);
-
-        contentVBox.getChildren().addAll(personalSection, emergencySection, medicalSection);
-        scrollPane.setContent(contentVBox);
-
-        // Button container - reduced padding
-        HBox buttonBox = new HBox(10);
-        buttonBox.setAlignment(javafx.geometry.Pos.CENTER_RIGHT);
-        buttonBox.setPadding(new Insets(10, 20, 10, 20));
-        buttonBox.setStyle("-fx-background-color: #F9F9F9; -fx-border-color: #E0E0E0; -fx-border-width: 1 0 0 0;");
-
-        Button editBtn = new Button("Edit");
-        Button deleteBtn = new Button("Delete");
-        Button closeBtn = new Button("Close");
-
-        editBtn.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-cursor: hand; -fx-padding: 8px 25px; -fx-font-size: 12; -fx-font-weight: bold;");
-        closeBtn.setStyle("-fx-background-color: #8B0000; -fx-text-fill: white; -fx-cursor: hand; -fx-padding: 8px 25px; -fx-font-size: 12; -fx-font-weight: bold;");
-
-        buttonBox.getChildren().addAll(editBtn, closeBtn);
-
-        // Edit button action
-        editBtn.setOnAction(e -> {
-            enableEditMode(idField, nameField, ageField, genderField, birthdateField, courseField,
-                          yearField, collegeField, contactField, emailField, emergencyNameField,
-                          relationshipField, emergencyContactField, allergiesField, conditionsField,
-                          bloodTypeField, heightField, weightField, medicalRemarksArea);
-
-            buttonBox.getChildren().clear();
-            Button saveBtn = new Button("Save");
-            Button cancelBtn = new Button("Cancel");
-            saveBtn.setStyle("-fx-background-color: #2196F3; -fx-text-fill: white; -fx-cursor: hand; -fx-padding: 8px 25px; -fx-font-size: 12; -fx-font-weight: bold;");
-            cancelBtn.setStyle("-fx-background-color: #FF9800; -fx-text-fill: white; -fx-cursor: hand; -fx-padding: 8px 25px; -fx-font-size: 12; -fx-font-weight: bold;");
-
-            saveBtn.setOnAction(save -> {
-                boolean success = DatabaseManager.updatePatient(
-                        patient.getId(),
-                        nameField.getText(),
-                        ageField.getText(),
-                        courseField.getText(),
-                        yearField.getText(),
-                        genderField.getText(),
-                        collegeField.getText(),
-                        contactField.getText(),
-                        emailField.getText(),
-                        birthdateField.getText(),
-                        patient.getType(),
-                        emergencyNameField.getText(),
-                        relationshipField.getText(),
-                        emergencyContactField.getText(),
-                        allergiesField.getText(),
-                        conditionsField.getText(),
-                        bloodTypeField.getText(),
-                        heightField.getText(),
-                        weightField.getText(),
-                        medicalRemarksArea.getText()
-                );
-
-                if (success) {
-                    refreshTable();
-                    showAlert(Alert.AlertType.INFORMATION, "Success", "Patient updated successfully!");
-                    disableEditMode(idField, nameField, ageField, genderField, birthdateField, courseField,
-                                   yearField, collegeField, contactField, emailField, emergencyNameField,
-                                   relationshipField, emergencyContactField, allergiesField, conditionsField,
-                                   bloodTypeField, heightField, weightField, medicalRemarksArea);
-                    buttonBox.getChildren().clear();
-                    buttonBox.getChildren().addAll(editBtn, closeBtn);
-                } else {
-                    showAlert(Alert.AlertType.ERROR, "Error", "Failed to update patient!");
-                }
-            });
-
-            cancelBtn.setOnAction(cancel -> {
-                nameField.setText(patient.getName());
-                ageField.setText(patient.getAge());
-                genderField.setText(patient.getGender());
-                birthdateField.setText(patient.getBirthdate());
-                courseField.setText(patient.getCourse());
-                yearField.setText(patient.getYear());
-                collegeField.setText(patient.getCollege());
-                contactField.setText(patient.getContact());
-                emailField.setText(patient.getEmail());
-                emergencyNameField.setText(patient.getEmergencyName());
-                relationshipField.setText(patient.getRelationship());
-                emergencyContactField.setText(patient.getEmergencyContact());
-                allergiesField.setText(patient.getAllergies());
-                conditionsField.setText(patient.getConditions());
-                bloodTypeField.setText(patient.getBloodType());
-                heightField.setText(patient.getHeight());
-                weightField.setText(patient.getWeight());
-                medicalRemarksArea.setText(patient.getMedicalRemarks());
-
-                disableEditMode(idField, nameField, ageField, genderField, birthdateField, courseField,
-                               yearField, collegeField, contactField, emailField, emergencyNameField,
-                               relationshipField, emergencyContactField, allergiesField, conditionsField,
-                               bloodTypeField, heightField, weightField, medicalRemarksArea);
-                buttonBox.getChildren().clear();
-                buttonBox.getChildren().addAll(editBtn, closeBtn);
-            });
-
-            buttonBox.getChildren().addAll(saveBtn, cancelBtn);
-        });
-
-        closeBtn.setOnAction(e -> stage.close());
-
-        root.getChildren().addAll(scrollPane, buttonBox);
-        VBox.setVgrow(scrollPane, Priority.ALWAYS);
-
-        Scene scene = new Scene(root);
-        stage.setScene(scene);
+        scroll.setContent(content);
+        VBox.setVgrow(scroll, Priority.ALWAYS);
+        root.getChildren().addAll(topBar, scroll);
+        stage.setScene(new Scene(root));
         stage.show();
     }
 
-    private void enableEditMode(TextField... fields) {
-        for (TextField field : fields) {
-            field.setEditable(true);
-            field.setStyle("-fx-border-color: #8B0000; -fx-border-width: 2; -fx-padding: 8; -fx-control-inner-background: #FFFFFF;");
+    private VBox buildProfileSection(String title, String[][] rows) {
+        VBox box = new VBox(8);
+        box.setStyle("-fx-background-color: white; -fx-border-color: #e0e0e0; -fx-border-radius: 6; -fx-padding: 16; -fx-background-radius: 6;");
+        Label lbl = new Label(title);
+        lbl.setStyle("-fx-font-weight: bold; -fx-text-fill: #8B0000; -fx-font-size: 14;");
+        box.getChildren().addAll(lbl, new Separator());
+        for (String[] r : rows) {
+            HBox row = new HBox(8);
+            Label key = new Label(r[0] + ":"); key.setStyle("-fx-font-weight: bold; -fx-text-fill: #555; -fx-min-width: 160;");
+            Label val = new Label(r[1] == null || r[1].isBlank() ? "—" : r[1]); val.setStyle("-fx-text-fill: #222;");
+            row.getChildren().addAll(key, val);
+            box.getChildren().add(row);
         }
+        return box;
     }
 
-    private void enableEditMode(Object... fields) {
-        for (Object field : fields) {
-            if (field instanceof TextField) {
-                ((TextField) field).setEditable(true);
-                ((TextField) field).setStyle("-fx-border-color: #8B0000; -fx-border-width: 2; -fx-padding: 8; -fx-control-inner-background: #FFFFFF;");
-            } else if (field instanceof TextArea) {
-                ((TextArea) field).setEditable(true);
-                ((TextArea) field).setStyle("-fx-border-color: #8B0000; -fx-border-width: 2; -fx-padding: 8; -fx-control-inner-background: #FFFFFF;");
+    private VBox buildVisitHistorySection(Patient patient) {
+        VBox box = new VBox(8);
+        box.setStyle("-fx-background-color: white; -fx-border-color: #e0e0e0; -fx-border-radius: 6; -fx-padding: 16; -fx-background-radius: 6;");
+        Label lbl = new Label("📋 Visit History");
+        lbl.setStyle("-fx-font-weight: bold; -fx-text-fill: #8B0000; -fx-font-size: 14;");
+        box.getChildren().addAll(lbl, new Separator());
+
+        TableView<Map<String,String>> table = new TableView<>();
+        table.setPrefHeight(220);
+
+        String[] cols   = {"visit_date","time_in","time_out","purpose","chief_complaint","diagnosis","treatment","remarks"};
+        String[] hdrs   = {"Date","Time In","Time Out","Purpose","Complaint","Diagnosis","Treatment","Remarks"};
+        double[] widths = {100,80,80,120,160,160,160,160};
+        for (int i = 0; i < cols.length; i++) {
+            final String key = cols[i];
+            TableColumn<Map<String,String>, String> tc = new TableColumn<>(hdrs[i]);
+            tc.setPrefWidth(widths[i]);
+            tc.setCellValueFactory(d -> new javafx.beans.property.SimpleStringProperty(
+                    d.getValue().getOrDefault(key, "")));
+            table.getColumns().add(tc);
+        }
+
+        table.setItems(FXCollections.observableArrayList(
+                DatabaseManager.getVisitsForPatient(patient.getId())));
+        table.setPlaceholder(new Label("No visits recorded yet."));
+        box.getChildren().add(table);
+        return box;
+    }
+
+    // ── Delete with "yes" confirmation ────────────────────────────
+    private void confirmDelete(Patient patient) {
+        Stage dlgStage = new Stage();
+        dlgStage.setTitle("Confirm Delete");
+        dlgStage.initModality(Modality.APPLICATION_MODAL);
+        dlgStage.setResizable(false);
+
+        VBox root = new VBox(14);
+        root.setStyle("-fx-padding: 24; -fx-background-color: white;");
+        root.setPrefWidth(380);
+
+        Label icon  = new Label("🗑"); icon.setStyle("-fx-font-size: 36;");
+        Label title = new Label("Delete Patient Record?");
+        title.setStyle("-fx-font-size: 15; -fx-font-weight: bold; -fx-text-fill: #C62828;");
+        Label msg = new Label("This will permanently remove:\n" + patient.getName()
+                + " (" + patient.getId() + ")\n\nThis action cannot be undone.");
+        msg.setStyle("-fx-font-size: 12; -fx-text-fill: #555;");
+        msg.setWrapText(true);
+
+        Label instruct = new Label("Type 'yes'  below to confirm:");
+        instruct.setStyle("-fx-font-size: 12; -fx-text-fill: #333; -fx-font-weight: bold;");
+        TextField confirmField = new TextField();
+        confirmField.setPromptText("type \"yes\" to confirm");
+        confirmField.setStyle("-fx-border-color: #ccc; -fx-border-radius: 4; -fx-padding: 7; -fx-font-size: 13;");
+
+        HBox btns = new HBox(10); btns.setAlignment(Pos.CENTER_RIGHT);
+        Button btnDelete = new Button("Delete");
+        Button btnCancel = new Button("Cancel");
+        btnDelete.setDisable(true);
+        btnDelete.setStyle("-fx-background-color: #C62828; -fx-text-fill: white; -fx-cursor: hand; -fx-background-radius: 4; -fx-padding: 7 18 7 18; -fx-font-weight: bold;");
+        btnCancel.setStyle("-fx-background-color: #888; -fx-text-fill: white; -fx-cursor: hand; -fx-background-radius: 4; -fx-padding: 7 14 7 14;");
+        confirmField.textProperty().addListener((obs, o, n) ->
+                btnDelete.setDisable(!"yes".equals(n.trim().toLowerCase())));
+        btnDelete.setOnAction(e -> {
+            boolean ok = DatabaseManager.deletePatient(patient.getId());
+            dlgStage.close();
+            if (ok) {
+                showAlert(Alert.AlertType.INFORMATION, "Deleted", patient.getName() + " has been deleted.");
+                refreshTable();
+            } else {
+                showAlert(Alert.AlertType.ERROR, "Error", "Failed to delete patient.");
             }
-        }
-    }
+        });
+        btnCancel.setOnAction(e -> dlgStage.close());
+        btns.getChildren().addAll(btnCancel, btnDelete);
 
-    private void disableEditMode(Object... fields) {
-        for (Object field : fields) {
-            if (field instanceof TextField) {
-                ((TextField) field).setEditable(false);
-                ((TextField) field).setStyle("-fx-text-fill: #555; -fx-control-inner-background: #F5F5F5; -fx-padding: 8;");
-            } else if (field instanceof TextArea) {
-                ((TextArea) field).setEditable(false);
-                ((TextArea) field).setStyle("-fx-control-inner-background: #F5F5F5; -fx-text-fill: #555;");
-            }
-        }
-    }
-
-    private HBox createFieldRow(String label, TextField field) {
-        HBox row = new HBox(10);
-        row.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
-
-        Label labelNode = new Label(label);
-        labelNode.setStyle("-fx-font-weight: bold; -fx-text-fill: #333; -fx-min-width: 150;");
-
-        field.setEditable(false);
-        field.setStyle("-fx-text-fill: #555; -fx-control-inner-background: #F5F5F5; -fx-padding: 8;");
-        field.setPrefWidth(600);
-
-        row.getChildren().addAll(labelNode, field);
-        return row;
-    }
-
-    private HBox createFieldRowWithArea(String label, TextArea area) {
-        HBox row = new HBox(10);
-        row.setAlignment(javafx.geometry.Pos.TOP_LEFT);
-
-        Label labelNode = new Label(label);
-        labelNode.setStyle("-fx-font-weight: bold; -fx-text-fill: #333; -fx-min-width: 150;");
-
-        area.setPrefWidth(600);
-
-        row.getChildren().addAll(labelNode, area);
-        return row;
-    }
-
-    private VBox createSection(String title, String titleColor) {
-        VBox section = new VBox(10);
-        section.setStyle("-fx-border-color: #CCCCCC; -fx-border-radius: 5; -fx-border-width: 1; -fx-padding: 10;");
-        Label titleLabel = new Label(title);
-        titleLabel.setStyle("-fx-font-size: 14; -fx-font-weight: bold; -fx-text-fill: " + titleColor + ";");
-        Separator separator = new Separator();
-        section.getChildren().addAll(titleLabel, separator);
-        return section;
-    }
-
-    private void setFieldProperties(TextField field, boolean editable) {
-        field.setEditable(editable);
-        field.setPrefWidth(300);
-        if (!editable) {
-            field.setStyle("-fx-text-fill: #555; -fx-control-inner-background: #F5F5F5; -fx-padding: 5;");
-        }
-    }
-
-    private void addDetailRow(GridPane grid, int row, String label, TextField field) {
-        Label labelNode = new Label(label);
-        labelNode.setStyle("-fx-font-weight: bold; -fx-text-fill: #333;");
-        grid.add(labelNode, 0, row);
-        grid.add(field, 1, row);
-    }
-
-    private void enableEditAllFields(Object... fields) {
-        for (Object field : fields) {
-            if (field instanceof TextField) {
-                ((TextField) field).setEditable(true);
-                ((TextField) field).setStyle("-fx-border-color: #8B0000; -fx-border-width: 1; -fx-padding: 5; -fx-control-inner-background: #FFFFFF;");
-            } else if (field instanceof TextArea) {
-                ((TextArea) field).setEditable(true);
-                ((TextArea) field).setStyle("-fx-border-color: #8B0000; -fx-border-width: 1; -fx-padding: 5; -fx-control-inner-background: #FFFFFF;");
-            }
-        }
-    }
-
-    private void disableEditAllFields(Object... fields) {
-        for (Object field : fields) {
-            if (field instanceof TextField) {
-                ((TextField) field).setEditable(false);
-                setFieldProperties((TextField) field, false);
-            } else if (field instanceof TextArea) {
-                ((TextArea) field).setEditable(false);
-                ((TextArea) field).setStyle("-fx-control-inner-background: #F5F5F5; -fx-text-fill: #555;");
-            }
-        }
+        root.getChildren().addAll(icon, title, msg, new Separator(), instruct, confirmField, btns);
+        root.setAlignment(Pos.TOP_LEFT);
+        dlgStage.setScene(new Scene(root));
+        dlgStage.show();
     }
 
     private void showAlert(Alert.AlertType type, String title, String content) {
-        Alert alert = new Alert(type);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(content);
-        alert.showAndWait();
-    }
-
-    private void editPatient(Patient patient) {
-        System.out.println("Editing patient: " + patient.getName());
-        showPatientDetails(patient);
-    }
-
-    public void refreshTable() {
-        patientList.setAll(DatabaseManager.getAllPatients());
-        if (filteredList == null) {
-            patientTable.setItems(patientList);
-        }
-    }
-
-    @FXML
-    private void openAddPatientForm() throws IOException {
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/cjcschoolclinicmanagementsystem/View/add-patient-view.fxml"));
-        Stage stage = new Stage();
-        stage.initModality(Modality.APPLICATION_MODAL);
-        stage.setScene(new Scene(loader.load()));
-        stage.showAndWait(); // Wait for user to save
-        refreshTable(); // REFRESH THE LIST IMMEDIATELY
+        Alert a = new Alert(type);
+        a.setTitle(title); a.setHeaderText(null); a.setContentText(content);
+        a.showAndWait();
     }
 }
-
-
-
-
-

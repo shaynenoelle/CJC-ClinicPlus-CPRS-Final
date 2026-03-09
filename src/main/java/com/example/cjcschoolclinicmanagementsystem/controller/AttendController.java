@@ -29,7 +29,67 @@ public class AttendController {
     @FXML private TextField txtTimeIn;
     @FXML private TextField txtTimeOut;
 
+    // ── Tab navigation controls ───────────────────────────────────
+    @FXML private TabPane tabPane;
+    @FXML private Button  btnBack, btnNext, btnSave;
+    @FXML private Label   lblStep;
+
     private int visitId;
+
+    @FXML
+    public void initialize() {
+        // Wire tab-change listener
+        tabPane.getSelectionModel().selectedIndexProperty().addListener(
+                (obs, oldIdx, newIdx) -> updateNavButtons(newIdx.intValue()));
+        updateNavButtons(0);
+    }
+
+    // ── Tab navigation ────────────────────────────────────────────
+    @FXML
+    public void onTabChanged() {
+        updateNavButtons(tabPane.getSelectionModel().getSelectedIndex());
+    }
+
+    private void updateNavButtons(int tabIndex) {
+        int lastTab = tabPane.getTabs().size() - 1;
+        boolean isFirst = (tabIndex == 0);
+        boolean isLast  = (tabIndex == lastTab);
+
+        btnBack.setVisible(!isFirst);
+        btnBack.setManaged(!isFirst);
+        btnNext.setVisible(!isLast);
+        btnNext.setManaged(!isLast);
+        btnSave.setVisible(isLast);
+        btnSave.setManaged(isLast);
+
+        lblStep.setText("Step " + (tabIndex + 1) + " of " + (lastTab + 1));
+        lblSaveStatus.setText("");
+    }
+
+    @FXML
+    public void onNext() {
+        // Validate vitals before leaving Tab 1
+        String tempStr = txtTemperature.getText().trim();
+        if (tempStr.isEmpty()) {
+            lblSaveStatus.setText("⚠ Temperature is required before proceeding.");
+            lblSaveStatus.setStyle("-fx-text-fill: #e74c3c;");
+            return;
+        }
+        if (txtBpSystolic.getText().trim().isEmpty() || txtBpDiastolic.getText().trim().isEmpty()) {
+            lblSaveStatus.setText("⚠ Blood Pressure is required before proceeding.");
+            lblSaveStatus.setStyle("-fx-text-fill: #e74c3c;");
+            return;
+        }
+        lblSaveStatus.setText("");
+        int current = tabPane.getSelectionModel().getSelectedIndex();
+        tabPane.getSelectionModel().select(current + 1);
+    }
+
+    @FXML
+    public void onBack() {
+        int current = tabPane.getSelectionModel().getSelectedIndex();
+        if (current > 0) tabPane.getSelectionModel().select(current - 1);
+    }
 
     public void setVisitData(Map<String, String> visitRow) {
         visitId = Integer.parseInt(visitRow.get("visit_id"));
@@ -136,6 +196,35 @@ public class AttendController {
 
         if (txtComplaint.getText().trim().isEmpty()) {
             lblSaveStatus.setText("⚠ Chief Complaint is required.");
+            lblSaveStatus.setStyle("-fx-text-fill: #e74c3c;");
+            return;
+        }
+
+        // Validate temperature
+        String tempStr = txtTemperature.getText().trim();
+        if (tempStr.isEmpty()) {
+            lblSaveStatus.setText("⚠ Temperature is required.");
+            lblSaveStatus.setStyle("-fx-text-fill: #e74c3c;");
+            return;
+        }
+        try { Double.parseDouble(tempStr); }
+        catch (NumberFormatException e) {
+            lblSaveStatus.setText("⚠ Temperature must be a valid number (e.g. 36.5).");
+            lblSaveStatus.setStyle("-fx-text-fill: #e74c3c;");
+            return;
+        }
+
+        // Validate blood pressure
+        String bpSys = txtBpSystolic.getText().trim();
+        String bpDia = txtBpDiastolic.getText().trim();
+        if (bpSys.isEmpty() || bpDia.isEmpty()) {
+            lblSaveStatus.setText("⚠ Blood Pressure (systolic / diastolic) is required.");
+            lblSaveStatus.setStyle("-fx-text-fill: #e74c3c;");
+            return;
+        }
+        try { Integer.parseInt(bpSys); Integer.parseInt(bpDia); }
+        catch (NumberFormatException e) {
+            lblSaveStatus.setText("⚠ Blood Pressure values must be whole numbers (e.g. 120 / 80).");
             lblSaveStatus.setStyle("-fx-text-fill: #e74c3c;");
             return;
         }

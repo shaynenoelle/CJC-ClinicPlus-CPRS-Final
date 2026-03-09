@@ -38,6 +38,17 @@ public class VisitHistoryController {
     @FXML private DatePicker dpFrom;
     @FXML private DatePicker dpTo;
 
+    @FXML private Button btnSort;
+    private boolean sortNewestFirst = true;
+
+    // ── Pagination ────────────────────────────────────────────────
+    @FXML private Button btnPrev;
+    @FXML private Button btnNext;
+    @FXML private Label  lblPage;
+
+    private static final int    PAGE_SIZE     = 35;
+    private int currentPage = 0;
+
     private List<Map<String, String>> allData;
     private String currentFilter = "daily";
 
@@ -67,7 +78,7 @@ public class VisitHistoryController {
         colAction.setCellFactory(col -> new TableCell<>() {
             final Button btnView   = new Button("View");
             final Button btnEdit   = new Button("Edit");
-            final Button btnDelete = new Button("🗑");
+            final Button btnDelete = new Button("Delete");
             final HBox box = new HBox(4, btnView, btnEdit, btnDelete);
             {
                 btnView.setStyle("-fx-background-color: #2196F3; -fx-text-fill: white;" +
@@ -135,10 +146,11 @@ public class VisitHistoryController {
 
     @FXML public void refreshTable() {
         allData = DatabaseManager.getAllVisits(currentFilter);
+        currentPage = 0;
         applySearch();
     }
 
-    @FXML private void onSearch() { applySearch(); }
+    @FXML private void onSearch() { currentPage = 0; applySearch(); }
 
     private void applySearch() {
         String query = txtSearch.getText().trim().toLowerCase();
@@ -151,25 +163,60 @@ public class VisitHistoryController {
                                 row.getOrDefault("patient_id", "").toLowerCase().contains(query))
                 .collect(Collectors.toList());
 
-        tblVisits.setItems(FXCollections.observableArrayList(filtered));
-        lblCount.setText(filtered.size() + " record" + (filtered.size() != 1 ? "s" : ""));
+        applyPagination(filtered);
+    }
+
+    private void applyPagination(List<Map<String, String>> data) {
+        int total      = data.size();
+        int totalPages = Math.max(1, (int) Math.ceil((double) total / PAGE_SIZE));
+        currentPage    = Math.max(0, Math.min(currentPage, totalPages - 1));
+
+        int from = currentPage * PAGE_SIZE;
+        int to   = Math.min(from + PAGE_SIZE, total);
+
+        tblVisits.setItems(FXCollections.observableArrayList(data.subList(from, to)));
+
+        if (lblPage != null)
+            lblPage.setText("Page " + (currentPage + 1) + " of " + totalPages);
+        if (btnPrev != null)
+            btnPrev.setDisable(currentPage == 0);
+        if (btnNext != null)
+            btnNext.setDisable(currentPage >= totalPages - 1);
+
+        lblCount.setText(total + " record" + (total != 1 ? "s" : ""));
+    }
+
+    @FXML private void goToPrevPage() {
+        if (currentPage > 0) { currentPage--; applySearch(); }
+    }
+
+    @FXML private void goToNextPage() {
+        // re-derive total to check bounds
+        String query = txtSearch.getText().trim().toLowerCase();
+        long total = allData.stream().filter(row ->
+                query.isEmpty() ||
+                        row.getOrDefault("full_name","").toLowerCase().contains(query) ||
+                        row.getOrDefault("diagnosis","").toLowerCase().contains(query) ||
+                        row.getOrDefault("course_dept","").toLowerCase().contains(query) ||
+                        row.getOrDefault("patient_id","").toLowerCase().contains(query)).count();
+        int totalPages = Math.max(1, (int) Math.ceil((double) total / PAGE_SIZE));
+        if (currentPage < totalPages - 1) { currentPage++; applySearch(); }
     }
 
     @FXML private void filterDaily() {
-        currentFilter = "daily"; updateFilterButtons(btnDaily); refreshTable(); }
+        currentFilter = "daily"; currentPage = 0; updateFilterButtons(btnDaily); refreshTable(); }
     @FXML private void filterWeekly() {
-        currentFilter = "weekly"; updateFilterButtons(btnWeekly); refreshTable(); }
+        currentFilter = "weekly"; currentPage = 0; updateFilterButtons(btnWeekly); refreshTable(); }
     @FXML private void filterMonthly() {
-        currentFilter = "monthly"; updateFilterButtons(btnMonthly); refreshTable(); }
+        currentFilter = "monthly"; currentPage = 0; updateFilterButtons(btnMonthly); refreshTable(); }
     @FXML private void filterAll() {
-        currentFilter = "all"; updateFilterButtons(btnAll); refreshTable(); }
-    @FXML private Button btnSort;
-    private boolean sortNewestFirst = true;
+        currentFilter = "all"; currentPage = 0; updateFilterButtons(btnAll); refreshTable(); }
 
     @FXML private void filterCustomRange() {
         if (dpFrom.getValue() == null || dpTo.getValue() == null) return;
         allData = DatabaseManager.getVisitsByDateRange(
                 dpFrom.getValue().toString(), dpTo.getValue().toString());
+        currentPage = 0;
         applySearch();
         updateFilterButtons(null);
     }

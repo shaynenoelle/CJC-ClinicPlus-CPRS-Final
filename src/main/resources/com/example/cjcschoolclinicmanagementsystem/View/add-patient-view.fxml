@@ -4,122 +4,318 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.Font?>
 
-<VBox spacing="15.0" style="-fx-background-color: #FFFFFF; -fx-border-color: #8B0000; -fx-border-width: 2;"
-      xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.cjcschoolclinicmanagementsystem.controller.AddPatientController">
-    <padding><Insets bottom="20.0" left="25.0" right="25.0" top="20.0" /></padding>
+<VBox spacing="0" style="-fx-background-color: #FFFFFF;"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.example.cjcschoolclinicmanagementsystem.controller.AddPatientController"
+      prefWidth="780">
 
-    <Label text="✚ REGISTRATION FORM" textFill="#8B0000">
-        <font><Font name="System Bold" size="20.0" /></font>
-    </Label>
-    <Separator />
+    <!-- HEADER -->
+    <HBox style="-fx-background-color: #8B0000; -fx-padding: 14 20 14 20;" alignment="CENTER_LEFT" spacing="12">
+        <Label fx:id="lblFormTitle" text="Add New Patient" textFill="white">
+            <font><Font name="System Bold" size="18.0" /></font>
+        </Label>
+        <Region HBox.hgrow="ALWAYS" />
+        <Label fx:id="lblPatientIdDisplay" text="" textFill="#FFCCCC"
+               style="-fx-font-size: 13;" />
+    </HBox>
 
-    <TabPane fx:id="tabPane" tabClosingPolicy="UNAVAILABLE">
+    <TabPane fx:id="tabPane" tabClosingPolicy="UNAVAILABLE" VBox.vgrow="ALWAYS"
+             onMouseClicked="#onTabChanged"
+             style="-fx-tab-min-width: 160; -fx-font-size: 13;">
 
-        <!-- Personal Information Tab -->
-        <Tab text="Personal Information" closable="false">
-            <VBox spacing="12.0" style="-fx-padding: 15;">
-                <GridPane hgap="15.0" vgap="12.0">
-                    <columnConstraints>
-                        <ColumnConstraints percentWidth="25.0" />
-                        <ColumnConstraints percentWidth="25.0" />
-                        <ColumnConstraints percentWidth="25.0" />
-                        <ColumnConstraints percentWidth="25.0" />
-                    </columnConstraints>
+        <!-- ═══════════════════════════════════════ TAB 1: PERSONAL INFO -->
+        <Tab text="👤  Personal Info" closable="false">
+            <ScrollPane fitToWidth="true" style="-fx-background-color: white;" hbarPolicy="NEVER">
+                <VBox spacing="14" style="-fx-padding: 20;">
 
-                    <Label text="Student ID:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
-                    <TextField fx:id="txtStudentID" promptText="2021-00123" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+                    <!-- Patient ID row -->
+                    <HBox spacing="12" alignment="CENTER_LEFT">
+                        <VBox spacing="4" prefWidth="230">
+                            <Label text="Patient ID# (auto-generated)" style="-fx-font-size: 11; -fx-text-fill: #888;" />
+                            <TextField fx:id="txtPatientId" editable="false"
+                                       style="-fx-background-color: #f5f5f5; -fx-border-color: #ddd; -fx-border-radius: 4; -fx-background-radius: 4; -fx-padding: 7; -fx-font-weight: bold; -fx-text-fill: #8B0000;" />
+                        </VBox>
+                        <VBox spacing="4" prefWidth="230">
+                            <Label text="School / Employee ID" style="-fx-font-size: 11; -fx-text-fill: #555;" />
+                            <TextField fx:id="txtStudentID" promptText="e.g. 2024-0001 or EMP-0010"
+                                       style="-fx-border-color: #ccc; -fx-border-radius: 4; -fx-background-radius: 4; -fx-padding: 7;" />
+                        </VBox>
+                        <VBox spacing="4" prefWidth="180">
+                            <Label text="School Year" style="-fx-font-size: 11; -fx-text-fill: #555;" />
+                            <TextField fx:id="txtSchoolYear" editable="false"
+                                       style="-fx-background-color: #f5f5f5; -fx-border-color: #ddd; -fx-border-radius: 4; -fx-background-radius: 4; -fx-padding: 7; -fx-text-fill: #555;" />
+                        </VBox>
+                    </HBox>
 
-                    <Label text="Age:" GridPane.columnIndex="2" GridPane.rowIndex="0" />
-                    <TextField fx:id="txtAge" promptText="25" GridPane.columnIndex="3" GridPane.rowIndex="0" />
+                    <Separator />
 
-                    <Label text="Full Name:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
-                    <TextField fx:id="txtFullName" promptText="Surname, First Name" GridPane.columnIndex="1" GridPane.rowIndex="1" GridPane.columnSpan="3" />
+                    <!-- Name row -->
+                    <HBox spacing="12">
+                        <VBox spacing="4" HBox.hgrow="ALWAYS">
+                            <Label text="Last Name *" style="-fx-font-size: 11; -fx-text-fill: #555;" />
+                            <TextField fx:id="txtLastName" promptText="Dela Cruz"
+                                       style="-fx-border-color: #ccc; -fx-border-radius: 4; -fx-background-radius: 4; -fx-padding: 7;" />
+                        </VBox>
+                        <VBox spacing="4" HBox.hgrow="ALWAYS">
+                            <Label text="First Name *" style="-fx-font-size: 11; -fx-text-fill: #555;" />
+                            <TextField fx:id="txtFirstName" promptText="Juan"
+                                       style="-fx-border-color: #ccc; -fx-border-radius: 4; -fx-background-radius: 4; -fx-padding: 7;" />
+                        </VBox>
+                        <VBox spacing="4" prefWidth="100">
+                            <Label text="Middle Initial" style="-fx-font-size: 11; -fx-text-fill: #555;" />
+                            <TextField fx:id="txtMiddleInitial" promptText="M."
+                                       style="-fx-border-color: #ccc; -fx-border-radius: 4; -fx-background-radius: 4; -fx-padding: 7;" />
+                        </VBox>
+                    </HBox>
 
-                    <Label text="Gender:" GridPane.columnIndex="0" GridPane.rowIndex="2" />
-                    <ComboBox fx:id="comboGender" prefWidth="150.0" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                    <!-- Birthdate / Age / Gender -->
+                    <HBox spacing="12">
+                        <VBox spacing="4" prefWidth="200">
+                            <Label text="Birthdate *" style="-fx-font-size: 11; -fx-text-fill: #555;" />
+                            <DatePicker fx:id="dateBirth" prefWidth="200"
+                                        style="-fx-border-color: #ccc; -fx-border-radius: 4; -fx-background-radius: 4;" />
+                        </VBox>
+                        <VBox spacing="4" prefWidth="100">
+                            <Label text="Age (auto)" style="-fx-font-size: 11; -fx-text-fill: #888;" />
+                            <TextField fx:id="txtAge" editable="false" promptText="—"
+                                       style="-fx-background-color: #f5f5f5; -fx-border-color: #ddd; -fx-border-radius: 4; -fx-background-radius: 4; -fx-padding: 7;" />
+                        </VBox>
+                        <VBox spacing="4" prefWidth="160">
+                            <Label text="Gender *" style="-fx-font-size: 11; -fx-text-fill: #555;" />
+                            <ComboBox fx:id="comboGender" prefWidth="160"
+                                      style="-fx-border-color: #ccc; -fx-border-radius: 4;" />
+                        </VBox>
+                        <VBox spacing="4" prefWidth="160">
+                            <Label text="Blood Type" style="-fx-font-size: 11; -fx-text-fill: #555;" />
+                            <ComboBox fx:id="comboBloodType" prefWidth="160"
+                                      style="-fx-border-color: #ccc; -fx-border-radius: 4;" />
+                        </VBox>
+                    </HBox>
 
-                    <Label text="Birthdate:" GridPane.columnIndex="2" GridPane.rowIndex="2" />
-                    <DatePicker fx:id="dateBirth" GridPane.columnIndex="3" GridPane.rowIndex="2" />
+                    <Separator />
 
-                    <Label text="College/Dept:" GridPane.columnIndex="0" GridPane.rowIndex="3" />
-                    <ComboBox fx:id="comboCourse" promptText="Choose College Dept" prefWidth="200.0" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+                    <!-- Type radio -->
+                    <HBox spacing="8" alignment="CENTER_LEFT">
+                        <Label text="Type *" style="-fx-font-weight: bold; -fx-text-fill: #333; -fx-font-size: 13;" />
+                        <RadioButton fx:id="rbStudent" text="Student" onAction="#onTypeChanged"
+                                     style="-fx-font-size: 13;" />
+                        <RadioButton fx:id="rbEmployee" text="Employee" onAction="#onTypeChanged"
+                                     style="-fx-font-size: 13;" />
+                    </HBox>
 
-                    <Label text="Year Level:" GridPane.columnIndex="2" GridPane.rowIndex="3" />
-                    <ComboBox fx:id="comboYear" promptText="Select Year" prefWidth="150.0" GridPane.columnIndex="3" GridPane.rowIndex="3" />
+                    <!-- STUDENT FIELDS (shown when Student selected) -->
+                    <VBox fx:id="paneStudentFields" spacing="10"
+                          style="-fx-background-color: #fafafa; -fx-border-color: #e0e0e0; -fx-border-radius: 5; -fx-padding: 12;">
+                        <HBox spacing="8" alignment="CENTER_LEFT">
+                            <Label text="Sub-type:" style="-fx-font-size: 12; -fx-text-fill: #555; -fx-min-width: 70;" />
+                            <RadioButton fx:id="rbCollege" text="College" onAction="#onSubTypeChanged"
+                                         style="-fx-font-size: 12;" />
+                            <RadioButton fx:id="rbBED" text="BED (Basic Education)" onAction="#onSubTypeChanged"
+                                         style="-fx-font-size: 12;" />
+                        </HBox>
+                        <HBox spacing="12">
+                            <VBox spacing="4" prefWidth="220">
+                                <Label text="College / Dept *" style="-fx-font-size: 11; -fx-text-fill: #555;" />
+                                <ComboBox fx:id="comboDept" prefWidth="220"
+                                          style="-fx-border-color: #ccc; -fx-border-radius: 4;" />
+                            </VBox>
+                            <VBox spacing="4" prefWidth="200">
+                                <Label text="Year Level *" style="-fx-font-size: 11; -fx-text-fill: #555;" />
+                                <ComboBox fx:id="comboYear" prefWidth="200"
+                                          style="-fx-border-color: #ccc; -fx-border-radius: 4;" />
+                            </VBox>
+                            <VBox spacing="4" HBox.hgrow="ALWAYS">
+                                <Label text="Course" style="-fx-font-size: 11; -fx-text-fill: #555;" />
+                                <TextField fx:id="txtCourse" promptText="e.g. BSCS, BSN, Grade 10"
+                                           style="-fx-border-color: #ccc; -fx-border-radius: 4; -fx-background-radius: 4; -fx-padding: 7;" />
+                            </VBox>
+                        </HBox>
+                    </VBox>
 
-                    <Label text="Type:" GridPane.columnIndex="0" GridPane.rowIndex="4" />
-                    <ComboBox fx:id="comboType" promptText="Select Type" prefWidth="150.0" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+                    <!-- EMPLOYEE FIELDS (shown when Employee selected) -->
+                    <VBox fx:id="paneEmployeeFields" spacing="10" managed="false" visible="false"
+                          style="-fx-background-color: #fafafa; -fx-border-color: #e0e0e0; -fx-border-radius: 5; -fx-padding: 12;">
+                        <HBox spacing="12">
+                            <VBox spacing="4" HBox.hgrow="ALWAYS">
+                                <Label text="Department *" style="-fx-font-size: 11; -fx-text-fill: #555;" />
+                                <ComboBox fx:id="comboDeptEmployee" prefWidth="220"
+                                          style="-fx-border-color: #ccc; -fx-border-radius: 4;" />
+                            </VBox>
+                            <VBox spacing="4" HBox.hgrow="ALWAYS">
+                                <Label text="Position" style="-fx-font-size: 11; -fx-text-fill: #555;" />
+                                <TextField fx:id="txtPosition" promptText="e.g. Faculty, Staff, Admin"
+                                           style="-fx-border-color: #ccc; -fx-border-radius: 4; -fx-background-radius: 4; -fx-padding: 7;" />
+                            </VBox>
+                        </HBox>
+                    </VBox>
 
-                    <Label text="Course:" GridPane.columnIndex="2" GridPane.rowIndex="4" />
-                    <TextField fx:id="txtCollege" promptText="CCIS" GridPane.columnIndex="3" GridPane.rowIndex="4" />
+                    <Separator />
 
-                    <Label text="Contact #:" GridPane.columnIndex="0" GridPane.rowIndex="5" />
-                    <TextField fx:id="txtContact" promptText="09XXXXXXXXX" GridPane.columnIndex="1" GridPane.rowIndex="5" />
+                    <!-- Contact -->
+                    <HBox spacing="12">
+                        <VBox spacing="4" HBox.hgrow="ALWAYS">
+                            <Label text="Phone / Contact # *" style="-fx-font-size: 11; -fx-text-fill: #555;" />
+                            <TextField fx:id="txtContact" promptText="09XXXXXXXXX"
+                                       style="-fx-border-color: #ccc; -fx-border-radius: 4; -fx-background-radius: 4; -fx-padding: 7;" />
+                        </VBox>
+                        <VBox spacing="4" HBox.hgrow="ALWAYS">
+                            <Label text="Email" style="-fx-font-size: 11; -fx-text-fill: #555;" />
+                            <TextField fx:id="txtEmail" promptText="student@cjc.edu.ph"
+                                       style="-fx-border-color: #ccc; -fx-border-radius: 4; -fx-background-radius: 4; -fx-padding: 7;" />
+                        </VBox>
+                    </HBox>
 
-                    <Label text="Email:" GridPane.columnIndex="2" GridPane.rowIndex="5" />
-                    <TextField fx:id="txtEmail" promptText="student@cjc.edu.ph" GridPane.columnIndex="3" GridPane.rowIndex="5" />
-                </GridPane>
-            </VBox>
+                    <!-- Address -->
+                    <VBox spacing="4">
+                        <Label text="Address" style="-fx-font-size: 11; -fx-text-fill: #555;" />
+                        <TextField fx:id="txtAddress" promptText="House #, Street, Barangay, City"
+                                   style="-fx-border-color: #ccc; -fx-border-radius: 4; -fx-background-radius: 4; -fx-padding: 7;" />
+                    </VBox>
+
+                </VBox>
+            </ScrollPane>
         </Tab>
 
-        <!-- Emergency Contact Tab -->
-        <Tab text="Emergency Contact" closable="false">
-            <VBox spacing="12.0" style="-fx-padding: 15;">
-                <GridPane hgap="15.0" vgap="12.0">
-                    <columnConstraints>
-                        <ColumnConstraints percentWidth="25.0" />
-                        <ColumnConstraints percentWidth="25.0" />
-                        <ColumnConstraints percentWidth="25.0" />
-                        <ColumnConstraints percentWidth="25.0" />
-                    </columnConstraints>
+        <!-- ═══════════════════════════════════════ TAB 2: CONTACT & EMERGENCY -->
+        <Tab text="📞  Contact &amp; Emergency" closable="false">
+            <ScrollPane fitToWidth="true" style="-fx-background-color: white;" hbarPolicy="NEVER">
+                <VBox spacing="16" style="-fx-padding: 20;">
 
-                    <Label text="Name:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
-                    <TextField fx:id="txtEmergencyName" promptText="Maria Dela Cruz" GridPane.columnIndex="1" GridPane.rowIndex="0" GridPane.columnSpan="3" />
+                    <Label text="Father's Information" style="-fx-font-weight: bold; -fx-text-fill: #8B0000; -fx-font-size: 13;" />
+                    <HBox spacing="12">
+                        <VBox spacing="4" HBox.hgrow="ALWAYS">
+                            <Label text="Father's Name" style="-fx-font-size: 11; -fx-text-fill: #555;" />
+                            <TextField fx:id="txtFatherName" promptText="Juan Dela Cruz Sr."
+                                       style="-fx-border-color: #ccc; -fx-border-radius: 4; -fx-background-radius: 4; -fx-padding: 7;" />
+                        </VBox>
+                        <VBox spacing="4" prefWidth="220">
+                            <Label text="Father's Contact #" style="-fx-font-size: 11; -fx-text-fill: #555;" />
+                            <TextField fx:id="txtFatherContact" promptText="09XXXXXXXXX"
+                                       style="-fx-border-color: #ccc; -fx-border-radius: 4; -fx-background-radius: 4; -fx-padding: 7;" />
+                        </VBox>
+                    </HBox>
 
-                    <Label text="Relationship:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
-                    <TextField fx:id="txtRelationship" promptText="Mother" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                    <Separator />
+                    <Label text="Mother's Information" style="-fx-font-weight: bold; -fx-text-fill: #8B0000; -fx-font-size: 13;" />
+                    <HBox spacing="12">
+                        <VBox spacing="4" HBox.hgrow="ALWAYS">
+                            <Label text="Mother's Name" style="-fx-font-size: 11; -fx-text-fill: #555;" />
+                            <TextField fx:id="txtMotherName" promptText="Maria Santos Dela Cruz"
+                                       style="-fx-border-color: #ccc; -fx-border-radius: 4; -fx-background-radius: 4; -fx-padding: 7;" />
+                        </VBox>
+                        <VBox spacing="4" prefWidth="220">
+                            <Label text="Mother's Contact #" style="-fx-font-size: 11; -fx-text-fill: #555;" />
+                            <TextField fx:id="txtMotherContact" promptText="09XXXXXXXXX"
+                                       style="-fx-border-color: #ccc; -fx-border-radius: 4; -fx-background-radius: 4; -fx-padding: 7;" />
+                        </VBox>
+                    </HBox>
 
-                    <Label text="Contact #:" GridPane.columnIndex="2" GridPane.rowIndex="1" />
-                    <TextField fx:id="txtEmergencyContact" promptText="09XXXXXXXXX" GridPane.columnIndex="3" GridPane.rowIndex="1" />
-                </GridPane>
-            </VBox>
+                    <Separator />
+                    <Label text="Emergency Contact *" style="-fx-font-weight: bold; -fx-text-fill: #8B0000; -fx-font-size: 13;" />
+                    <HBox spacing="12">
+                        <VBox spacing="4" HBox.hgrow="ALWAYS">
+                            <Label text="Name *" style="-fx-font-size: 11; -fx-text-fill: #555;" />
+                            <TextField fx:id="txtEmergencyName" promptText="Full name"
+                                       style="-fx-border-color: #ccc; -fx-border-radius: 4; -fx-background-radius: 4; -fx-padding: 7;" />
+                        </VBox>
+                        <VBox spacing="4" prefWidth="160">
+                            <Label text="Relationship *" style="-fx-font-size: 11; -fx-text-fill: #555;" />
+                            <TextField fx:id="txtRelationship" promptText="Mother / Father"
+                                       style="-fx-border-color: #ccc; -fx-border-radius: 4; -fx-background-radius: 4; -fx-padding: 7;" />
+                        </VBox>
+                        <VBox spacing="4" prefWidth="200">
+                            <Label text="Contact # *" style="-fx-font-size: 11; -fx-text-fill: #555;" />
+                            <TextField fx:id="txtEmergencyContact" promptText="09XXXXXXXXX"
+                                       style="-fx-border-color: #ccc; -fx-border-radius: 4; -fx-background-radius: 4; -fx-padding: 7;" />
+                        </VBox>
+                    </HBox>
+
+                </VBox>
+            </ScrollPane>
         </Tab>
 
-        <!-- Medical History Tab -->
-        <Tab text="Medical History" closable="false">
-            <VBox spacing="12.0" style="-fx-padding: 15;">
-                <GridPane hgap="15.0" vgap="12.0">
-                    <columnConstraints>
-                        <ColumnConstraints percentWidth="25.0" />
-                        <ColumnConstraints percentWidth="25.0" />
-                        <ColumnConstraints percentWidth="25.0" />
-                        <ColumnConstraints percentWidth="25.0" />
-                    </columnConstraints>
+        <!-- ═══════════════════════════════════════ TAB 3: MEDICAL HISTORY -->
+        <Tab text="🏥  Medical History" closable="false">
+            <ScrollPane fitToWidth="true" style="-fx-background-color: white;" hbarPolicy="NEVER">
+                <VBox spacing="14" style="-fx-padding: 20;">
 
-                    <Label text="Allergies:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
-                    <TextField fx:id="txtAllergies" promptText="e.g. Amoxicillin" GridPane.columnIndex="1" GridPane.rowIndex="0" GridPane.columnSpan="3" />
+                    <HBox spacing="12">
+                        <VBox spacing="4" prefWidth="120">
+                            <Label text="Height (cm) *" style="-fx-font-size: 11; -fx-text-fill: #555;" />
+                            <TextField fx:id="txtHeight" promptText="e.g. 165"
+                                       style="-fx-border-color: #ccc; -fx-border-radius: 4; -fx-background-radius: 4; -fx-padding: 7;" />
+                        </VBox>
+                        <VBox spacing="4" prefWidth="120">
+                            <Label text="Weight (kg) *" style="-fx-font-size: 11; -fx-text-fill: #555;" />
+                            <TextField fx:id="txtWeight" promptText="e.g. 58"
+                                       style="-fx-border-color: #ccc; -fx-border-radius: 4; -fx-background-radius: 4; -fx-padding: 7;" />
+                        </VBox>
+                    </HBox>
 
-                    <Label text="Conditions:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
-                    <TextField fx:id="txtConditions" promptText="e.g. Asthma" GridPane.columnIndex="1" GridPane.rowIndex="1" GridPane.columnSpan="3" />
+                    <Separator />
 
-                    <Label text="Blood Type:" GridPane.columnIndex="0" GridPane.rowIndex="2" />
-                    <ComboBox fx:id="comboBloodType" prefWidth="150.0" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                    <VBox spacing="4">
+                        <Label text="Allergies (if any)" style="-fx-font-size: 11; -fx-text-fill: #555;" />
+                        <TextArea fx:id="txtAllergies" prefHeight="70" wrapText="true"
+                                  promptText="e.g. Amoxicillin, Penicillin, Peanuts — leave blank if none"
+                                  style="-fx-border-color: #ccc; -fx-border-radius: 4; -fx-background-radius: 4; -fx-padding: 7;" />
+                    </VBox>
 
-                    <Label text="Height (cm):" GridPane.columnIndex="2" GridPane.rowIndex="2" />
-                    <TextField fx:id="txtHeight" promptText="170" GridPane.columnIndex="3" GridPane.rowIndex="2" />
+                    <VBox spacing="4">
+                        <Label text="Pre-existing Conditions (if any)" style="-fx-font-size: 11; -fx-text-fill: #555;" />
+                        <TextArea fx:id="txtConditions" prefHeight="70" wrapText="true"
+                                  promptText="e.g. Asthma, Hypertension, Diabetes — leave blank if none"
+                                  style="-fx-border-color: #ccc; -fx-border-radius: 4; -fx-background-radius: 4; -fx-padding: 7;" />
+                    </VBox>
 
-                    <Label text="Weight (kg):" GridPane.columnIndex="0" GridPane.rowIndex="3" />
-                    <TextField fx:id="txtWeight" promptText="65" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+                    <VBox spacing="4">
+                        <Label text="Medical Remarks / Notes" style="-fx-font-size: 11; -fx-text-fill: #555;" />
+                        <TextArea fx:id="txtMedicalRemarks" prefHeight="80" wrapText="true"
+                                  promptText="Additional notes from the nurse..."
+                                  style="-fx-border-color: #ccc; -fx-border-radius: 4; -fx-background-radius: 4; -fx-padding: 7;" />
+                    </VBox>
 
-                    <Label text="Medical Remarks:" GridPane.columnIndex="0" GridPane.rowIndex="4" />
-                    <TextArea fx:id="txtMedicalRemarks" prefHeight="80.0" promptText="Additional medical notes..." GridPane.columnIndex="1" GridPane.rowIndex="4" GridPane.columnSpan="3" />
-                </GridPane>
-            </VBox>
+                    <!-- Archive Status (visible only on Edit) -->
+                    <VBox fx:id="paneStatus" spacing="6" managed="false" visible="false"
+                          style="-fx-background-color: #fff8f0; -fx-border-color: #f0c080; -fx-border-radius: 5; -fx-padding: 12;">
+                        <Label text="Patient Status" style="-fx-font-weight: bold; -fx-text-fill: #8B0000; -fx-font-size: 13;" />
+                        <HBox spacing="12" alignment="CENTER_LEFT">
+                            <RadioButton fx:id="rbActive"   text="Active"   style="-fx-font-size: 12;" />
+                            <RadioButton fx:id="rbArchived" text="Archived" style="-fx-font-size: 12;" />
+                        </HBox>
+                        <ComboBox fx:id="comboArchiveReason" prefWidth="280" promptText="Reason (if Archived)"
+                                  style="-fx-font-size: 12; -fx-border-color: #ccc; -fx-border-radius: 4;" />
+                    </VBox>
+
+                </VBox>
+            </ScrollPane>
         </Tab>
     </TabPane>
 
-    <HBox alignment="CENTER_RIGHT" spacing="15.0">
-        <Button onAction="#handleSave" prefWidth="120.0" style="-fx-background-color: #8B0000; -fx-text-fill: white; -fx-font-weight: bold;" text="Save to Database" />
-        <Button onAction="#handleCancel" prefWidth="100.0" style="-fx-background-color: #5D0000; -fx-text-fill: white;" text="Cancel" />
+    <!-- BOTTOM BUTTONS — swap dynamically based on active tab -->
+    <HBox fx:id="btnBar" alignment="CENTER_RIGHT" spacing="12.0"
+          style="-fx-background-color: #f9f9f9; -fx-border-color: #e0e0e0; -fx-border-width: 1 0 0 0; -fx-padding: 12 20 12 20;">
+        <Label fx:id="lblValidationMsg" text="" style="-fx-text-fill: #cc0000; -fx-font-size: 11;" />
+        <Region HBox.hgrow="ALWAYS" />
+        <!-- Step indicator e.g. "Step 1 of 3" -->
+        <Label fx:id="lblStep" text="Step 1 of 3"
+               style="-fx-text-fill: #888; -fx-font-size: 11;" />
+        <Button onAction="#handleCancel" fx:id="btnCancel" prefWidth="100"
+                style="-fx-background-color: #888; -fx-text-fill: white; -fx-background-radius: 5; -fx-cursor: hand; -fx-font-size: 13;"
+                text="Cancel" />
+        <!-- Back button — hidden on Tab 1 -->
+        <Button fx:id="btnBack" onAction="#handleBack" prefWidth="90"
+                managed="false" visible="false"
+                style="-fx-background-color: #555; -fx-text-fill: white; -fx-background-radius: 5; -fx-cursor: hand; -fx-font-size: 13;"
+                text="◀  Back" />
+        <!-- Next button — shown on Tab 1 and Tab 2 -->
+        <Button fx:id="btnNext" onAction="#handleNext" prefWidth="120"
+                style="-fx-background-color: #8B0000; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 5; -fx-cursor: hand; -fx-font-size: 13;"
+                text="Next  ▶" />
+        <!-- Save button — shown only on Tab 3 (last tab) -->
+        <Button fx:id="btnSave" onAction="#handleSave" prefWidth="140"
+                managed="false" visible="false"
+                style="-fx-background-color: #8B0000; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 5; -fx-cursor: hand; -fx-font-size: 13;"
+                text="💾  Save Patient" />
     </HBox>
 </VBox>
