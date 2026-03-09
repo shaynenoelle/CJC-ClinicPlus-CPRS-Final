@@ -500,4 +500,221 @@ public class DatabaseManager {
             default   -> month;
         };
     }
+
+    // ── SETTINGS: Change password ─────────────────────────────────
+    public static boolean changePassword(String username, String oldPassword, String newPassword) {
+        // First verify old password
+        String verifySql = "SELECT * FROM Users WHERE username = ? AND password_hash = ?";
+        try (Connection conn = connect();
+             PreparedStatement p = conn.prepareStatement(verifySql)) {
+            p.setString(1, username);
+            p.setString(2, oldPassword);
+            ResultSet rs = p.executeQuery();
+            if (!rs.next()) return false; // wrong old password
+        } catch (SQLException e) {
+            System.err.println("VerifyPassword Error: " + e.getMessage());
+            return false;
+        }
+        // Update to new password
+        String updateSql = "UPDATE Users SET password_hash = ? WHERE username = ?";
+        try (Connection conn = connect();
+             PreparedStatement p = conn.prepareStatement(updateSql)) {
+            p.setString(1, newPassword);
+            p.setString(2, username);
+            p.executeUpdate();
+            return true;
+        } catch (SQLException e) {
+            System.err.println("ChangePassword Error: " + e.getMessage());
+            return false;
+        }
+    }
+
+    // ── SETTINGS: Get all users ───────────────────────────────────
+    public static List<java.util.Map<String, String>> getAllUsers() {
+        List<java.util.Map<String, String>> list = new ArrayList<>();
+        String sql = "SELECT username FROM Users";
+        try (Connection conn = connect();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            while (rs.next()) {
+                java.util.Map<String, String> row = new java.util.LinkedHashMap<>();
+                row.put("username", rs.getString("username"));
+                list.add(row);
+            }
+        } catch (SQLException e) {
+            System.err.println("GetAllUsers Error: " + e.getMessage());
+        }
+        return list;
+    }
+
+    // ── SETTINGS: Add user ────────────────────────────────────────
+    public static boolean addUser(String username, String password) {
+        String sql = "INSERT INTO Users(username, password_hash) VALUES(?, ?)";
+        try (Connection conn = connect();
+             PreparedStatement p = conn.prepareStatement(sql)) {
+            p.setString(1, username);
+            p.setString(2, password);
+            p.executeUpdate();
+            return true;
+        } catch (SQLException e) {
+            System.err.println("AddUser Error: " + e.getMessage());
+            return false;
+        }
+    }
+
+    // ── SETTINGS: Delete user ─────────────────────────────────────
+    public static boolean deleteUser(String username) {
+        String sql = "DELETE FROM Users WHERE username = ?";
+        try (Connection conn = connect();
+             PreparedStatement p = conn.prepareStatement(sql)) {
+            p.setString(1, username);
+            p.executeUpdate();
+            return true;
+        } catch (SQLException e) {
+            System.err.println("DeleteUser Error: " + e.getMessage());
+            return false;
+        }
+    }
+
+    // ── SETTINGS: Reset user password (admin) ─────────────────────
+    public static boolean resetUserPassword(String username, String newPassword) {
+        String sql = "UPDATE Users SET password_hash = ? WHERE username = ?";
+        try (Connection conn = connect();
+             PreparedStatement p = conn.prepareStatement(sql)) {
+            p.setString(1, newPassword);
+            p.setString(2, username);
+            int rows = p.executeUpdate();
+            return rows > 0;
+        } catch (SQLException e) {
+            System.err.println("ResetPassword Error: " + e.getMessage());
+            return false;
+        }
+    }
+
+    // ── SETTINGS: Save/load app settings ─────────────────────────
+    public static void ensureSettingsTable() {
+        String sql = "CREATE TABLE IF NOT EXISTS AppSettings (" +
+                     "key TEXT PRIMARY KEY, value TEXT)";
+        try (Connection conn = connect();
+             Statement stmt = conn.createStatement()) {
+            stmt.execute(sql);
+        } catch (SQLException e) {
+            System.err.println("EnsureSettings Error: " + e.getMessage());
+        }
+    }
+
+    public static void saveSetting(String key, String value) {
+        ensureSettingsTable();
+        String sql = "INSERT INTO AppSettings(key, value) VALUES(?,?) " +
+                     "ON CONFLICT(key) DO UPDATE SET value=excluded.value";
+        try (Connection conn = connect();
+             PreparedStatement p = conn.prepareStatement(sql)) {
+            p.setString(1, key);
+            p.setString(2, value);
+            p.executeUpdate();
+        } catch (SQLException e) {
+            System.err.println("SaveSetting Error: " + e.getMessage());
+        }
+    }
+
+    public static String getSetting(String key, String defaultValue) {
+        ensureSettingsTable();
+        String sql = "SELECT value FROM AppSettings WHERE key = ?";
+        try (Connection conn = connect();
+             PreparedStatement p = conn.prepareStatement(sql)) {
+            p.setString(1, key);
+            ResultSet rs = p.executeQuery();
+            if (rs.next()) return rs.getString("value");
+        } catch (SQLException e) {
+            System.err.println("GetSetting Error: " + e.getMessage());
+        }
+        return defaultValue;
+    }
+
+    // ── BACKUP: Copy database to destination file ─────────────────
+    public static boolean backupDatabase(String destinationPath) {
+        try {
+            java.nio.file.Path src = java.nio.file.Paths.get("cjclinic.db");
+            java.nio.file.Path dst = java.nio.file.Paths.get(destinationPath);
+            java.nio.file.Files.copy(src, dst,
+                java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            return true;
+        } catch (Exception e) {
+            System.err.println("Backup Error: " + e.getMessage());
+            return false;
+        }
+    }
+
+    // ── EXPORT: Export all patients to CSV ────────────────────────
+    public static boolean exportPatientsToCSV(String filePath) {
+        String sql = "SELECT patient_id, full_name, age, course_dept, year_level, gender, college, " +
+                     "contact_number, email, birthdate, type, emergency_name, relationship, " +
+                     "emergency_contact, allergies, conditions, blood_type, height, weight, medical_remarks " +
+                     "FROM Patients";
+        try (Connection conn = connect();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql);
+             java.io.PrintWriter pw = new java.io.PrintWriter(new java.io.FileWriter(filePath))) {
+
+            pw.println("ID,Full Name,Age,Course/Dept,Year Level,Gender,College," +
+                       "Contact,Email,Birthdate,Type,Emergency Name,Relationship," +
+                       "Emergency Contact,Allergies,Conditions,Blood Type,Height,Weight,Medical Remarks");
+            while (rs.next()) {
+                pw.printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"," +
+                          "\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"," +
+                          "\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"%n",
+                    safe(rs.getString("patient_id")), safe(rs.getString("full_name")),
+                    safe(rs.getString("age")), safe(rs.getString("course_dept")),
+                    safe(rs.getString("year_level")), safe(rs.getString("gender")),
+                    safe(rs.getString("college")), safe(rs.getString("contact_number")),
+                    safe(rs.getString("email")), safe(rs.getString("birthdate")),
+                    safe(rs.getString("type")), safe(rs.getString("emergency_name")),
+                    safe(rs.getString("relationship")), safe(rs.getString("emergency_contact")),
+                    safe(rs.getString("allergies")), safe(rs.getString("conditions")),
+                    safe(rs.getString("blood_type")), safe(rs.getString("height")),
+                    safe(rs.getString("weight")), safe(rs.getString("medical_remarks")));
+            }
+            return true;
+        } catch (Exception e) {
+            System.err.println("ExportCSV Error: " + e.getMessage());
+            return false;
+        }
+    }
+
+    // ── EXPORT: Export all visits to CSV ──────────────────────────
+    public static boolean exportVisitsToCSV(String filePath) {
+        String sql = "SELECT v.visit_id, v.patient_id, p.full_name, v.visit_date, v.time_in, v.time_out, " +
+                     "v.purpose, v.chief_complaint, v.diagnosis, v.treatment, v.remarks, " +
+                     "v.temperature, v.blood_pressure, v.heart_rate, v.oxygen_sat " +
+                     "FROM Visits v JOIN Patients p ON v.patient_id = p.patient_id " +
+                     "ORDER BY v.visit_date DESC";
+        try (Connection conn = connect();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql);
+             java.io.PrintWriter pw = new java.io.PrintWriter(new java.io.FileWriter(filePath))) {
+
+            pw.println("Visit ID,Patient ID,Full Name,Date,Time In,Time Out,Purpose," +
+                       "Chief Complaint,Diagnosis,Treatment,Remarks,Temperature,Blood Pressure,Heart Rate,SpO2");
+            while (rs.next()) {
+                pw.printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"," +
+                          "\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"%n",
+                    safe(rs.getString("visit_id")), safe(rs.getString("patient_id")),
+                    safe(rs.getString("full_name")), safe(rs.getString("visit_date")),
+                    safe(rs.getString("time_in")), safe(rs.getString("time_out")),
+                    safe(rs.getString("purpose")), safe(rs.getString("chief_complaint")),
+                    safe(rs.getString("diagnosis")), safe(rs.getString("treatment")),
+                    safe(rs.getString("remarks")), safe(rs.getString("temperature")),
+                    safe(rs.getString("blood_pressure")), safe(rs.getString("heart_rate")),
+                    safe(rs.getString("oxygen_sat")));
+            }
+            return true;
+        } catch (Exception e) {
+            System.err.println("ExportVisitsCSV Error: " + e.getMessage());
+            return false;
+        }
+    }
+
+    private static String safe(String s) {
+        return s == null ? "" : s.replace("\"", "\"\"");
+    }
 }

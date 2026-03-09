@@ -4,6 +4,7 @@ import com.example.cjcschoolclinicmanagementsystem.database.DatabaseManager;
 import com.example.cjcschoolclinicmanagementsystem.model.Patient;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
@@ -23,8 +24,10 @@ public class PatientRegistryController {
 
     @FXML private TableView<Patient> patientTable;
     @FXML private TableColumn<Patient, String> colID, colName, colType, colDept;
+    @FXML private TextField txtSearch;
 
     final private ObservableList<Patient> patientList = FXCollections.observableArrayList();
+    private FilteredList<Patient> filteredList;
 
     public void initialize() {
         // Link UI columns to the Patient model properties
@@ -32,6 +35,15 @@ public class PatientRegistryController {
         colName.setCellValueFactory(cellData -> cellData.getValue().nameProperty());
         colType.setCellValueFactory(cellData -> cellData.getValue().yearProperty());
         colDept.setCellValueFactory(cellData -> cellData.getValue().courseProperty());
+
+        // Set up filtered list
+        filteredList = new FilteredList<>(patientList, p -> true);
+        patientTable.setItems(filteredList);
+
+        // Live search as user types
+        if (txtSearch != null) {
+            txtSearch.textProperty().addListener((obs, oldVal, newVal) -> applyFilter(newVal));
+        }
 
         // Add double-click listener to the table for Name column
         patientTable.setRowFactory(tv -> {
@@ -51,6 +63,23 @@ public class PatientRegistryController {
         });
 
         refreshTable();
+    }
+
+    @FXML
+    private void handleSearch() {
+        applyFilter(txtSearch != null ? txtSearch.getText() : "");
+    }
+
+    private void applyFilter(String keyword) {
+        if (keyword == null || keyword.isBlank()) {
+            filteredList.setPredicate(p -> true);
+        } else {
+            String lower = keyword.toLowerCase().trim();
+            filteredList.setPredicate(p ->
+                p.getName().toLowerCase().contains(lower) ||
+                p.getId().toLowerCase().contains(lower)
+            );
+        }
     }
 
     private void showPatientDetails(Patient patient) {
@@ -379,7 +408,9 @@ public class PatientRegistryController {
 
     public void refreshTable() {
         patientList.setAll(DatabaseManager.getAllPatients());
-        patientTable.setItems(patientList);
+        if (filteredList == null) {
+            patientTable.setItems(patientList);
+        }
     }
 
     @FXML

@@ -18,8 +18,12 @@
                 style="-fx-background-color: #8B0000; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;"
                 text="[ + Add New Patient ]" />
         <Region HBox.hgrow="ALWAYS" />
-        <TextField promptText="Search Name/ID..." prefWidth="250.0"
-                   style="-fx-border-color: #8B0000; -fx-border-width: 0 0 2 0; -fx-background-color: transparent;" />
+        <TextField fx:id="txtSearch" promptText="Search Name/ID..." prefWidth="250.0"
+                   style="-fx-border-color: #8B0000; -fx-border-width: 0 0 2 0; -fx-background-color: transparent;"
+                   onAction="#handleSearch" />
+        <Button onAction="#handleSearch"
+                style="-fx-background-color: #8B0000; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;"
+                text="🔍 Search" />
     </HBox>
 
     <TableView fx:id="patientTable" VBox.vgrow="ALWAYS">

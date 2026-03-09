@@ -202,16 +202,66 @@ public class DashboardController {
     @FXML
     private void openSettings() {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource(
-                    "/com/example/cjcschoolclinicmanagementsystem/View/settings-view.fxml"));
+            System.out.println("=== ATTEMPTING TO LOAD SETTINGS ===");
+
+            // Try multiple resource loading approaches
+            String fxmlPath = "/com/example/cjcschoolclinicmanagementsystem/View/settings-view.fxml";
+            System.out.println("Looking for FXML at: " + fxmlPath);
+
+            // Method 1: Try with getClass()
+            java.net.URL resource = getClass().getResource(fxmlPath);
+            System.out.println("Method 1 (getClass): " + (resource != null ? resource.toString() : "NULL"));
+
+            // Method 2: Try with ClassLoader if Method 1 fails
+            if (resource == null) {
+                resource = getClass().getClassLoader().getResource("com/example/cjcschoolclinicmanagementsystem/View/settings-view.fxml");
+                System.out.println("Method 2 (ClassLoader): " + (resource != null ? resource.toString() : "NULL"));
+            }
+
+            // Method 3: Try with Thread context ClassLoader
+            if (resource == null) {
+                resource = Thread.currentThread().getContextClassLoader().getResource("com/example/cjcschoolclinicmanagementsystem/View/settings-view.fxml");
+                System.out.println("Method 3 (Thread ClassLoader): " + (resource != null ? resource.toString() : "NULL"));
+            }
+
+            if (resource == null) {
+                System.err.println("ERROR: Could not find settings-view.fxml using any method!");
+                System.err.println("Classpath: " + System.getProperty("java.class.path"));
+                showError("File Not Found",
+                    "Could not locate settings-view.fxml\n" +
+                    "Please ensure the file exists in:\n" +
+                    "target/classes/com/example/cjcschoolclinicmanagementsystem/View/");
+                return;
+            }
+
+            System.out.println("SUCCESS: Found FXML file at: " + resource);
+
+            FXMLLoader loader = new FXMLLoader(resource);
+            System.out.println("FXMLLoader created, attempting to load...");
+
             Parent root = loader.load();
+            System.out.println("FXML loaded successfully!");
+
             javafx.stage.Stage stage = new javafx.stage.Stage();
             stage.setTitle("Settings");
             stage.setScene(new javafx.scene.Scene(root));
             stage.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+            stage.setWidth(900);
+            stage.setHeight(700);
+
+            System.out.println("Showing settings window...");
             stage.showAndWait();
+            System.out.println("Settings window closed.");
+
         } catch (Exception e) {
-            showError("Error", "Failed to open settings: " + e.getMessage());
+            System.err.println("=== ERROR LOADING SETTINGS ===");
+            System.err.println("Error type: " + e.getClass().getName());
+            System.err.println("Error message: " + e.getMessage());
+            e.printStackTrace();
+
+            showError("Error", "Failed to open settings:\n" +
+                e.getClass().getSimpleName() + ": " + e.getMessage() +
+                "\n\nCheck console for detailed error trace.");
         }
     }
 
