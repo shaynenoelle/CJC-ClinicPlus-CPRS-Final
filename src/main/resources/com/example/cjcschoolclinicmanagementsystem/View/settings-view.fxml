@@ -1,44 +1,266 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.Font?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
 
-<BorderPane xmlns="http://javafx.com/javafx"
-            xmlns:fx="http://javafx.com/fxml"
-            fx:controller="com.example.cjcschoolclinicmanagementsystem.controller.SettingsController"
-            prefHeight="600.0" prefWidth="800.0">
+<VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.example.cjcschoolclinicmanagementsystem.controller.SettingsController"
+      spacing="0" style="-fx-background-color: #F5F5F5;">
 
-    <top>
-        <HBox style="-fx-background-color: #8B0000; -fx-padding: 20;">
-            <Label text="Settings" textFill="WHITE">
-                <font><Font name="System Bold" size="24.0" /></font>
-            </Label>
-        </HBox>
-    </top>
+    <!-- Header -->
+    <HBox style="-fx-background-color: #8B0000; -fx-padding: 18 25;">
+        <Label text="⚙  SETTINGS" textFill="WHITE">
+            <font><Font name="System Bold" size="22.0"/></font>
+        </Label>
+    </HBox>
 
-    <center>
-        <VBox spacing="20.0" style="-fx-padding: 30;">
-            <Label text="Application Settings" style="-fx-font-size: 18; -fx-font-weight: bold;"/>
+    <TabPane fx:id="mainTabPane" tabClosingPolicy="UNAVAILABLE" VBox.vgrow="ALWAYS"
+             style="-fx-tab-min-width: 140; -fx-tab-max-width: 140;">
 
-            <VBox spacing="10">
-                <Label text="Theme:"/>
-                <ComboBox fx:id="themeComboBox" prefWidth="300" promptText="Select Theme"/>
-            </VBox>
+        <!-- ══════════════════ DATA BACKUP ══════════════════ -->
+        <Tab text="💾  Data Backup">
+            <ScrollPane fitToWidth="true" style="-fx-background-color: #F5F5F5;">
+                <VBox spacing="18" style="-fx-padding: 25;">
 
-            <VBox spacing="10">
-                <Label text="Font Size:"/>
-                <Slider fx:id="fontSizeSlider" min="10" max="20" value="14" showTickLabels="true" showTickMarks="true"/>
-            </VBox>
+                    <!-- Manual Backup -->
+                    <VBox style="-fx-background-color: white; -fx-border-color: #DDDDDD; -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 18;" spacing="12">
+                        <Label text="Manual Backup" style="-fx-font-size: 15; -fx-font-weight: bold; -fx-text-fill: #8B0000;"/>
+                        <Separator/>
+                        <Label text="Create a full copy of the database file right now." style="-fx-text-fill: #555;"/>
+                        <HBox spacing="12">
+                            <TextField fx:id="txtBackupPath" promptText="Backup destination folder..."
+                                       prefWidth="420"
+                                       style="-fx-border-color: #CCCCCC; -fx-border-radius: 4; -fx-padding: 8;"/>
+                            <Button text="📂 Browse" onAction="#browseBackupFolder"
+                                    style="-fx-background-color: #607D8B; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand; -fx-padding: 8 18;"/>
+                        </HBox>
+                        <HBox spacing="12">
+                            <Button text="💾 Backup Now" onAction="#handleBackupNow"
+                                    style="-fx-background-color: #8B0000; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand; -fx-padding: 10 28; -fx-font-size: 13;"/>
+                            <Button text="📤 Export Patients (CSV)" onAction="#handleExportPatients"
+                                    style="-fx-background-color: #2E7D32; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand; -fx-padding: 10 20; -fx-font-size: 13;"/>
+                            <Button text="📋 Export Visits (CSV)" onAction="#handleExportVisits"
+                                    style="-fx-background-color: #1565C0; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand; -fx-padding: 10 20; -fx-font-size: 13;"/>
+                        </HBox>
+                    </VBox>
 
-            <CheckBox fx:id="notificationsCheckBox" text="Enable Notifications"/>
+                    <!-- Auto Backup -->
+                    <VBox style="-fx-background-color: white; -fx-border-color: #DDDDDD; -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 18;" spacing="12">
+                        <Label text="Automatic Backup" style="-fx-font-size: 15; -fx-font-weight: bold; -fx-text-fill: #8B0000;"/>
+                        <Separator/>
+                        <CheckBox fx:id="chkAutoBackup" text="Enable automatic backup" style="-fx-font-size: 13;"/>
+                        <GridPane hgap="15" vgap="10">
+                            <columnConstraints>
+                                <ColumnConstraints minWidth="160"/>
+                                <ColumnConstraints minWidth="200"/>
+                            </columnConstraints>
+                            <Label text="Backup Frequency:" GridPane.columnIndex="0" GridPane.rowIndex="0" style="-fx-font-weight: bold;"/>
+                            <ComboBox fx:id="comboBackupFrequency" prefWidth="180"
+                                      GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+                            <Label text="Backup Time:" GridPane.columnIndex="0" GridPane.rowIndex="1" style="-fx-font-weight: bold;"/>
+                            <HBox spacing="5" alignment="CENTER_LEFT" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                                <Spinner fx:id="spinnerHour" prefWidth="65" editable="true"/>
+                                <Label text=":" style="-fx-font-weight: bold; -fx-font-size: 16;"/>
+                                <Spinner fx:id="spinnerMinute" prefWidth="65" editable="true"/>
+                                <ComboBox fx:id="comboAMPM" prefWidth="75"/>
+                            </HBox>
+                            <Label text="Auto Backup Folder:" GridPane.columnIndex="0" GridPane.rowIndex="2" style="-fx-font-weight: bold;"/>
+                            <HBox spacing="8" GridPane.columnIndex="1" GridPane.rowIndex="2">
+                                <TextField fx:id="txtAutoBackupPath" promptText="Auto backup folder..." prefWidth="280"
+                                           style="-fx-border-color: #CCCCCC; -fx-border-radius: 4; -fx-padding: 6;"/>
+                                <Button text="📂" onAction="#browseAutoBackupFolder"
+                                        style="-fx-background-color: #607D8B; -fx-text-fill: white; -fx-cursor: hand; -fx-padding: 6 12;"/>
+                            </HBox>
+                        </GridPane>
+                        <Label fx:id="lblNextBackup" text="Next backup: —" style="-fx-text-fill: #555; -fx-font-style: italic;"/>
+                        <Button text="💾 Save Backup Settings" onAction="#saveBackupSettings"
+                                style="-fx-background-color: #8B0000; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand; -fx-padding: 9 24;"/>
+                    </VBox>
 
-            <HBox spacing="10" alignment="CENTER_LEFT">
-                <Button text="Save" onAction="#saveSettings" style="-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-padding: 10 30;"/>
-                <Button text="Cancel" onAction="#closeSettings" style="-fx-background-color: #8B0000; -fx-text-fill: white; -fx-padding: 10 30;"/>
-            </HBox>
-        </VBox>
-    </center>
-</BorderPane>
+                    <!-- Last Backup Info -->
+                    <VBox style="-fx-background-color: white; -fx-border-color: #DDDDDD; -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 18;" spacing="8">
+                        <Label text="Backup History" style="-fx-font-size: 15; -fx-font-weight: bold; -fx-text-fill: #8B0000;"/>
+                        <Separator/>
+                        <Label fx:id="lblLastBackup" text="Last backup: Never" style="-fx-text-fill: #555;"/>
+                        <Label fx:id="lblLastExport" text="Last export: Never" style="-fx-text-fill: #555;"/>
+                    </VBox>
+
+                </VBox>
+            </ScrollPane>
+        </Tab>
+
+        <!-- ══════════════════ ACCOUNT MANAGEMENT ══════════════════ -->
+        <Tab text="👤  Accounts">
+            <ScrollPane fitToWidth="true" style="-fx-background-color: #F5F5F5;">
+                <VBox spacing="18" style="-fx-padding: 25;">
+
+                    <!-- Change Own Password -->
+                    <VBox style="-fx-background-color: white; -fx-border-color: #DDDDDD; -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 18;" spacing="12">
+                        <Label text="Change My Password" style="-fx-font-size: 15; -fx-font-weight: bold; -fx-text-fill: #8B0000;"/>
+                        <Separator/>
+                        <GridPane hgap="15" vgap="10">
+                            <columnConstraints>
+                                <ColumnConstraints minWidth="160"/>
+                                <ColumnConstraints minWidth="280"/>
+                            </columnConstraints>
+                            <Label text="Username:" GridPane.columnIndex="0" GridPane.rowIndex="0" style="-fx-font-weight: bold;"/>
+                            <TextField fx:id="txtCurrentUsername" promptText="Your username"
+                                       GridPane.columnIndex="1" GridPane.rowIndex="0"
+                                       style="-fx-border-color: #CCCCCC; -fx-border-radius: 4; -fx-padding: 8;"/>
+                            <Label text="Current Password:" GridPane.columnIndex="0" GridPane.rowIndex="1" style="-fx-font-weight: bold;"/>
+                            <PasswordField fx:id="txtOldPassword" promptText="Current password"
+                                           GridPane.columnIndex="1" GridPane.rowIndex="1"
+                                           style="-fx-border-color: #CCCCCC; -fx-border-radius: 4; -fx-padding: 8;"/>
+                            <Label text="New Password:" GridPane.columnIndex="0" GridPane.rowIndex="2" style="-fx-font-weight: bold;"/>
+                            <PasswordField fx:id="txtNewPassword" promptText="New password (min 6 chars)"
+                                           GridPane.columnIndex="1" GridPane.rowIndex="2"
+                                           style="-fx-border-color: #CCCCCC; -fx-border-radius: 4; -fx-padding: 8;"/>
+                            <Label text="Confirm Password:" GridPane.columnIndex="0" GridPane.rowIndex="3" style="-fx-font-weight: bold;"/>
+                            <PasswordField fx:id="txtConfirmPassword" promptText="Re-enter new password"
+                                           GridPane.columnIndex="1" GridPane.rowIndex="3"
+                                           style="-fx-border-color: #CCCCCC; -fx-border-radius: 4; -fx-padding: 8;"/>
+                        </GridPane>
+                        <Label fx:id="lblPasswordStrength" text="" style="-fx-font-style: italic;"/>
+                        <Button text="🔒 Change Password" onAction="#handleChangePassword"
+                                style="-fx-background-color: #8B0000; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand; -fx-padding: 9 24;"/>
+                    </VBox>
+
+
+
+                </VBox>
+            </ScrollPane>
+        </Tab>
+
+        <!-- ══════════════════ APPEARANCE ══════════════════ -->
+        <Tab text="🎨  Appearance">
+            <ScrollPane fitToWidth="true" style="-fx-background-color: #F5F5F5;">
+                <VBox spacing="18" style="-fx-padding: 25;">
+                    <VBox style="-fx-background-color: white; -fx-border-color: #DDDDDD; -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 18;" spacing="14">
+                        <Label text="Display Preferences" style="-fx-font-size: 15; -fx-font-weight: bold; -fx-text-fill: #8B0000;"/>
+                        <Separator/>
+                        <GridPane hgap="15" vgap="12">
+                            <columnConstraints>
+                                <ColumnConstraints minWidth="160"/>
+                                <ColumnConstraints minWidth="250"/>
+                            </columnConstraints>
+                            <Label text="Theme:" GridPane.columnIndex="0" GridPane.rowIndex="0" style="-fx-font-weight: bold;"/>
+                            <ComboBox fx:id="themeComboBox" prefWidth="220"
+                                      GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+                            <Label text="Font Size:" GridPane.columnIndex="0" GridPane.rowIndex="1" style="-fx-font-weight: bold;"/>
+                            <HBox spacing="10" alignment="CENTER_LEFT" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                                <Slider fx:id="fontSizeSlider" min="10" max="20" value="14"
+                                        showTickLabels="true" showTickMarks="true" prefWidth="200"/>
+                                <Label fx:id="lblFontSize" text="14 pt" style="-fx-font-weight: bold;"/>
+                            </HBox>
+                        </GridPane>
+                        <CheckBox fx:id="notificationsCheckBox" text="Enable desktop notifications" style="-fx-font-size: 13;"/>
+                        <Button text="💾 Save Appearance" onAction="#saveSettings"
+                                style="-fx-background-color: #8B0000; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand; -fx-padding: 9 24;"/>
+                    </VBox>
+                </VBox>
+            </ScrollPane>
+        </Tab>
+
+        <!-- ══════════════════ ABOUT ══════════════════ -->
+        <Tab text="ℹ  About">
+            <ScrollPane fitToWidth="true" style="-fx-background-color: #F5F5F5; -fx-border-color: transparent;">
+                <VBox spacing="16" style="-fx-padding: 24 40 24 40; -fx-background-color: #F5F5F5;" alignment="TOP_CENTER">
+
+                    <!-- App Info -->
+                    <VBox alignment="CENTER" spacing="6" style="-fx-background-color: white; -fx-border-color: #E0E0E0; -fx-border-radius: 8; -fx-background-radius: 8; -fx-padding: 24 20; -fx-border-width: 1;" maxWidth="660">
+                        <Label text="CJC Clinic Patient Management System" style="-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: #8B0000;"/>
+                        <Label text="Version 1.0.2  •  © 2025 CJC School Clinic" style="-fx-font-size: 11; -fx-text-fill: #999;"/>
+                        <VBox style="-fx-padding: 8 0 0 0;">
+                            <Label text="A patient management system for the CJC School Clinic — built to simplify patient registration, visit tracking, and health record management."
+                                   wrapText="true" textAlignment="CENTER" style="-fx-font-size: 12; -fx-text-fill: #666; -fx-line-spacing: 2;" maxWidth="580"/>
+                        </VBox>
+                    </VBox>
+
+                    <!-- Developers -->
+                    <VBox spacing="14" style="-fx-background-color: white; -fx-border-color: #E0E0E0; -fx-border-radius: 8; -fx-background-radius: 8; -fx-padding: 22 20; -fx-border-width: 1;" maxWidth="660">
+                        <Label text="Developers" style="-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #8B0000;"/>
+                        <Separator/>
+
+                        <HBox spacing="20" alignment="CENTER">
+
+                            <!-- Shayne Card -->
+                            <VBox alignment="CENTER" spacing="10"
+                                  style="-fx-background-color: #FAFAFA; -fx-border-color: #E0E0E0; -fx-border-radius: 8; -fx-background-radius: 8; -fx-padding: 20 14; -fx-border-width: 1;"
+                                  prefWidth="290" minHeight="180">
+                                <HBox alignment="CENTER">
+                                    <ImageView fitWidth="100" fitHeight="100" preserveRatio="false"
+                                               style="-fx-border-radius: 50; -fx-background-radius: 50;">
+                                        <image><Image url="@../Images/shayne.jpg"/></image>
+                                    </ImageView>
+                                </HBox>
+                                <Label text="Shayne Noelle Bangcailan"
+                                       style="-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #222;"
+                                       wrapText="true" textAlignment="CENTER" maxWidth="250"/>
+                                <Label text="Developer"
+                                       style="-fx-font-size: 11; -fx-text-fill: #777;
+                                              -fx-background-color: #EEEEEE;
+                                              -fx-padding: 3 14;
+                                              -fx-background-radius: 10;"/>
+                            </VBox>
+
+                            <!-- Prince Joshua Card -->
+                            <VBox alignment="CENTER" spacing="10"
+                                  style="-fx-background-color: #FAFAFA; -fx-border-color: #E0E0E0; -fx-border-radius: 8; -fx-background-radius: 8; -fx-padding: 20 14; -fx-border-width: 1;"
+                                  prefWidth="290" minHeight="180">
+                                <HBox alignment="CENTER">
+                                    <ImageView fitWidth="100" fitHeight="100" preserveRatio="false"
+                                               style="-fx-border-radius: 50; -fx-background-radius: 50;">
+                                        <image><Image url="@../Images/joshiev2.jpg"/></image>
+                                    </ImageView>
+                                </HBox>
+                                <Label text="Prince Joshua Ngojo"
+                                       style="-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #222;"
+                                       wrapText="true" textAlignment="CENTER" maxWidth="250"/>
+                                <Label text="Developer"
+                                       style="-fx-font-size: 11; -fx-text-fill: #777;
+                                              -fx-background-color: #EEEEEE;
+                                              -fx-padding: 3 14;
+                                              -fx-background-radius: 10;"/>
+                            </VBox>
+
+                        </HBox>
+                    </VBox>
+
+                    <!-- Tech Stack -->
+                    <VBox spacing="12" style="-fx-background-color: white; -fx-border-color: #E0E0E0; -fx-border-radius: 8; -fx-background-radius: 8; -fx-padding: 20; -fx-border-width: 1;" maxWidth="660">
+                        <Label text="Built With" style="-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #8B0000;"/>
+                        <Separator/>
+                        <HBox spacing="10" alignment="CENTER">
+                            <HBox alignment="CENTER_LEFT" spacing="8" style="-fx-background-color: #FFF8F0; -fx-border-color: #F0D0A0; -fx-border-radius: 5; -fx-background-radius: 5; -fx-padding: 10 18; -fx-border-width: 1;" prefWidth="143">
+                                <Label text="☕" style="-fx-font-size: 18;"/>
+                                <VBox spacing="1"><Label text="Java 21" style="-fx-font-size: 12; -fx-font-weight: bold; -fx-text-fill: #444;"/><Label text="Language" style="-fx-font-size: 10; -fx-text-fill: #999;"/></VBox>
+                            </HBox>
+                            <HBox alignment="CENTER_LEFT" spacing="8" style="-fx-background-color: #F0F7FF; -fx-border-color: #B0D0F0; -fx-border-radius: 5; -fx-background-radius: 5; -fx-padding: 10 18; -fx-border-width: 1;" prefWidth="143">
+                                <Label text="🎨" style="-fx-font-size: 18;"/>
+                                <VBox spacing="1"><Label text="JavaFX 21" style="-fx-font-size: 12; -fx-font-weight: bold; -fx-text-fill: #444;"/><Label text="UI Framework" style="-fx-font-size: 10; -fx-text-fill: #999;"/></VBox>
+                            </HBox>
+                            <HBox alignment="CENTER_LEFT" spacing="8" style="-fx-background-color: #F0FFF4; -fx-border-color: #A0D8B0; -fx-border-radius: 5; -fx-background-radius: 5; -fx-padding: 10 18; -fx-border-width: 1;" prefWidth="143">
+                                <Label text="🗄" style="-fx-font-size: 18;"/>
+                                <VBox spacing="1"><Label text="SQLite" style="-fx-font-size: 12; -fx-font-weight: bold; -fx-text-fill: #444;"/><Label text="Database" style="-fx-font-size: 10; -fx-text-fill: #999;"/></VBox>
+                            </HBox>
+                            <HBox alignment="CENTER_LEFT" spacing="8" style="-fx-background-color: #FFF0F5; -fx-border-color: #F0B0C8; -fx-border-radius: 5; -fx-background-radius: 5; -fx-padding: 10 18; -fx-border-width: 1;" prefWidth="143">
+                                <Label text="📦" style="-fx-font-size: 18;"/>
+                                <VBox spacing="1"><Label text="Maven" style="-fx-font-size: 12; -fx-font-weight: bold; -fx-text-fill: #444;"/><Label text="Build Tool" style="-fx-font-size: 10; -fx-text-fill: #999;"/></VBox>
+                            </HBox>
+                        </HBox>
+                    </VBox>
+
+                    <!-- Footer note -->
+                    <Label text="Made with ❤ for Cor Jesu College School Clinic" style="-fx-font-size: 11; -fx-text-fill: #AAAAAA; -fx-padding: 4 0 12 0;"/>
+
+                </VBox>
+            </ScrollPane>
+        </Tab>
+
+    </TabPane>
+</VBox>
 

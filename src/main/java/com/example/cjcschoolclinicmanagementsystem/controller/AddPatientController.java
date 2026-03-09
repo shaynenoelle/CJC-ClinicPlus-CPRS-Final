@@ -4,6 +4,8 @@ import com.example.cjcschoolclinicmanagementsystem.database.DatabaseManager;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.stage.Stage;
+import java.time.LocalDate;
+import java.time.Period;
 
 public class AddPatientController {
     // Personal Information
@@ -27,6 +29,16 @@ public class AddPatientController {
         comboGender.getItems().addAll("Male", "Female", "Other");
         comboType.getItems().addAll("Student", "Employee");
         comboBloodType.getItems().addAll("O+", "O-", "A+", "A-", "B+", "B-", "AB+", "AB-");
+
+        // Auto-calculate age when birthdate is selected
+        dateBirth.valueProperty().addListener((obs, oldDate, newDate) -> {
+            if (newDate != null) {
+                int age = Period.between(newDate, LocalDate.now()).getYears();
+                txtAge.setText(String.valueOf(age));
+            } else {
+                txtAge.clear();
+            }
+        });
 
         setupTabValidation();
     }
