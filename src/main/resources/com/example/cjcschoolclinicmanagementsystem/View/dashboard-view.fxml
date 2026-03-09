@@ -11,7 +11,7 @@
 <BorderPane fx:id="mainBorderPane"
             prefHeight="768.0" prefWidth="1024.0"
             xmlns:fx="http://javafx.com/fxml/1"
-            xmlns="http://javafx.com/javafx/25"
+            xmlns="http://javafx.com/javafx/21"
             fx:controller="com.example.cjcschoolclinicmanagementsystem.controller.DashboardController">
     <left>
         <VBox prefWidth="240.0" spacing="10.0"
@@ -34,100 +34,60 @@
 
             <Separator opacity="0.2"/>
 
-            <!-- NAV BUTTONS -->
-            <Button maxWidth="Infinity"
-                    onAction="#showDashboard"
-                    text="✚  Dashboard"
+            <Button maxWidth="Infinity" onAction="#showDashboard" text="✚  Dashboard"
                     fx:id="btnDashboard"
-                    style="-fx-background-color: transparent;
-                               -fx-text-fill: white;
-                               -fx-alignment: BASELINE_LEFT;
-                               -fx-cursor: hand;">
+                    style="-fx-background-color: transparent; -fx-text-fill: white;
+                           -fx-alignment: BASELINE_LEFT; -fx-cursor: hand;">
+                <font><Font size="16.0"/></font>
+            </Button>
+            <Button maxWidth="Infinity" onAction="#showPatientRegistry" text="✚  Patient Records"
+                    style="-fx-background-color: transparent; -fx-text-fill: white;
+                           -fx-alignment: BASELINE_LEFT; -fx-cursor: hand;">
+                <font><Font size="16.0"/></font>
+            </Button>
+            <Button maxWidth="Infinity" onAction="#showLogbook" text="✚  Logbook"
+                    style="-fx-background-color: transparent; -fx-text-fill: white;
+                           -fx-alignment: BASELINE_LEFT; -fx-cursor: hand;">
+                <font><Font size="16.0"/></font>
+            </Button>
+            <Button maxWidth="Infinity" onAction="#showVisitHistory" text="✚  Visit History"
+                    style="-fx-background-color: transparent; -fx-text-fill: white;
+                           -fx-alignment: BASELINE_LEFT; -fx-cursor: hand;">
                 <font><Font size="16.0"/></font>
             </Button>
 
-            <Button maxWidth="Infinity"
-                    onAction="#showPatientRegistry"
-                    text="✚  Patient Records"
-                    style="-fx-background-color: transparent;
-                               -fx-text-fill: white;
-                               -fx-alignment: BASELINE_LEFT;
-                               -fx-cursor: hand;">
-                <font><Font size="16.0"/></font>
-            </Button>
-
-            <Button maxWidth="Infinity"
-                    onAction="#showLogbook"
-                    text="✚  Logbook"
-                    style="-fx-background-color: transparent;
-                               -fx-text-fill: white;
-                               -fx-alignment: BASELINE_LEFT;
-                               -fx-cursor: hand;">
-                <font><Font size="16.0"/></font>
-            </Button>
-
-            <Button maxWidth="Infinity"
-                    onAction="#showVisitHistory"
-                    text="✚  Visit History"
-                    style="-fx-background-color: transparent;
-                               -fx-text-fill: white;
-                               -fx-alignment: BASELINE_LEFT;
-                               -fx-cursor: hand;">
-                <font><Font size="16.0"/></font>
-            </Button>
-
-            <!-- Push settings/logout to bottom -->
             <Region VBox.vgrow="ALWAYS"/>
 
-            <Button maxWidth="Infinity"
-                    onAction="#openSettings"
-                    text="⚙  Settings"
-                    style="-fx-background-color: transparent;
-                               -fx-text-fill: white;
-                               -fx-alignment: BASELINE_LEFT;
-                               -fx-cursor: hand;">
+            <Button maxWidth="Infinity" onAction="#openSettings" text="⚙  Settings"
+                    style="-fx-background-color: transparent; -fx-text-fill: white;
+                           -fx-alignment: BASELINE_LEFT; -fx-cursor: hand;">
                 <font><Font size="16.0"/></font>
             </Button>
-
-            <Button maxWidth="Infinity"
-                    onAction="#handleLogout"
-                    text="SIGN OUT"
-                    style="-fx-background-color: #5D0000;
-                               -fx-text-fill: white;
-                               -fx-font-weight: bold;
-                               -fx-padding: 10;
-                               -fx-cursor: hand;"/>
+            <Button maxWidth="Infinity" onAction="#handleLogout" text="SIGN OUT"
+                    style="-fx-background-color: #5D0000; -fx-text-fill: white;
+                           -fx-font-weight: bold; -fx-padding: 10; -fx-cursor: hand;"/>
         </VBox>
     </left>
 
-    <!-- CENTER: starts empty, filled by controller -->
     <center>
         <ScrollPane fitToWidth="true"
-                    style="-fx-background-color: #f5f5f5;
-                       -fx-background: #f5f5f5;">
-            <VBox spacing="16"
-                  style="-fx-background-color: #f5f5f5;">
-                <padding><Insets top="24" bottom="24" left="24" right="24"/></padding>
+                    style="-fx-background-color: #f5f5f5; -fx-background: #f5f5f5;">
+            <VBox spacing="14" style="-fx-background-color: #f5f5f5;">
+                <padding><Insets top="22" bottom="22" left="22" right="22"/></padding>
 
-                <!-- HEADER ROW -->
+                <!-- HEADER -->
                 <HBox alignment="CENTER_LEFT">
                     <VBox HBox.hgrow="ALWAYS">
                         <Label text="Dashboard"
-                               style="-fx-font-size: 22; -fx-font-weight: bold;
-                                  -fx-text-fill: #8B0000;"/>
+                               style="-fx-font-size: 22; -fx-font-weight: bold; -fx-text-fill: #8B0000;"/>
                         <Label text="Overview of clinic activity"
                                style="-fx-font-size: 12; -fx-text-fill: #888;"/>
                     </VBox>
                     <HBox spacing="8" alignment="CENTER_RIGHT">
-                        <MenuButton text="⬇ Export"
-                                    style="-fx-background-color: #8B0000;
-                                       -fx-text-fill: white;
-                                       -fx-mark-color: white;
-                                       -fx-background-radius: 6;
-                                       -fx-cursor: hand;
-                                       -fx-font-size: 12;
-                                       -fx-label-padding: 0 4 0 0;"
-                                    fx:id="btnExport">
+                        <MenuButton text="⬇ Export" fx:id="btnExport"
+                                    style="-fx-background-color: #8B0000; -fx-text-fill: white;
+                                           -fx-mark-color: white; -fx-background-radius: 6;
+                                           -fx-cursor: hand; -fx-font-size: 12;">
                             <items>
                                 <MenuItem text="Daily"/>
                                 <MenuItem text="Weekly"/>
@@ -135,176 +95,163 @@
                             </items>
                         </MenuButton>
                         <Button text="⟳ Refresh" onAction="#refreshDashboard"
-                                style="-fx-background-color: #f0f0f0;
-                                   -fx-text-fill: #555;
-                                   -fx-background-radius: 6;
-                                   -fx-cursor: hand; -fx-font-size: 12;"/>
+                                style="-fx-background-color: #f0f0f0; -fx-text-fill: #555;
+                                       -fx-background-radius: 6; -fx-cursor: hand; -fx-font-size: 12;"/>
                     </HBox>
                 </HBox>
 
-                <!-- ROW 1: Count cards + Total Patients -->
-                <HBox spacing="16">
+                <!-- ═══ ROW 1: Stat Cards ═══ -->
+                <HBox spacing="14">
 
-                    <!-- Patient Check-In Card -->
-                    <VBox spacing="12" HBox.hgrow="ALWAYS"
-                          style="-fx-background-color: white;
-                             -fx-background-radius: 10;
-                             -fx-border-color: #e0e0e0;
-                             -fx-border-radius: 10;
-                             -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.06),8,0,0,2);">
-                        <padding><Insets top="20" bottom="20" left="20" right="20"/></padding>
-                        <HBox alignment="CENTER_LEFT" spacing="8">
-                            <Label text="📋" style="-fx-font-size: 16;"/>
-                            <Label text="Patient Check-In"
-                                   style="-fx-font-size: 14; -fx-font-weight: bold;
-                                      -fx-text-fill: #333;"/>
-                            <Region HBox.hgrow="ALWAYS"/>
-                            <ComboBox fx:id="cmbCheckInFilter"
-                                      onAction="#onCheckInFilterChanged"
-                                      prefWidth="100"
-                                      style="-fx-font-size: 11;"/>
-                        </HBox>
-                        <HBox spacing="16" alignment="CENTER">
-                            <VBox alignment="CENTER" spacing="4"
-                                  style="-fx-background-color: #fff0f0;
-                                     -fx-background-radius: 8;
-                                     -fx-padding: 12 20 12 20;">
-                                <Label fx:id="lblToday" text="0"
-                                       style="-fx-font-size: 28; -fx-font-weight: bold;
-                                          -fx-text-fill: #8B0000;"/>
-                                <Label text="Today"
-                                       style="-fx-font-size: 11; -fx-text-fill: #888;"/>
-                            </VBox>
-                            <VBox alignment="CENTER" spacing="4"
-                                  style="-fx-background-color: #f5f5f5;
-                                     -fx-background-radius: 8;
-                                     -fx-padding: 12 20 12 20;">
-                                <Label fx:id="lblWeekly" text="0"
-                                       style="-fx-font-size: 28; -fx-font-weight: bold;
-                                          -fx-text-fill: #555;"/>
-                                <Label text="This Week"
-                                       style="-fx-font-size: 11; -fx-text-fill: #888;"/>
-                            </VBox>
-                            <VBox alignment="CENTER" spacing="4"
-                                  style="-fx-background-color: #f5f5f5;
-                                     -fx-background-radius: 8;
-                                     -fx-padding: 12 20 12 20;">
-                                <Label fx:id="lblMonthly" text="0"
-                                       style="-fx-font-size: 28; -fx-font-weight: bold;
-                                          -fx-text-fill: #555;"/>
-                                <Label text="This Month"
-                                       style="-fx-font-size: 11; -fx-text-fill: #888;"/>
-                            </VBox>
-                        </HBox>
+                    <!-- Visits Today -->
+                    <VBox alignment="CENTER" spacing="4" HBox.hgrow="ALWAYS"
+                          style="-fx-background-color: white; -fx-background-radius: 10;
+                                 -fx-border-color: #e0e0e0; -fx-border-radius: 10;
+                                 -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.06),8,0,0,2);">
+                        <padding><Insets top="18" bottom="18" left="16" right="16"/></padding>
+                        <Label text="Today's Visits"
+                               style="-fx-font-size: 11; -fx-text-fill: #888; -fx-font-weight: bold;"/>
+                        <Label fx:id="lblToday" text="0"
+                               style="-fx-font-size: 34; -fx-font-weight: bold; -fx-text-fill: #8B0000;"/>
+                        <Label text="check-ins today"
+                               style="-fx-font-size: 10; -fx-text-fill: #aaa;"/>
                     </VBox>
 
-                    <!-- Total Patients Card -->
-                    <VBox spacing="12" prefWidth="280"
-                          style="-fx-background-color: white;
-                             -fx-background-radius: 10;
-                             -fx-border-color: #e0e0e0;
-                             -fx-border-radius: 10;
-                             -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.06),8,0,0,2);">
-                        <padding><Insets top="20" bottom="20" left="20" right="20"/></padding>
-                        <HBox alignment="CENTER_LEFT" spacing="8">
-                            <Label text="👥" style="-fx-font-size: 16;"/>
-                            <Label text="Total Patients"
-                                   style="-fx-font-size: 14; -fx-font-weight: bold;
-                                      -fx-text-fill: #333;"/>
-                        </HBox>
+                    <!-- This Week -->
+                    <VBox alignment="CENTER" spacing="4" HBox.hgrow="ALWAYS"
+                          style="-fx-background-color: white; -fx-background-radius: 10;
+                                 -fx-border-color: #e0e0e0; -fx-border-radius: 10;
+                                 -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.06),8,0,0,2);">
+                        <padding><Insets top="18" bottom="18" left="16" right="16"/></padding>
+                        <Label text="This Week"
+                               style="-fx-font-size: 11; -fx-text-fill: #888; -fx-font-weight: bold;"/>
+                        <Label fx:id="lblWeekly" text="0"
+                               style="-fx-font-size: 34; -fx-font-weight: bold; -fx-text-fill: #555;"/>
+                        <Label text="visits this week"
+                               style="-fx-font-size: 10; -fx-text-fill: #aaa;"/>
+                    </VBox>
+
+                    <!-- This Month -->
+                    <VBox alignment="CENTER" spacing="4" HBox.hgrow="ALWAYS"
+                          style="-fx-background-color: white; -fx-background-radius: 10;
+                                 -fx-border-color: #e0e0e0; -fx-border-radius: 10;
+                                 -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.06),8,0,0,2);">
+                        <padding><Insets top="18" bottom="18" left="16" right="16"/></padding>
+                        <Label text="This Month"
+                               style="-fx-font-size: 11; -fx-text-fill: #888; -fx-font-weight: bold;"/>
+                        <Label fx:id="lblMonthly" text="0"
+                               style="-fx-font-size: 34; -fx-font-weight: bold; -fx-text-fill: #555;"/>
+                        <Label text="visits this month"
+                               style="-fx-font-size: 10; -fx-text-fill: #aaa;"/>
+                    </VBox>
+
+                    <!-- Total Patients -->
+                    <VBox alignment="CENTER" spacing="4" HBox.hgrow="ALWAYS"
+                          style="-fx-background-color: white; -fx-background-radius: 10;
+                                 -fx-border-color: #e0e0e0; -fx-border-radius: 10;
+                                 -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.06),8,0,0,2);">
+                        <padding><Insets top="18" bottom="18" left="16" right="16"/></padding>
+                        <Label text="Total Patients"
+                               style="-fx-font-size: 11; -fx-text-fill: #888; -fx-font-weight: bold;"/>
                         <Label fx:id="lblTotalPatients" text="0"
-                               alignment="CENTER" maxWidth="Infinity"
-                               style="-fx-font-size: 42; -fx-font-weight: bold;
-                                  -fx-text-fill: #8B0000;"/>
-                        <VBox fx:id="vboxCollegeBreakdown" spacing="4"/>
+                               style="-fx-font-size: 34; -fx-font-weight: bold; -fx-text-fill: #1976D2;"/>
+                        <Label text="registered patients"
+                               style="-fx-font-size: 10; -fx-text-fill: #aaa;"/>
+                    </VBox>
+
+                    <!-- Unattended Today — nurse alert card -->
+                    <VBox alignment="CENTER" spacing="4" HBox.hgrow="ALWAYS"
+                          style="-fx-background-color: #fff8e1; -fx-background-radius: 10;
+                                 -fx-border-color: #ffe082; -fx-border-radius: 10;
+                                 -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.06),8,0,0,2);">
+                        <padding><Insets top="18" bottom="18" left="16" right="16"/></padding>
+                        <Label text="⚠ Unattended"
+                               style="-fx-font-size: 11; -fx-text-fill: #e65100; -fx-font-weight: bold;"/>
+                        <Label fx:id="lblUnattended" text="0"
+                               style="-fx-font-size: 34; -fx-font-weight: bold; -fx-text-fill: #e65100;"/>
+                        <Label text="waiting for care"
+                               style="-fx-font-size: 10; -fx-text-fill: #bf360c;"/>
                     </VBox>
 
                 </HBox>
 
-                <!-- ROW 2: Charts -->
-                <HBox spacing="16">
+                <!-- ═══ ROW 2: HERO — Illness Charts ═══ -->
+                <HBox spacing="14">
 
-                    <!-- By College Pie Chart -->
+                    <!-- Top 5 Diagnoses — BIG horizontal bar chart -->
                     <VBox spacing="10" HBox.hgrow="ALWAYS"
-                          style="-fx-background-color: white;
-                             -fx-background-radius: 10;
-                             -fx-border-color: #e0e0e0;
-                             -fx-border-radius: 10;
-                             -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.06),8,0,0,2);">
-                        <padding><Insets top="20" bottom="20" left="20" right="20"/></padding>
-                        <Label text="By College / Dept"
-                               style="-fx-font-size: 14; -fx-font-weight: bold;
-                                  -fx-text-fill: #333;"/>
-                        <PieChart fx:id="chartCollege"
-                                  prefHeight="220" animated="true"
-                                  legendVisible="true"/>
-                    </VBox>
-
-                    <!-- Top Illnesses Bar Chart -->
-                    <VBox spacing="10" HBox.hgrow="ALWAYS"
-                          style="-fx-background-color: white;
-                             -fx-background-radius: 10;
-                             -fx-border-color: #e0e0e0;
-                             -fx-border-radius: 10;
-                             -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.06),8,0,0,2);">
-                        <padding><Insets top="20" bottom="20" left="20" right="20"/></padding>
-                        <HBox alignment="CENTER_LEFT">
-                            <Label text="Top Illnesses"
-                                   style="-fx-font-size: 14; -fx-font-weight: bold;
-                                      -fx-text-fill: #333;"
+                          style="-fx-background-color: white; -fx-background-radius: 10;
+                                 -fx-border-color: #e0e0e0; -fx-border-radius: 10;
+                                 -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.06),8,0,0,2);">
+                        <padding><Insets top="18" bottom="18" left="18" right="18"/></padding>
+                        <HBox alignment="CENTER_LEFT" spacing="10">
+                            <Label text="Top Diagnoses"
+                                   style="-fx-font-size: 14; -fx-font-weight: bold; -fx-text-fill: #333;"
                                    HBox.hgrow="ALWAYS"/>
-                            <ComboBox fx:id="cmbIllnessFilter"
-                                      onAction="#onIllnessFilterChanged"
-                                      prefWidth="100"
-                                      style="-fx-font-size: 11;"/>
+                            <ComboBox fx:id="cmbIllnessFilter" onAction="#onIllnessFilterChanged"
+                                      prefWidth="110" style="-fx-font-size: 11;"/>
                         </HBox>
-                        <BarChart fx:id="chartIllnesses"
-                                  prefHeight="220"
-                                  animated="true"
-                                  legendVisible="false">
+                        <Label text="Most frequent diagnoses — sorted by count"
+                               style="-fx-font-size: 11; -fx-text-fill: #999;"/>
+                        <BarChart fx:id="chartIllnesses" prefHeight="260"
+                                  animated="true" legendVisible="false">
                             <xAxis><CategoryAxis label="Diagnosis"/></xAxis>
                             <yAxis><NumberAxis label="Count"/></yAxis>
                         </BarChart>
                     </VBox>
 
-                </HBox>
-
-                <!-- ROW 3: Line Chart + Purpose Pie -->
-                <HBox spacing="16">
-
-                    <!-- Avg Patients Line Chart -->
+                    <!-- Illness Trend Line Chart -->
                     <VBox spacing="10" HBox.hgrow="ALWAYS"
-                          style="-fx-background-color: white;
-                             -fx-background-radius: 10;
-                             -fx-border-color: #e0e0e0;
-                             -fx-border-radius: 10;
-                             -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.06),8,0,0,2);">
-                        <padding><Insets top="20" bottom="20" left="20" right="20"/></padding>
-                        <Label text="Avg Patients per Month"
-                               style="-fx-font-size: 14; -fx-font-weight: bold;
-                                  -fx-text-fill: #333;"/>
-                        <LineChart fx:id="chartMonthly"
-                                   prefHeight="220" animated="true"
-                                   legendVisible="false">
-                            <xAxis><CategoryAxis label="Month"/></xAxis>
+                          style="-fx-background-color: white; -fx-background-radius: 10;
+                                 -fx-border-color: #e0e0e0; -fx-border-radius: 10;
+                                 -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.06),8,0,0,2);">
+                        <padding><Insets top="18" bottom="18" left="18" right="18"/></padding>
+                        <Label text="Illness Trend (8 Weeks)"
+                               style="-fx-font-size: 14; -fx-font-weight: bold; -fx-text-fill: #333;"/>
+                        <Label text="Is a diagnosis spreading?"
+                               style="-fx-font-size: 11; -fx-text-fill: #999;"/>
+                        <LineChart fx:id="chartMonthly" prefHeight="260"
+                                   animated="true" legendVisible="true">
+                            <xAxis><CategoryAxis label="Week"/></xAxis>
                             <yAxis><NumberAxis label="Visits"/></yAxis>
                         </LineChart>
                     </VBox>
 
+                </HBox>
+
+                <!-- ═══ ROW 3: College Bar + Purpose Pie ═══ -->
+                <HBox spacing="14">
+
+                    <!-- Visits by College/Dept — colored bar chart -->
+                    <VBox spacing="10" HBox.hgrow="ALWAYS"
+                          style="-fx-background-color: white; -fx-background-radius: 10;
+                                 -fx-border-color: #e0e0e0; -fx-border-radius: 10;
+                                 -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.06),8,0,0,2);">
+                        <padding><Insets top="18" bottom="18" left="18" right="18"/></padding>
+                        <Label text="Visits by College / Dept"
+                               style="-fx-font-size: 14; -fx-font-weight: bold; -fx-text-fill: #333;"/>
+                        <Label text="CCIS · COE · CHS · CABE · CEDAS · CSP · BED · Employees"
+                               style="-fx-font-size: 10; -fx-text-fill: #999;"/>
+                        <BarChart fx:id="chartCollege" prefHeight="220"
+                                  animated="true" legendVisible="true">
+                            <xAxis><CategoryAxis label="College / Dept"/></xAxis>
+                            <yAxis><NumberAxis label="Patients"/></yAxis>
+                        </BarChart>
+                        <VBox fx:id="vboxCollegeBreakdown" spacing="3"/>
+                    </VBox>
+
                     <!-- Purpose of Visit Pie -->
-                    <VBox spacing="10" prefWidth="300"
-                          style="-fx-background-color: white;
-                             -fx-background-radius: 10;
-                             -fx-border-color: #e0e0e0;
-                             -fx-border-radius: 10;
-                             -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.06),8,0,0,2);">
-                        <padding><Insets top="20" bottom="20" left="20" right="20"/></padding>
-                        <Label text="Purpose of Visit Type"
-                               style="-fx-font-size: 14; -fx-font-weight: bold;
-                                  -fx-text-fill: #333;"/>
-                        <PieChart fx:id="chartPurpose"
-                                  prefHeight="220" animated="true"
-                                  legendVisible="true"/>
+                    <VBox spacing="10" prefWidth="460" maxWidth="460" minWidth="440"
+                          style="-fx-background-color: white; -fx-background-radius: 10;
+                                 -fx-border-color: #e0e0e0; -fx-border-radius: 10;
+                                 -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.06),8,0,0,2);">
+                        <padding><Insets top="18" bottom="18" left="18" right="18"/></padding>
+                        <Label text="Purpose of Visit"
+                               style="-fx-font-size: 14; -fx-font-weight: bold; -fx-text-fill: #333;"/>
+                        <Label text="Health-Related vs Med Cert"
+                               style="-fx-font-size: 11; -fx-text-fill: #999;"/>
+                        <PieChart fx:id="chartPurpose" prefHeight="220"
+                                  animated="true" legendVisible="true"/>
                     </VBox>
 
                 </HBox>

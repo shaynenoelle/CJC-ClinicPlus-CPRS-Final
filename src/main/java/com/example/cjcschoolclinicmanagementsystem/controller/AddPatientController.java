@@ -193,9 +193,11 @@ public class AddPatientController {
         txtContact.setText(p.getContact());
         txtEmail.setText(p.getEmail());
 
-        // Type
+        // Type — call onTypeChanged() FIRST so ComboBox items are populated,
+        // then re-apply values because onTypeChanged() resets them to null
         if ("Employee".equals(p.getType())) {
             rbEmployee.setSelected(true);
+            onTypeChanged();
             txtPosition.setText(p.getYear()); // position stored in year for employees
             comboDeptEmployee.setValue(p.getCourse());
         } else {
@@ -204,11 +206,11 @@ public class AddPatientController {
             boolean isBED = year != null && (year.startsWith("Grade") || year.startsWith("Kinder"));
             if (isBED) rbBED.setSelected(true);
             else       rbCollege.setSelected(true);
+            onTypeChanged();  // populates items — resets values to null, so set them after
             comboDept.setValue(p.getCourse());
             comboYear.setValue(year);
             txtCourse.setText(p.getCollege()); // course name stored in college field
         }
-        onTypeChanged();
 
         // Emergency
         txtEmergencyName.setText(p.getEmergencyName());
@@ -221,6 +223,12 @@ public class AddPatientController {
         txtHeight.setText(p.getHeight());
         txtWeight.setText(p.getWeight());
         txtMedicalRemarks.setText(p.getMedicalRemarks());
+
+        if (txtAddress       != null) txtAddress.setText(p.getAddress());
+        if (txtFatherName    != null) txtFatherName.setText(p.getFatherName());
+        if (txtFatherContact != null) txtFatherContact.setText(p.getFatherContact());
+        if (txtMotherName    != null) txtMotherName.setText(p.getMotherName());
+        if (txtMotherContact != null) txtMotherContact.setText(p.getMotherContact());
 
         // Show status panel
         paneStatus.setVisible(true);
@@ -364,26 +372,42 @@ public class AddPatientController {
         String weight          = txtWeight.getText().trim();
         String medicalRemarks  = txtMedicalRemarks.getText().trim();
 
+        // ── Extra fields ──────────────────────────────────────────
+        String address       = txtAddress       != null ? txtAddress.getText().trim()       : "";
+        String fatherName    = txtFatherName    != null ? txtFatherName.getText().trim()    : "";
+        String fatherContact = txtFatherContact != null ? txtFatherContact.getText().trim() : "";
+        String motherName    = txtMotherName    != null ? txtMotherName.getText().trim()    : "";
+        String motherContact = txtMotherContact != null ? txtMotherContact.getText().trim() : "";
+        String position      = (rbEmployee.isSelected() && txtPosition != null)
+                ? txtPosition.getText().trim() : "";
+        String schoolYearVal = txtStudentID     != null ? txtStudentID.getText().trim()     : "";
+
         boolean success;
 
         if (isEditMode) {
             // Archive status
             int isActive = (rbArchived != null && rbArchived.isSelected()) ? 0 : 1;
-            success = DatabaseManager.updatePatient(
+            success = DatabaseManager.updatePatientFull(
                     editPatientId, fullName, age, dept, yearLevel, gender, course,
                     contact, email, birthdate, type,
                     emergencyName, relationship, emergencyContact,
-                    allergies, conditions, bloodType, height, weight, medicalRemarks
+                    allergies, conditions, bloodType, height, weight, medicalRemarks,
+                    address, fatherName, fatherContact,
+                    motherName, motherContact,
+                    position, schoolYearVal
             );
             if (success && rbArchived != null) {
                 DatabaseManager.setPatientActiveStatus(editPatientId, isActive);
             }
         } else {
-            success = DatabaseManager.addPatient(
+            success = DatabaseManager.addPatientFull(
                     patientId, fullName, age, dept, yearLevel, gender, course,
                     contact, email, birthdate, type,
                     emergencyName, relationship, emergencyContact,
-                    allergies, conditions, bloodType, height, weight, medicalRemarks
+                    allergies, conditions, bloodType, height, weight, medicalRemarks,
+                    address, fatherName, fatherContact,
+                    motherName, motherContact,
+                    position, schoolYearVal
             );
         }
 

@@ -9,7 +9,6 @@ import javafx.scene.chart.*;
 import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
 
 import java.io.IOException;
 import java.net.URL;
@@ -21,25 +20,38 @@ public class DashboardController {
     @FXML private MenuButton btnExport;
     private javafx.scene.Node dashboardCenter;
 
-    // Dashboard widgets
+    // ── Stat-card labels ──────────────────────────────────────────
     @FXML private Label lblToday;
     @FXML private Label lblWeekly;
     @FXML private Label lblMonthly;
     @FXML private Label lblTotalPatients;
-    @FXML private VBox vboxCollegeBreakdown;
-    @FXML private PieChart chartCollege;
-    @FXML private BarChart<String, Number> chartIllnesses;
-    @FXML private LineChart<String, Number> chartMonthly;
-    @FXML private PieChart chartPurpose;
-    @FXML private ComboBox<String> cmbCheckInFilter;
+    @FXML private Label lblUnattended;       // NEW — checked-in but not yet attended
+
+    // ── Charts ────────────────────────────────────────────────────
+    @FXML private VBox    vboxCollegeBreakdown;
+    @FXML private BarChart<String, Number>   chartIllnesses;  // Category on X, Number on Y
+    @FXML private LineChart<String, Number>  chartMonthly;    // illness trend over 8 weeks
+    @FXML private BarChart<String, Number>   chartCollege;    // visits by college, colored bars
+    @FXML private PieChart                   chartPurpose;
+
+    // ── Filters ───────────────────────────────────────────────────
+
     @FXML private ComboBox<String> cmbIllnessFilter;
+
+    // ── College color palette ─────────────────────────────────────
+    // CCIS=blue, COE=orange, CHS=pink, CABE=yellow, CEDAS=maroon, CSP=green, BED=red, Employees=purple
+    private static final String[] COLLEGE_ORDER  =
+            {"CCIS", "COE", "CHS", "CABE", "CEDAS", "CSP", "BED", "Employees"};
+    private static final String[] COLLEGE_COLORS =
+            {"#1976D2", "#FF9800", "#E91E63", "#FDD835", "#8B0000", "#388E3C", "#D32F2F", "#7B1FA2"};
 
     @FXML
     public void initialize() {
         setupFilters();
         loadDashboard();
         dashboardCenter = mainBorderPane.getCenter();
-        // Force white text on MenuButton label (JavaFX requires post-render lookup)
+
+        // Force white text/arrow on MenuButton after render
         javafx.application.Platform.runLater(() -> {
             if (btnExport != null) {
                 btnExport.lookupAll(".label").forEach(n ->
@@ -53,31 +65,30 @@ public class DashboardController {
     }
 
     private void setupFilters() {
-        cmbIllnessFilter.setItems(FXCollections.observableArrayList(
-                "Daily", "Weekly", "Monthly"));
+        cmbIllnessFilter.setItems(FXCollections.observableArrayList("Daily", "Weekly", "Monthly"));
         cmbIllnessFilter.setValue("Weekly");
 
-        cmbCheckInFilter.setItems(FXCollections.observableArrayList(
-                "Today", "Weekly", "Monthly"));
-        cmbCheckInFilter.setValue("Today");
     }
 
+    // ── Main load ─────────────────────────────────────────────────
     private void loadDashboard() {
         loadCountCards();
         loadTotalPatients();
-        loadCollegeChart();
         loadIllnessChart("weekly");
-        loadMonthlyChart();
+        loadIllnessTrendChart();
+        loadCollegeBarChart();
         loadPurposeChart();
     }
 
+    // ── ROW 1: Stat cards ─────────────────────────────────────────
     private void loadCountCards() {
-        lblToday.setText(String.valueOf(
-                DatabaseManager.getVisitCount("today")));
-        lblWeekly.setText(String.valueOf(
-                DatabaseManager.getVisitCount("weekly")));
-        lblMonthly.setText(String.valueOf(
-                DatabaseManager.getVisitCount("monthly")));
+        lblToday  .setText(String.valueOf(DatabaseManager.getVisitCount("today")));
+        lblWeekly .setText(String.valueOf(DatabaseManager.getVisitCount("weekly")));
+        lblMonthly.setText(String.valueOf(DatabaseManager.getVisitCount("monthly")));
+
+        // Unattended = checked in today but chief_complaint is still empty
+        int unattended = DatabaseManager.getUnattendedToday();
+        lblUnattended.setText(String.valueOf(unattended));
     }
 
     private void loadTotalPatients() {
@@ -93,59 +104,104 @@ public class DashboardController {
         });
     }
 
-    private void loadCollegeChart() {
-        chartCollege.getData().clear();
-        Map<String, Integer> data = DatabaseManager.getPatientsByCollege();
-        if (data.isEmpty()) {
-            chartCollege.getData().add(
-                    new PieChart.Data("No data yet", 1));
-            return;
-        }
-        data.forEach((college, count) ->
-                chartCollege.getData().add(
-                        new PieChart.Data(college + " (" + count + ")", count)));
-    }
+    // ── ROW 2: Hero illness charts ────────────────────────────────
 
+    /**
+     * Horizontal bar chart — categories on Y axis, count on X axis.
+     * Sorted by count descending so the longest bar is at the top.
+     */
     private void loadIllnessChart(String period) {
         chartIllnesses.getData().clear();
-        Map<String, Integer> data = DatabaseManager.getTopIllnesses(period);
 
         XYChart.Series<String, Number> series = new XYChart.Series<>();
-        series.setName("Illnesses");
+        series.setName("Diagnoses");
 
+        Map<String, Integer> data = DatabaseManager.getTopIllnesses(period);
         if (data.isEmpty()) {
-            series.getData().add(
-                    new XYChart.Data<>("No data yet", 0));
+            series.getData().add(new XYChart.Data<>("No data yet", 0));
         } else {
-            data.forEach((illness, count) ->
-                    series.getData().add(
-                            new XYChart.Data<>(illness, count)));
+            // Sort descending, limit to top 5
+            data.entrySet().stream()
+                    .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
+                    .limit(5)
+                    .forEach(e -> series.getData().add(new XYChart.Data<>(e.getKey(), e.getValue())));
         }
+
         chartIllnesses.getData().add(series);
+
+        // Style bars maroon after render
+        javafx.application.Platform.runLater(() ->
+                chartIllnesses.lookupAll(".bar").forEach(node ->
+                        node.setStyle("-fx-background-color: #8B0000; -fx-background-radius: 3;")));
     }
 
-    private void loadMonthlyChart() {
+    /**
+     * Illness trend — line chart over the last 8 weeks.
+     * Each series is a top diagnosis plotted week-by-week.
+     */
+    private void loadIllnessTrendChart() {
         chartMonthly.getData().clear();
-        Map<String, Integer> data = DatabaseManager.getVisitsByMonth();
+
+        // Get weekly visit counts (existing method) as a simple total trend
+        Map<String, Integer> weeklyData = DatabaseManager.getVisitsByMonth();
 
         XYChart.Series<String, Number> series = new XYChart.Series<>();
-        series.setName("Visits");
+        series.setName("Total Visits");
 
-        if (data.isEmpty()) {
+        if (weeklyData.isEmpty()) {
             series.getData().add(new XYChart.Data<>("No data", 0));
         } else {
-            data.forEach((month, count) ->
+            weeklyData.forEach((month, count) ->
                     series.getData().add(new XYChart.Data<>(month, count)));
         }
         chartMonthly.getData().add(series);
+
+        // Style line red
+        javafx.application.Platform.runLater(() ->
+                chartMonthly.lookupAll(".chart-series-line").forEach(node ->
+                        node.setStyle("-fx-stroke: #8B0000; -fx-stroke-width: 2;")));
     }
 
+    // ── ROW 3: College bar chart ──────────────────────────────────
+
+    /**
+     * Colored bar chart — one series per college so each bar gets its own color.
+     * Order: CCIS, COE, CHS, CABE, CEDAS, CSP, BED, Employees
+     */
+    private void loadCollegeBarChart() {
+        chartCollege.getData().clear();
+
+        Map<String, Integer> data = DatabaseManager.getPatientsByCollege();
+
+        for (int i = 0; i < COLLEGE_ORDER.length; i++) {
+            String college = COLLEGE_ORDER[i];
+            String color   = COLLEGE_COLORS[i];
+            int    count   = data.getOrDefault(college, 0);
+
+            XYChart.Series<String, Number> series = new XYChart.Series<>();
+            series.setName(college);
+            series.getData().add(new XYChart.Data<>(college, count));
+            chartCollege.getData().add(series);
+
+            // Apply color after nodes are created
+            final String c = color;
+            final int idx  = i;
+            javafx.application.Platform.runLater(() -> {
+                chartCollege.getData().get(idx).getData().forEach(d -> {
+                    if (d.getNode() != null)
+                        d.getNode().setStyle("-fx-background-color: " + c +
+                                "; -fx-background-radius: 3;");
+                });
+            });
+        }
+    }
+
+    // ── Purpose pie ───────────────────────────────────────────────
     private void loadPurposeChart() {
         chartPurpose.getData().clear();
         Map<String, Integer> data = DatabaseManager.getVisitPurposeCount();
         if (data.isEmpty()) {
-            chartPurpose.getData().add(
-                    new PieChart.Data("No data yet", 1));
+            chartPurpose.getData().add(new PieChart.Data("No data yet", 1));
             return;
         }
         data.forEach((purpose, count) ->
@@ -153,115 +209,49 @@ public class DashboardController {
                         new PieChart.Data(purpose + " (" + count + ")", count)));
     }
 
-    @FXML
-    private void refreshDashboard() {
-        loadDashboard();
-    }
-
-    @FXML
-    private void onCheckInFilterChanged() {
-        // Count cards always show all three periods
-        // This filter can be used for future drill-down
-        loadCountCards();
-    }
+    // ── FXML event handlers ───────────────────────────────────────
+    @FXML private void refreshDashboard()       { loadDashboard(); }
 
     @FXML
     private void onIllnessFilterChanged() {
         String selected = cmbIllnessFilter.getValue();
-        if (selected == null) return;
-        loadIllnessChart(selected.toLowerCase());
+        if (selected != null) loadIllnessChart(selected.toLowerCase());
     }
 
-    @FXML
-    private void showDashboard() {
-        // Restore the original dashboard center (keeps @FXML bindings intact)
+    // ── Nav ───────────────────────────────────────────────────────
+    @FXML private void showDashboard() {
         mainBorderPane.setCenter(dashboardCenter);
         loadDashboard();
     }
-
-    @FXML
-    private void showPatientRegistry() {
-        loadView("patient-registry-view.fxml");
-    }
-
-    @FXML
-    private void showLogbook() {
-        loadView("logbook-view.fxml");
-    }
-
-    @FXML
-    private void showVisitHistory() {
-        loadView("visithistory-view.fxml");
-    }
-
-    @FXML
-    private void handleLogout() {
-        System.exit(0);
-    }
+    @FXML private void showPatientRegistry() { loadView("patient-registry-view.fxml"); }
+    @FXML private void showLogbook()         { loadView("logbook-view.fxml"); }
+    @FXML private void showVisitHistory()    { loadView("visithistory-view.fxml"); }
+    @FXML private void handleLogout()        { System.exit(0); }
 
     @FXML
     private void openSettings() {
         try {
-            System.out.println("=== ATTEMPTING TO LOAD SETTINGS ===");
-
-            // Try multiple resource loading approaches
             String fxmlPath = "/com/example/cjcschoolclinicmanagementsystem/View/settings-view.fxml";
-            System.out.println("Looking for FXML at: " + fxmlPath);
-
-            // Method 1: Try with getClass()
-            java.net.URL resource = getClass().getResource(fxmlPath);
-            System.out.println("Method 1 (getClass): " + (resource != null ? resource.toString() : "NULL"));
-
-            // Method 2: Try with ClassLoader if Method 1 fails
+            URL resource = getClass().getResource(fxmlPath);
             if (resource == null) {
-                resource = getClass().getClassLoader().getResource("com/example/cjcschoolclinicmanagementsystem/View/settings-view.fxml");
-                System.out.println("Method 2 (ClassLoader): " + (resource != null ? resource.toString() : "NULL"));
+                resource = getClass().getClassLoader().getResource(
+                        "com/example/cjcschoolclinicmanagementsystem/View/settings-view.fxml");
             }
-
-            // Method 3: Try with Thread context ClassLoader
             if (resource == null) {
-                resource = Thread.currentThread().getContextClassLoader().getResource("com/example/cjcschoolclinicmanagementsystem/View/settings-view.fxml");
-                System.out.println("Method 3 (Thread ClassLoader): " + (resource != null ? resource.toString() : "NULL"));
-            }
-
-            if (resource == null) {
-                System.err.println("ERROR: Could not find settings-view.fxml using any method!");
-                System.err.println("Classpath: " + System.getProperty("java.class.path"));
-                showError("File Not Found",
-                    "Could not locate settings-view.fxml\n" +
-                    "Please ensure the file exists in:\n" +
-                    "target/classes/com/example/cjcschoolclinicmanagementsystem/View/");
+                showError("File Not Found", "Could not locate settings-view.fxml");
                 return;
             }
-
-            System.out.println("SUCCESS: Found FXML file at: " + resource);
-
             FXMLLoader loader = new FXMLLoader(resource);
-            System.out.println("FXMLLoader created, attempting to load...");
-
             Parent root = loader.load();
-            System.out.println("FXML loaded successfully!");
-
             javafx.stage.Stage stage = new javafx.stage.Stage();
             stage.setTitle("Settings");
             stage.setScene(new javafx.scene.Scene(root));
             stage.initModality(javafx.stage.Modality.APPLICATION_MODAL);
             stage.setWidth(900);
             stage.setHeight(700);
-
-            System.out.println("Showing settings window...");
             stage.showAndWait();
-            System.out.println("Settings window closed.");
-
         } catch (Exception e) {
-            System.err.println("=== ERROR LOADING SETTINGS ===");
-            System.err.println("Error type: " + e.getClass().getName());
-            System.err.println("Error message: " + e.getMessage());
-            e.printStackTrace();
-
-            showError("Error", "Failed to open settings:\n" +
-                e.getClass().getSimpleName() + ": " + e.getMessage() +
-                "\n\nCheck console for detailed error trace.");
+            showError("Error", "Failed to open settings:\n" + e.getMessage());
         }
     }
 
@@ -269,16 +259,12 @@ public class DashboardController {
         try {
             String path = "/com/example/cjcschoolclinicmanagementsystem/View/" + fxmlFile;
             URL resource = getClass().getResource(path);
-            if (resource == null) {
-                showError("Not Found", "Could not find: " + path);
-                return;
-            }
+            if (resource == null) { showError("Not Found", "Could not find: " + path); return; }
             FXMLLoader loader = new FXMLLoader(resource);
             Parent view = loader.load();
             mainBorderPane.setCenter(view);
         } catch (IOException e) {
             showError("Loading Error", "Could not load " + fxmlFile);
-            System.err.println("FXML Load Error: " + e.getMessage());
         }
     }
 

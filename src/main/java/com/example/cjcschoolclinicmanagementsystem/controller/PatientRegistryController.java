@@ -94,7 +94,7 @@ public class PatientRegistryController {
                 // Strip trailing MI (≤3 chars ending with ".")
                 if (rest.contains(" ")) {
                     String possible = rest.substring(rest.lastIndexOf(" ") + 1);
-                    if (possible.length() <= 3 && possible.endsWith("."))
+                    if (possible.length() <= 3 && (possible.endsWith(".") || possible.matches("[A-Z]")))
                         return new javafx.beans.property.SimpleStringProperty(
                                 rest.substring(0, rest.lastIndexOf(" ")).trim());
                 }
@@ -109,7 +109,7 @@ public class PatientRegistryController {
                 String rest = full.split(",", 2)[1].trim();
                 if (rest.contains(" ")) {
                     String possible = rest.substring(rest.lastIndexOf(" ") + 1);
-                    if (possible.length() <= 3 && possible.endsWith("."))
+                    if (possible.length() <= 3 && (possible.endsWith(".") || possible.matches("[A-Z]")))
                         return new javafx.beans.property.SimpleStringProperty(possible);
                 }
             }
@@ -452,7 +452,7 @@ public class PatientRegistryController {
             String rest = full.split(",", 2)[1].trim();
             if (rest.contains(" ")) {
                 String possible = rest.substring(rest.lastIndexOf(" ") + 1);
-                if (possible.length() <= 3 && possible.endsWith(".")) {
+                if (possible.length() <= 3 && (possible.endsWith(".") || possible.matches("[A-Z]"))) {
                     firstName = rest.substring(0, rest.lastIndexOf(" ")).trim();
                     mi = possible;
                 } else { firstName = rest; }
