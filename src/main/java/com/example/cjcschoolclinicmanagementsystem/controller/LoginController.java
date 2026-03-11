@@ -8,6 +8,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import com.example.cjcschoolclinicmanagementsystem.database.DatabaseManager;
@@ -162,5 +163,79 @@ public class LoginController {
             // GRAY = password is hidden
             btnTogglePassword.setStyle("-fx-cursor: hand; -fx-font-size: 16; -fx-text-fill: #aaaaaa;");
         }
+    }
+
+    @FXML
+    protected void onForgotPasswordClick() {
+        TextInputDialog userDialog = new TextInputDialog(txtUsername.getText() == null ? "" : txtUsername.getText().trim());
+        userDialog.setTitle("Forgot Password");
+        userDialog.setHeaderText("Reset your account password");
+        userDialog.setContentText("Username:");
+
+        java.util.Optional<String> userResult = userDialog.showAndWait();
+        if (userResult.isEmpty()) return;
+
+        String username = userResult.get().trim();
+        if (username.isEmpty()) {
+            showResetMessage("Please enter a username.", false);
+            return;
+        }
+        if (!DatabaseManager.userExists(username)) {
+            showResetMessage("Username not found.", false);
+            return;
+        }
+
+        Dialog<ButtonType> resetDialog = new Dialog<>();
+        resetDialog.setTitle("Forgot Password");
+        resetDialog.setHeaderText("Set a new password for: " + username);
+
+        ButtonType btnReset = new ButtonType("Reset Password", ButtonBar.ButtonData.OK_DONE);
+        resetDialog.getDialogPane().getButtonTypes().addAll(btnReset, ButtonType.CANCEL);
+
+        PasswordField txtNew = new PasswordField();
+        PasswordField txtConfirm = new PasswordField();
+        txtNew.setPromptText("New password (min 6 chars)");
+        txtConfirm.setPromptText("Confirm new password");
+
+        Label lblHint = new Label("Password must be at least 6 characters.");
+        lblHint.setStyle("-fx-font-size: 11; -fx-text-fill: #777;");
+
+        GridPane gp = new GridPane();
+        gp.setHgap(10);
+        gp.setVgap(8);
+        gp.add(new Label("New Password:"), 0, 0);
+        gp.add(txtNew, 1, 0);
+        gp.add(new Label("Confirm:"), 0, 1);
+        gp.add(txtConfirm, 1, 1);
+        gp.add(lblHint, 1, 2);
+        resetDialog.getDialogPane().setContent(gp);
+
+        Button resetButton = (Button) resetDialog.getDialogPane().lookupButton(btnReset);
+        resetButton.disableProperty().bind(
+                txtNew.textProperty().isEmpty()
+                        .or(txtConfirm.textProperty().isEmpty())
+                        .or(txtNew.textProperty().length().lessThan(6))
+                        .or(txtNew.textProperty().isNotEqualTo(txtConfirm.textProperty()))
+        );
+
+        java.util.Optional<ButtonType> resetResult = resetDialog.showAndWait();
+        if (resetResult.isEmpty() || resetResult.get() != btnReset) return;
+
+        boolean ok = DatabaseManager.resetUserPassword(username, txtNew.getText().trim());
+        if (ok) {
+            txtUsername.setText(username);
+            txtPassword.clear();
+            txtPasswordVisible.clear();
+            showResetMessage("Password reset successful. Please sign in.", true);
+        } else {
+            showResetMessage("Failed to reset password. Please try again.", false);
+        }
+    }
+
+    private void showResetMessage(String message, boolean success) {
+        lblStatus.setText(message);
+        lblStatus.setStyle(success
+                ? "-fx-font-size: 12; -fx-text-fill: #2e7d32;"
+                : "-fx-font-size: 12; -fx-text-fill: #c62828;");
     }
 }

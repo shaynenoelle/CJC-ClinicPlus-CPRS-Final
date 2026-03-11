@@ -977,4 +977,18 @@ public class DatabaseManager {
     // ── Utilities ─────────────────────────────────────────────────
     private static String safe(String s) { return s == null ? "" : s.replace("\"", "\"\""); }
     private static String nvl(String s)  { return s == null ? "" : s; }
+
+    // ── FORGOT PASSWORD ───────────────────────────────────────────
+    public static boolean userExists(String username) {
+        String sql = "SELECT 1 FROM Users WHERE username = ? LIMIT 1";
+        try (Connection conn = connect();
+             PreparedStatement p = conn.prepareStatement(sql)) {
+            p.setString(1, username);
+            ResultSet rs = p.executeQuery();
+            return rs.next();
+        } catch (SQLException e) {
+            System.err.println("UserExists Error: " + e.getMessage());
+            return false;
+        }
+    }
 }
