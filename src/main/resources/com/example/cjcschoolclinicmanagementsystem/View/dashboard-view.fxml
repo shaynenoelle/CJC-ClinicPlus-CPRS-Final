@@ -88,9 +88,9 @@
                                            -fx-mark-color: white; -fx-background-radius: 6;
                                            -fx-cursor: hand; -fx-font-size: 11;">
                             <items>
-                                <MenuItem text="Daily"/>
-                                <MenuItem text="Weekly"/>
-                                <MenuItem text="Monthly"/>
+                                <MenuItem text="Daily" onAction="#exportDaily"/>
+                                <MenuItem text="Weekly" onAction="#exportWeekly"/>
+                                <MenuItem text="Monthly" onAction="#exportMonthly"/>
                             </items>
                         </MenuButton>
                         <Button text="⟳ Refresh" onAction="#refreshDashboard"

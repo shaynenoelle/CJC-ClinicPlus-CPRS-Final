@@ -974,6 +974,74 @@ public class DatabaseManager {
         } catch (Exception e) { System.err.println("ExportVisitsCSV Error: " + e.getMessage()); return false; }
     }
 
+    // Dashboard snapshot export (cards + chart data + filtered visit rows)
+    public static boolean exportDashboardToCSV(String filePath, String period) {
+        String normalized = period == null ? "weekly" : period.toLowerCase();
+        String countKey = switch (normalized) {
+            case "daily" -> "today";
+            case "monthly" -> "monthly";
+            default -> "weekly";
+        };
+
+        try (java.io.PrintWriter pw = new java.io.PrintWriter(new java.io.FileWriter(filePath))) {
+            pw.println("Dashboard Export");
+            pw.println("Period," + normalized);
+            pw.println("Generated At," + java.time.LocalDateTime.now());
+            pw.println();
+
+            // Summary cards
+            pw.println("Summary");
+            pw.println("Metric,Value");
+            pw.println("Visits (selected period)," + getVisitCount(countKey));
+            pw.println("Total Patients," + getTotalPatients());
+            pw.println("Unattended Today," + getUnattendedToday());
+            pw.println();
+
+            // Top diagnoses
+            pw.println("Top Diagnoses");
+            pw.println("Diagnosis,Count");
+            java.util.Map<String, Integer> illnesses = getTopIllnesses(normalized);
+            if (illnesses.isEmpty()) pw.println("No data,0");
+            else illnesses.forEach((k, v) -> pw.println("\"" + safe(k) + "\"," + v));
+            pw.println();
+
+            // Purpose chart
+            pw.println("Purpose of Visit");
+            pw.println("Purpose,Count");
+            java.util.Map<String, Integer> purpose = getVisitPurposeCount(normalized);
+            if (purpose.isEmpty()) pw.println("No data,0");
+            else purpose.forEach((k, v) -> pw.println("\"" + safe(k) + "\"," + v));
+            pw.println();
+
+            // College/Dept chart
+            pw.println("Visits by College/Dept");
+            pw.println("College/Dept,Count");
+            java.util.Map<String, Integer> college = getPatientsByCollege();
+            if (college.isEmpty()) pw.println("No data,0");
+            else college.forEach((k, v) -> pw.println("\"" + safe(k) + "\"," + v));
+            pw.println();
+
+            // Underlying rows used for period
+            pw.println("Visit Rows");
+            pw.println("Visit ID,Patient ID,Full Name,Date,Time In,Time Out,Purpose,Diagnosis");
+            for (java.util.Map<String, String> row : getAllVisits(normalized)) {
+                pw.printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"%n",
+                        safe(row.get("visit_id")),
+                        safe(row.get("patient_id")),
+                        safe(row.get("full_name")),
+                        safe(row.get("visit_date")),
+                        safe(row.get("time_in")),
+                        safe(row.get("time_out")),
+                        safe(row.get("purpose")),
+                        safe(row.get("diagnosis")));
+            }
+            return true;
+        } catch (Exception e) {
+            System.err.println("ExportDashboardCSV Error: " + e.getMessage());
+            return false;
+        }
+    }
+
     // ── Utilities ─────────────────────────────────────────────────
     private static String safe(String s) { return s == null ? "" : s.replace("\"", "\"\""); }
     private static String nvl(String s)  { return s == null ? "" : s; }
@@ -992,3 +1060,4 @@ public class DatabaseManager {
         }
     }
 }
+

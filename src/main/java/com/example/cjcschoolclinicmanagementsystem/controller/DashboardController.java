@@ -11,9 +11,13 @@ import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
+import javafx.stage.FileChooser;
+import javafx.stage.Window;
 
 import java.io.IOException;
 import java.net.URL;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
 public class DashboardController {
@@ -262,6 +266,37 @@ public class DashboardController {
     private void onIllnessFilterChanged() {
         String selected = cmbIllnessFilter.getValue();
         if (selected != null) loadIllnessChart(selected.toLowerCase());
+    }
+
+    @FXML private void exportDaily()   { exportDashboardData("daily"); }
+    @FXML private void exportWeekly()  { exportDashboardData("weekly"); }
+    @FXML private void exportMonthly() { exportDashboardData("monthly"); }
+
+    private void exportDashboardData(String period) {
+        Window owner = mainBorderPane != null && mainBorderPane.getScene() != null
+                ? mainBorderPane.getScene().getWindow()
+                : null;
+
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle("Export Dashboard Data");
+        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("CSV files", "*.csv"));
+
+        String stamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmm"));
+        chooser.setInitialFileName("dashboard_" + period + "_" + stamp + ".csv");
+
+        java.io.File selected = chooser.showSaveDialog(owner);
+        if (selected == null) return;
+
+        boolean ok = DatabaseManager.exportDashboardToCSV(selected.getAbsolutePath(), period);
+        if (ok) {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Export Successful");
+            alert.setHeaderText(null);
+            alert.setContentText("Dashboard data exported to:\n" + selected.getAbsolutePath());
+            alert.showAndWait();
+        } else {
+            showError("Export Failed", "Could not export dashboard data.");
+        }
     }
 
     // ── Nav ───────────────────────────────────────────────────────
