@@ -7,15 +7,14 @@
 <VBox spacing="10.0" style="-fx-background-color: #f5f5f5;"
       xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="com.example.cjcschoolclinicmanagementsystem.controller.PatientRegistryController">
-    <padding><Insets bottom="20.0" left="25.0" right="25.0" top="18.0" /></padding>
+    <padding><Insets bottom="16.0" left="18.0" right="18.0" top="14.0" /></padding>
 
     <!-- HEADER ROW -->
     <HBox alignment="CENTER_LEFT" spacing="10.0">
         <VBox spacing="2">
             <Label text="Patient List Record" textFill="#8B0000">
-                <font><Font name="System Bold" size="22.0" /></font>
+                <font><Font name="System Bold" size="20.0" /></font>
             </Label>
-            <!-- School Year inline edit -->
             <HBox spacing="6" alignment="CENTER_LEFT">
                 <Label text="School Year:" style="-fx-font-size: 12; -fx-text-fill: #555;" />
                 <TextField fx:id="txtSchoolYear" prefWidth="110"
@@ -33,46 +32,45 @@
                 text="+ Add Patient" />
     </HBox>
 
-    <!-- SEARCH + FILTER BAR -->
-    <HBox spacing="8.0" alignment="CENTER_LEFT"
-          style="-fx-background-color: white; -fx-border-color: #e0e0e0; -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 10;">
+    <!-- SEARCH + FILTER BAR — wraps on small screens -->
+    <FlowPane hgap="8" vgap="8" alignment="CENTER_LEFT"
+              style="-fx-background-color: white; -fx-border-color: #e0e0e0; -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 10;">
         <TextField fx:id="txtSearch" promptText="🔍  Search by ID or Name..."
-                   prefWidth="240.0" onKeyReleased="#handleSearch"
+                   prefWidth="220.0" onKeyReleased="#handleSearch"
                    style="-fx-border-color: #ccc; -fx-border-radius: 4; -fx-background-radius: 4; -fx-padding: 6;" />
         <Separator orientation="VERTICAL" />
         <Label text="College/Dept:" style="-fx-text-fill: #555; -fx-font-size: 12;" />
-        <ComboBox fx:id="cmbCollege" prefWidth="115" onAction="#handleSearch" style="-fx-font-size: 12;" />
+        <ComboBox fx:id="cmbCollege" prefWidth="110" onAction="#handleSearch" style="-fx-font-size: 12;" />
         <Label text="Type:" style="-fx-text-fill: #555; -fx-font-size: 12;" />
-        <ComboBox fx:id="cmbType" prefWidth="110" onAction="#handleSearch" style="-fx-font-size: 12;" />
+        <ComboBox fx:id="cmbType" prefWidth="100" onAction="#handleSearch" style="-fx-font-size: 12;" />
         <Label text="Year:" style="-fx-text-fill: #555; -fx-font-size: 12;" />
-        <ComboBox fx:id="cmbYear" prefWidth="130" onAction="#handleSearch" style="-fx-font-size: 12;" />
+        <ComboBox fx:id="cmbYear" prefWidth="120" onAction="#handleSearch" style="-fx-font-size: 12;" />
         <Separator orientation="VERTICAL" />
         <Label text="Sort:" style="-fx-text-fill: #555; -fx-font-size: 12;" />
-        <ComboBox fx:id="cmbSort" prefWidth="150" onAction="#handleSearch" style="-fx-font-size: 12;" />
-        <Region HBox.hgrow="ALWAYS" />
+        <ComboBox fx:id="cmbSort" prefWidth="140" onAction="#handleSearch" style="-fx-font-size: 12;" />
         <Button onAction="#clearFilters"
                 style="-fx-background-color: #eee; -fx-text-fill: #555; -fx-font-size: 11; -fx-cursor: hand; -fx-background-radius: 4;"
                 text="✕ Clear" />
-    </HBox>
+    </FlowPane>
 
-    <!-- TABLE — columns matching the clinic Google Sheet -->
+    <!-- TABLE -->
     <TableView fx:id="patientTable" VBox.vgrow="ALWAYS"
                style="-fx-background-color: white; -fx-border-color: #e0e0e0; -fx-border-radius: 6;">
         <columns>
-            <TableColumn fx:id="colID"          prefWidth="120.0" text="Patient ID#" />
-            <TableColumn fx:id="colLastName"    prefWidth="120.0" text="Last Name" />
-            <TableColumn fx:id="colFirstName"   prefWidth="110.0" text="First Name" />
-            <TableColumn fx:id="colMI"          prefWidth="42.0"  text="M.I." />
-            <TableColumn fx:id="colGender"      prefWidth="70.0"  text="Gender" />
-            <TableColumn fx:id="colBirthdate"   prefWidth="100.0" text="Birthdate" />
-            <TableColumn fx:id="colYear"        prefWidth="80.0"  text="Year" />
-            <TableColumn fx:id="colCourse"      prefWidth="110.0" text="Course" />
-            <TableColumn fx:id="colDept"        prefWidth="100.0" text="College/Dept" />
-            <TableColumn fx:id="colType"        prefWidth="85.0"  text="Type" />
-            <TableColumn fx:id="colContact"     prefWidth="120.0" text="Contact No." />
-            <TableColumn fx:id="colMedHistory"  prefWidth="200.0" text="Medical History" />
-            <TableColumn fx:id="colStatus"      prefWidth="80.0"  text="Status" />
-            <TableColumn fx:id="colAction"      prefWidth="270.0" text="Action" />
+            <TableColumn fx:id="colID"          prefWidth="110.0" text="Patient ID#" />
+            <TableColumn fx:id="colLastName"    prefWidth="110.0" text="Last Name" />
+            <TableColumn fx:id="colFirstName"   prefWidth="100.0" text="First Name" />
+            <TableColumn fx:id="colMI"          prefWidth="40.0"  text="M.I." />
+            <TableColumn fx:id="colGender"      prefWidth="65.0"  text="Gender" />
+            <TableColumn fx:id="colBirthdate"   prefWidth="90.0"  text="Birthdate" />
+            <TableColumn fx:id="colYear"        prefWidth="70.0"  text="Year" />
+            <TableColumn fx:id="colCourse"      prefWidth="100.0" text="Course" />
+            <TableColumn fx:id="colDept"        prefWidth="90.0"  text="College/Dept" />
+            <TableColumn fx:id="colType"        prefWidth="80.0"  text="Type" />
+            <TableColumn fx:id="colContact"     prefWidth="110.0" text="Contact No." />
+            <TableColumn fx:id="colMedHistory"  prefWidth="180.0" text="Medical History" />
+            <TableColumn fx:id="colStatus"      prefWidth="72.0"  text="Status" />
+            <TableColumn fx:id="colAction"      prefWidth="260.0" text="Action" />
         </columns>
         <placeholder>
             <Label text="No patients found." style="-fx-text-fill: #aaa; -fx-font-size: 13;" />

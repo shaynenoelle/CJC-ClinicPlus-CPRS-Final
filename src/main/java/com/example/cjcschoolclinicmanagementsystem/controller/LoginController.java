@@ -116,16 +116,29 @@ public class LoginController {
     }
 
     private void switchToDashboard() throws IOException {
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/cjcschoolclinicmanagementsystem/View/dashboard-view.fxml"));
+        FXMLLoader loader = new FXMLLoader(getClass().getResource(
+                "/com/example/cjcschoolclinicmanagementsystem/View/dashboard-view.fxml"));
         Parent root = loader.load();
 
         Stage stage = (Stage) lblStatus.getScene().getWindow();
-        Scene scene = new Scene(root);
 
+        // Get full screen bounds so the scene matches before maximizing
+        javafx.geometry.Rectangle2D screenBounds =
+                javafx.stage.Screen.getPrimary().getVisualBounds();
+
+        Scene scene = new Scene(root, screenBounds.getWidth(), screenBounds.getHeight());
+
+        // Must set maximized = false first to force a state change, then true
+        stage.setMaximized(false);
         stage.setScene(scene);
+        stage.setMinWidth(900);
+        stage.setMinHeight(600);
 
-        // Force Maximize to fill the Dell Latitude screen
-        stage.setMaximized(true);
+        // Use Platform.runLater to guarantee maximize happens after scene is attached
+        javafx.application.Platform.runLater(() -> {
+            stage.setMaximized(true);
+        });
+
         stage.show();
     }
 

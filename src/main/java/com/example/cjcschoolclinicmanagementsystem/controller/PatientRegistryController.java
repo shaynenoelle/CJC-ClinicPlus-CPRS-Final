@@ -52,6 +52,36 @@ public class PatientRegistryController {
         setupFilters();
         loadSchoolYear();
         refreshTable();
+
+        // Bind column widths as percentages of table width — responsive layout
+        javafx.application.Platform.runLater(() -> {
+            if (patientTable.getScene() != null) {
+                bindColumnWidths();
+            } else {
+                patientTable.sceneProperty().addListener((obs, ov, nv) -> {
+                    if (nv != null) bindColumnWidths();
+                });
+            }
+        });
+    }
+
+    private void bindColumnWidths() {
+        javafx.beans.binding.DoubleBinding w = patientTable.widthProperty()
+                .subtract(20); // subtract scrollbar width
+        colID         .prefWidthProperty().bind(w.multiply(0.085));
+        colLastName   .prefWidthProperty().bind(w.multiply(0.085));
+        colFirstName  .prefWidthProperty().bind(w.multiply(0.080));
+        colMI         .prefWidthProperty().bind(w.multiply(0.033));
+        colGender     .prefWidthProperty().bind(w.multiply(0.050));
+        colBirthdate  .prefWidthProperty().bind(w.multiply(0.068));
+        colYear       .prefWidthProperty().bind(w.multiply(0.052));
+        colCourse     .prefWidthProperty().bind(w.multiply(0.075));
+        colDept       .prefWidthProperty().bind(w.multiply(0.068));
+        colType       .prefWidthProperty().bind(w.multiply(0.055));
+        colContact    .prefWidthProperty().bind(w.multiply(0.082));
+        colMedHistory .prefWidthProperty().bind(w.multiply(0.125));
+        colStatus     .prefWidthProperty().bind(w.multiply(0.055));
+        colAction     .prefWidthProperty().bind(w.multiply(0.187));
     }
 
     // ── School Year inline edit ───────────────────────────────────
@@ -293,7 +323,12 @@ public class PatientRegistryController {
             Stage stage = new Stage();
             stage.setTitle("Add New Patient");
             stage.initModality(Modality.APPLICATION_MODAL);
-            stage.setScene(new Scene(loader.load()));
+            javafx.geometry.Rectangle2D screen = javafx.stage.Screen.getPrimary().getVisualBounds();
+            double w = Math.min(860, screen.getWidth() * 0.80);
+            double h = Math.min(720, screen.getHeight() * 0.88);
+            stage.setScene(new Scene(loader.load(), w, h));
+            stage.setMinWidth(620);
+            stage.setMinHeight(560);
             stage.setResizable(true);
             stage.showAndWait();
             refreshTable();
@@ -310,7 +345,12 @@ public class PatientRegistryController {
             Stage stage = new Stage();
             stage.setTitle("Edit Patient — " + patient.getName());
             stage.initModality(Modality.APPLICATION_MODAL);
-            stage.setScene(new Scene(loader.load()));
+            javafx.geometry.Rectangle2D screen = javafx.stage.Screen.getPrimary().getVisualBounds();
+            double w = Math.min(860, screen.getWidth() * 0.80);
+            double h = Math.min(720, screen.getHeight() * 0.88);
+            stage.setScene(new Scene(loader.load(), w, h));
+            stage.setMinWidth(620);
+            stage.setMinHeight(560);
             stage.setResizable(true);
             AddPatientController ctrl = loader.getController();
             ctrl.loadPatientForEdit(patient);

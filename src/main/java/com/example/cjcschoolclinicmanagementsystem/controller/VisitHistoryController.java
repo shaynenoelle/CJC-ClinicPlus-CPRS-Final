@@ -56,6 +56,26 @@ public class VisitHistoryController {
     public void initialize() {
         setupTable();
         refreshTable();
+
+        // Bind column widths as % of table — responsive
+        javafx.application.Platform.runLater(() -> {
+            if (tblVisits.getScene() != null) bindColumnWidths();
+            else tblVisits.sceneProperty().addListener((obs, ov, nv) -> {
+                if (nv != null) bindColumnWidths();
+            });
+        });
+    }
+
+    private void bindColumnWidths() {
+        javafx.beans.binding.DoubleBinding w = tblVisits.widthProperty().subtract(20);
+        colDate      .prefWidthProperty().bind(w.multiply(0.10));
+        colPatientId .prefWidthProperty().bind(w.multiply(0.11));
+        colName      .prefWidthProperty().bind(w.multiply(0.18));
+        colTimeIn    .prefWidthProperty().bind(w.multiply(0.08));
+        colTimeOut   .prefWidthProperty().bind(w.multiply(0.08));
+        colPurpose   .prefWidthProperty().bind(w.multiply(0.11));
+        colDiagnosis .prefWidthProperty().bind(w.multiply(0.18));
+        colAction    .prefWidthProperty().bind(w.multiply(0.16));
     }
 
     private void setupTable() {

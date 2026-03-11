@@ -11,18 +11,18 @@
       xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="com.example.cjcschoolclinicmanagementsystem.controller.LoginController">
 
-    <!-- LEFT SIDE: Branding -->
+    <!-- LEFT SIDE: Branding — grows to fill available space -->
     <VBox alignment="CENTER"
           style="-fx-background-color: #f0f4f8;"
           HBox.hgrow="ALWAYS"
           maxWidth="Infinity">
         <padding>
-            <Insets bottom="60" left="60" right="60" top="60"/>
+            <Insets bottom="40" left="40" right="40" top="40"/>
         </padding>
 
-        <VBox alignment="CENTER" spacing="24">
+        <VBox alignment="CENTER" spacing="20">
 
-            <ImageView fitHeight="150" fitWidth="150"
+            <ImageView fitHeight="130" fitWidth="130"
                        pickOnBounds="true" preserveRatio="true">
                 <image>
                     <Image url="@../Images/cliniclogov3.png"/>
@@ -32,28 +32,28 @@
             <!-- CJC-Clinic+ name -->
             <HBox alignment="CENTER" spacing="0">
                 <Label text="CJC-Clinic" textFill="#c41e3a"
-                       style="-fx-font-size: 38; -fx-font-weight: bold;"/>
+                       style="-fx-font-size: 34; -fx-font-weight: bold;"/>
                 <Label text="+" textFill="#c41e3a"
-                       style="-fx-font-size: 24; -fx-font-weight: bold;
-                              -fx-padding: 0 0 16 2;"/>
+                       style="-fx-font-size: 22; -fx-font-weight: bold;
+                              -fx-padding: 0 0 14 2;"/>
             </HBox>
 
             <Label text="Clinic Patient Records System"
                    textFill="#5a6c7d"
-                   style="-fx-font-size: 16;"/>
+                   style="-fx-font-size: 15;"/>
 
-            <Separator maxWidth="300"/>
+            <Separator maxWidth="280"/>
 
             <Label fx:id="taglineLabel"
                    text="Golden Heart. Healing Hands."
                    textFill="#7f8c8d"
                    wrapText="true"
-                   maxWidth="340"
+                   maxWidth="320"
                    alignment="CENTER"
                    textAlignment="CENTER"
-                   style="-fx-font-size: 15; -fx-font-weight: bold;
-              -fx-text-alignment: CENTER; -fx-opacity: 0.0;">
-                <font><Font name="System Bold" size="15"/></font>
+                   style="-fx-font-size: 14; -fx-font-weight: bold;
+                          -fx-text-alignment: CENTER; -fx-opacity: 0.0;">
+                <font><Font name="System Bold" size="14"/></font>
             </Label>
 
             <!-- Developer Credits -->
@@ -62,7 +62,7 @@
                    alignment="CENTER"
                    textAlignment="CENTER"
                    wrapText="true"
-                   maxWidth="340"
+                   maxWidth="320"
                    style="-fx-font-size: 10; -fx-font-style: italic;"/>
             <Label text="BSCS-3 | Software Engineering 1 | S.Y. 2025-2026"
                    textFill="#cccccc"
@@ -73,25 +73,25 @@
         </VBox>
     </VBox>
 
-    <!-- RIGHT SIDE: Login Form -->
-    <VBox alignment="CENTER" spacing="22"
+    <!-- RIGHT SIDE: Login Form — grows to fill available space -->
+    <VBox alignment="CENTER" spacing="18"
           style="-fx-background-color: linear-gradient(to bottom, #f8f9fa 0%, #ffffff 100%);"
           HBox.hgrow="ALWAYS"
           maxWidth="Infinity">
         <padding>
-            <Insets bottom="60" left="70" right="70" top="60"/>
+            <Insets bottom="40" left="50" right="50" top="40"/>
         </padding>
 
         <Label text="Sign In" textFill="#c41e3a">
-            <font><Font name="System Bold" size="32"/></font>
+            <font><Font name="System Bold" size="28"/></font>
         </Label>
 
         <Label text="Access your patient information"
                textFill="#666666"
-               style="-fx-font-size: 14;"/>
+               style="-fx-font-size: 13;"/>
 
-        <VBox alignment="CENTER" spacing="14"
-              style="-fx-padding: 35;
+        <VBox alignment="CENTER" spacing="12"
+              style="-fx-padding: 28;
                      -fx-background-color: white;
                      -fx-border-color: #e0e0e0;
                      -fx-border-radius: 10;
@@ -101,37 +101,29 @@
 
             <!-- USERNAME -->
             <Label text="Username" textFill="#333333"
-                   style="-fx-font-weight: bold; -fx-font-size: 13;"/>
+                   style="-fx-font-weight: bold; -fx-font-size: 13;" maxWidth="Infinity"/>
             <TextField fx:id="txtUsername"
                        promptText="Enter your username"
-                       prefHeight="46" prefWidth="380"
-                       style="-fx-background-radius: 6;
-                              -fx-border-color: #e0e0e0;
-                              -fx-border-radius: 6;
-                              -fx-padding: 10 12 10 12;
-                              -fx-font-size: 14;"/>
+                       maxWidth="Infinity"
+                       prefHeight="44"
+                       style="-fx-background-radius: 6; -fx-border-color: #e0e0e0;
+                              -fx-border-radius: 6; -fx-padding: 10 12 10 12; -fx-font-size: 13;"/>
 
             <!-- PASSWORD -->
             <Label text="Password" textFill="#333333"
-                   style="-fx-font-weight: bold; -fx-font-size: 13;"/>
-            <StackPane prefWidth="380" maxWidth="380">
+                   style="-fx-font-weight: bold; -fx-font-size: 13;" maxWidth="Infinity"/>
+            <StackPane maxWidth="Infinity">
                 <PasswordField fx:id="txtPassword"
                                promptText="Enter your password"
-                               prefHeight="46" prefWidth="380"
-                               style="-fx-background-radius: 6;
-                                      -fx-border-color: #e0e0e0;
-                                      -fx-border-radius: 6;
-                                      -fx-padding: 10 46 10 12;
-                                      -fx-font-size: 14;"/>
+                               prefHeight="44" maxWidth="Infinity"
+                               style="-fx-background-radius: 6; -fx-border-color: #e0e0e0;
+                                      -fx-border-radius: 6; -fx-padding: 10 46 10 12; -fx-font-size: 13;"/>
                 <TextField fx:id="txtPasswordVisible"
                            promptText="Enter your password"
-                           prefHeight="46" prefWidth="380"
+                           prefHeight="44" maxWidth="Infinity"
                            visible="false" managed="false"
-                           style="-fx-background-radius: 6;
-                                  -fx-border-color: #e0e0e0;
-                                  -fx-border-radius: 6;
-                                  -fx-padding: 10 46 10 12;
-                                  -fx-font-size: 14;"/>
+                           style="-fx-background-radius: 6; -fx-border-color: #e0e0e0;
+                                  -fx-border-radius: 6; -fx-padding: 10 46 10 12; -fx-font-size: 13;"/>
                 <!-- Eye icon -->
                 <Label fx:id="btnTogglePassword"
                        text="👁"
@@ -145,23 +137,19 @@
             </StackPane>
 
             <!-- REMEMBER ME -->
-            <HBox alignment="CENTER_LEFT" prefWidth="380">
+            <HBox alignment="CENTER_LEFT" maxWidth="Infinity">
                 <CheckBox fx:id="chkRemember"
                           text="Remember me"
                           style="-fx-font-size: 13; -fx-text-fill: #555;"/>
             </HBox>
 
             <!-- SIGN IN BUTTON -->
-            <Button maxWidth="Infinity" prefHeight="50"
+            <Button maxWidth="Infinity" prefHeight="46"
                     onAction="#onLoginClick"
                     text="SIGN IN"
                     style="-fx-background-color: linear-gradient(to right, #c41e3a, #d63856);
-                           -fx-text-fill: white;
-                           -fx-font-weight: bold;
-                           -fx-cursor: hand;
-                           -fx-font-size: 15;
-                           -fx-border-radius: 6;
-                           -fx-background-radius: 6;"/>
+                           -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;
+                           -fx-font-size: 14; -fx-border-radius: 6; -fx-background-radius: 6;"/>
 
             <Label fx:id="lblStatus" textFill="RED"
                    style="-fx-font-size: 12;"/>
@@ -169,7 +157,7 @@
 
         <Label text="© 2026 Cor Jesu College Clinic"
                textFill="#999999">
-            <font><Font size="12"/></font>
+            <font><Font size="11"/></font>
         </Label>
     </VBox>
 

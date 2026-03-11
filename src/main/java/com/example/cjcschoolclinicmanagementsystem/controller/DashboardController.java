@@ -1,12 +1,14 @@
 package com.example.cjcschoolclinicmanagementsystem.controller;
 
 import com.example.cjcschoolclinicmanagementsystem.database.DatabaseManager;
+import javafx.beans.binding.Bindings;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.chart.*;
 import javafx.scene.control.*;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 
@@ -17,6 +19,10 @@ import java.util.Map;
 public class DashboardController {
 
     @FXML private BorderPane mainBorderPane;
+    @FXML private VBox       sidebar;
+    @FXML private ImageView  logoImg;
+    @FXML private Label      lblClinicName;
+    @FXML private Label      lblDashboardTitle;
     @FXML private MenuButton btnExport;
     private javafx.scene.Node dashboardCenter;
 
@@ -61,7 +67,47 @@ public class DashboardController {
                 btnExport.lookupAll(".arrow").forEach(n ->
                         n.setStyle("-fx-background-color: white;"));
             }
+            // Attach responsive bindings after scene is available
+            setupResponsiveBindings();
         });
+    }
+
+    /**
+     * Binds sidebar width, logo size, and label visibility to the window width.
+     * At &lt;1100 px the sidebar collapses to icon-only mode (80 px).
+     */
+    private void setupResponsiveBindings() {
+        if (mainBorderPane.getScene() == null) return;
+
+        javafx.scene.Scene scene = mainBorderPane.getScene();
+
+        // Sidebar width: 20% of window, clamped between 80 and 260
+        sidebar.prefWidthProperty().bind(
+                Bindings.createDoubleBinding(
+                        () -> Math.max(80, Math.min(260, scene.getWidth() * 0.18)),
+                        scene.widthProperty()));
+
+        // Clinic name: hide on narrow screens
+        lblClinicName.visibleProperty().bind(
+                Bindings.createBooleanBinding(
+                        () -> scene.getWidth() >= 960, scene.widthProperty()));
+        lblClinicName.managedProperty().bind(lblClinicName.visibleProperty());
+
+        // Logo scales with sidebar
+        logoImg.fitWidthProperty().bind(
+                Bindings.createDoubleBinding(
+                        () -> scene.getWidth() < 960 ? 32.0 : 48.0,
+                        scene.widthProperty()));
+        logoImg.fitHeightProperty().bind(logoImg.fitWidthProperty());
+
+        // Dashboard title font size: fluid between 16 and 22
+        lblDashboardTitle.styleProperty().bind(
+                Bindings.createStringBinding(
+                        () -> {
+                            double fs = Math.max(16, Math.min(22, scene.getWidth() * 0.018));
+                            return "-fx-font-size: " + fs + "; -fx-font-weight: bold; -fx-text-fill: #8B0000;";
+                        },
+                        scene.widthProperty()));
     }
 
     private void setupFilters() {
@@ -245,10 +291,15 @@ public class DashboardController {
             Parent root = loader.load();
             javafx.stage.Stage stage = new javafx.stage.Stage();
             stage.setTitle("Settings");
-            stage.setScene(new javafx.scene.Scene(root));
+            javafx.geometry.Rectangle2D screen =
+                    javafx.stage.Screen.getPrimary().getVisualBounds();
+            double w = Math.min(960, screen.getWidth()  * 0.82);
+            double h = Math.min(740, screen.getHeight() * 0.88);
+            stage.setScene(new javafx.scene.Scene(root, w, h));
+            stage.setMinWidth(760);
+            stage.setMinHeight(580);
+            stage.setResizable(true);
             stage.initModality(javafx.stage.Modality.APPLICATION_MODAL);
-            stage.setWidth(900);
-            stage.setHeight(700);
             stage.showAndWait();
         } catch (Exception e) {
             showError("Error", "Failed to open settings:\n" + e.getMessage());

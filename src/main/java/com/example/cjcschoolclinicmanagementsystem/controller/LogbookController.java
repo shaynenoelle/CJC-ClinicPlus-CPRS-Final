@@ -81,6 +81,24 @@ public class LogbookController {
         setupLogbookTable();
         setCurrentTime();
         refreshLogbook();
+
+        // Bind logbook table column widths as percentages — responsive
+        javafx.application.Platform.runLater(() -> {
+            if (tblLogbook.getScene() != null) bindLogbookColumns();
+            else tblLogbook.sceneProperty().addListener((obs, ov, nv) -> {
+                if (nv != null) bindLogbookColumns();
+            });
+        });
+    }
+
+    private void bindLogbookColumns() {
+        javafx.beans.binding.DoubleBinding w = tblLogbook.widthProperty().subtract(18);
+        colId      .prefWidthProperty().bind(w.multiply(0.14));
+        colName    .prefWidthProperty().bind(w.multiply(0.24));
+        colTimeIn  .prefWidthProperty().bind(w.multiply(0.12));
+        colPurpose .prefWidthProperty().bind(w.multiply(0.16));
+        colTimeOut .prefWidthProperty().bind(w.multiply(0.12));
+        colAction  .prefWidthProperty().bind(w.multiply(0.22));
     }
 
     // ── Search table ──────────────────────────────────────────────
@@ -238,7 +256,14 @@ public class LogbookController {
 
             Stage stage = new Stage();
             stage.setTitle("Attend — " + visitRow.get("full_name"));
-            stage.setScene(new Scene(root));
+            javafx.geometry.Rectangle2D screen =
+                    javafx.stage.Screen.getPrimary().getVisualBounds();
+            double w = Math.min(780, screen.getWidth()  * 0.72);
+            double h = Math.min(660, screen.getHeight() * 0.85);
+            stage.setScene(new Scene(root, w, h));
+            stage.setMinWidth(600);
+            stage.setMinHeight(500);
+            stage.setResizable(true);
             stage.initModality(Modality.APPLICATION_MODAL);
             stage.showAndWait();
 

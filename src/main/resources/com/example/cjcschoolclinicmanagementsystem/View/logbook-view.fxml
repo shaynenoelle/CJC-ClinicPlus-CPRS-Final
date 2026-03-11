@@ -16,69 +16,54 @@
                  -fx-border-color: #e0e0e0;
                  -fx-border-width: 0 0 1 0;"
           alignment="CENTER_LEFT">
-        <padding><Insets top="20" bottom="20" left="30" right="30"/></padding>
+        <padding><Insets top="16" bottom="16" left="24" right="24"/></padding>
         <VBox HBox.hgrow="ALWAYS">
             <Label text="Services Logbook"
-                   style="-fx-font-size: 22; -fx-font-weight: bold; -fx-text-fill: #8B0000;"/>
+                   style="-fx-font-size: 20; -fx-font-weight: bold; -fx-text-fill: #8B0000;"/>
             <Label text="Check-in patients and manage today's visitors"
-                   style="-fx-font-size: 12; -fx-text-fill: #888888;"/>
+                   style="-fx-font-size: 11; -fx-text-fill: #888888;"/>
         </VBox>
 
-        <!-- Date filter buttons + custom range -->
-        <HBox spacing="8" alignment="CENTER_RIGHT">
+        <!-- Date filter buttons — wraps on small screens -->
+        <FlowPane hgap="6" vgap="6" alignment="CENTER_RIGHT">
             <Button fx:id="btnToday" text="Today"
                     onAction="#filterToday"
-                    style="-fx-background-color: #8B0000;
-                           -fx-text-fill: white;
-                           -fx-background-radius: 20;
-                           -fx-cursor: hand;
-                           -fx-font-size: 12;"/>
+                    style="-fx-background-color: #8B0000; -fx-text-fill: white;
+                           -fx-background-radius: 20; -fx-cursor: hand; -fx-font-size: 12;"/>
             <Button fx:id="btnWeekly" text="Weekly"
                     onAction="#filterWeekly"
-                    style="-fx-background-color: #e0e0e0;
-                           -fx-text-fill: #555;
-                           -fx-background-radius: 20;
-                           -fx-cursor: hand;
-                           -fx-font-size: 12;"/>
+                    style="-fx-background-color: #e0e0e0; -fx-text-fill: #555;
+                           -fx-background-radius: 20; -fx-cursor: hand; -fx-font-size: 12;"/>
             <Button fx:id="btnMonthly" text="Monthly"
                     onAction="#filterMonthly"
-                    style="-fx-background-color: #e0e0e0;
-                           -fx-text-fill: #555;
-                           -fx-background-radius: 20;
-                           -fx-cursor: hand;
-                           -fx-font-size: 12;"/>
+                    style="-fx-background-color: #e0e0e0; -fx-text-fill: #555;
+                           -fx-background-radius: 20; -fx-cursor: hand; -fx-font-size: 12;"/>
             <Button fx:id="btnAll" text="All"
                     onAction="#filterAll"
-                    style="-fx-background-color: #e0e0e0;
-                           -fx-text-fill: #555;
-                           -fx-background-radius: 20;
-                           -fx-cursor: hand;
-                           -fx-font-size: 12;"/>
+                    style="-fx-background-color: #e0e0e0; -fx-text-fill: #555;
+                           -fx-background-radius: 20; -fx-cursor: hand; -fx-font-size: 12;"/>
             <Separator orientation="VERTICAL" opacity="0.3"/>
             <Label text="From:" style="-fx-font-size: 12; -fx-text-fill: #555;"/>
-            <DatePicker fx:id="dpFrom" prefWidth="130" prefHeight="32"/>
+            <DatePicker fx:id="dpFrom" prefWidth="130" prefHeight="30"/>
             <Label text="To:" style="-fx-font-size: 12; -fx-text-fill: #555;"/>
-            <DatePicker fx:id="dpTo" prefWidth="130" prefHeight="32"/>
+            <DatePicker fx:id="dpTo" prefWidth="130" prefHeight="30"/>
             <Button text="Apply" onAction="#filterCustomRange"
-                    style="-fx-background-color: #555;
-                           -fx-text-fill: white;
-                           -fx-background-radius: 6;
-                           -fx-cursor: hand;
-                           -fx-font-size: 12;"/>
-        </HBox>
+                    style="-fx-background-color: #555; -fx-text-fill: white;
+                           -fx-background-radius: 6; -fx-cursor: hand; -fx-font-size: 12;"/>
+        </FlowPane>
     </HBox>
 
     <HBox spacing="16" VBox.vgrow="ALWAYS">
-        <padding><Insets top="20" bottom="20" left="24" right="24"/></padding>
+        <padding><Insets top="16" bottom="16" left="18" right="18"/></padding>
 
-        <!-- LEFT: Check-in panel -->
-        <VBox spacing="14" prefWidth="380"
+        <!-- LEFT: Check-in panel — fluid width, collapses gracefully -->
+        <VBox spacing="14" minWidth="280" prefWidth="340" maxWidth="400"
               style="-fx-background-color: white;
                      -fx-background-radius: 10;
                      -fx-border-color: #e0e0e0;
                      -fx-border-radius: 10;
                      -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 8, 0, 0, 2);">
-            <padding><Insets top="24" bottom="24" left="24" right="24"/></padding>
+            <padding><Insets top="20" bottom="20" left="20" right="20"/></padding>
 
             <Label text="Check-in Patient"
                    style="-fx-font-size: 16; -fx-font-weight: bold; -fx-text-fill: #333;"/>
@@ -237,9 +222,6 @@
                     <TableColumn fx:id="colTimeOut" text="Time Out"   prefWidth="80"/>
                     <TableColumn fx:id="colAction"  text="Action"     prefWidth="160"/>
                 </columns>
-                <columnResizePolicy>
-                    <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
-                </columnResizePolicy>
             </TableView>
 
             <!-- Pagination bar -->
