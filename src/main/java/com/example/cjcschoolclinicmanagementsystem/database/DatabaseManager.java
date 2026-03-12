@@ -774,6 +774,119 @@ public class DatabaseManager {
         return map;
     }
 
+    /**
+     * Returns visit counts grouped by college/dept for a given period.
+     * This is different from getPatientsByCollege() which counts registered
+     * patients — this counts actual VISITS joined to the patient's dept.
+     *
+     * Period values: "daily", "weekly", "monthly"
+     */
+    public static java.util.Map<String, Integer> getVisitsByCollegePeriod(String period) {
+        String condition = switch (period.toLowerCase()) {
+            case "daily"   -> "AND v.visit_date = DATE('now')";
+            case "monthly" -> "AND v.visit_date >= DATE('now', '-30 days')";
+            default        -> "AND v.visit_date >= DATE('now', '-7 days')";
+        };
+        java.util.Map<String, Integer> map = new java.util.LinkedHashMap<>();
+        // Students — grouped by course_dept
+        String sql = "SELECT p.course_dept, COUNT(*) as cnt " +
+                "FROM Visits v JOIN Patients p ON v.patient_id = p.patient_id " +
+                "WHERE (p.type IS NULL OR p.type != 'Employee') " + condition +
+                " GROUP BY p.course_dept ORDER BY cnt DESC";
+        try (Connection conn = connect();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            while (rs.next())
+                map.put(nvl(rs.getString("course_dept")), rs.getInt("cnt"));
+        } catch (SQLException e) {
+            System.err.println("VisitsByCollegePeriod Error: " + e.getMessage());
+        }
+        // Employees — counted separately
+        String empSql = "SELECT COUNT(*) FROM Visits v " +
+                "JOIN Patients p ON v.patient_id = p.patient_id " +
+                "WHERE p.type = 'Employee' " + condition;
+        try (Connection conn = connect();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(empSql)) {
+            if (rs.next()) {
+                int cnt = rs.getInt(1);
+                if (cnt > 0) map.put("Employees", cnt);
+            }
+        } catch (SQLException e) {
+            System.err.println("VisitsByCollegePeriod Emp Error: " + e.getMessage());
+        }
+        return map;
+    }
+
+    /**
+     * Returns a time-series of visit counts for the trend line chart.
+     *
+     * - "daily"   → counts per hour (00–23) for today
+     * - "weekly"  → counts per week label (W-7 … W-now) over past 8 weeks
+     * - "monthly" → counts per month (Jan–Dec) for the current year
+     */
+    public static java.util.Map<String, Integer> getVisitTrendByPeriod(String period) {
+        java.util.Map<String, Integer> map = new java.util.LinkedHashMap<>();
+        try (Connection conn = connect()) {
+            switch (period.toLowerCase()) {
+
+                case "daily": {
+                    // Hours 00–23 today
+                    String sql = "SELECT strftime('%H', time_in) as hr, COUNT(*) as cnt " +
+                            "FROM Visits WHERE visit_date = DATE('now') " +
+                            "AND time_in IS NOT NULL AND time_in != '' " +
+                            "GROUP BY hr ORDER BY hr ASC";
+                    try (Statement s = conn.createStatement(); ResultSet rs = s.executeQuery(sql)) {
+                        while (rs.next()) {
+                            String hr = rs.getString("hr");
+                            map.put(hr != null ? hr + ":00" : "?", rs.getInt("cnt"));
+                        }
+                    }
+                    break;
+                }
+
+                case "monthly": {
+                    // Jan–Dec this year
+                    String sql = "SELECT strftime('%m', visit_date) as mo, COUNT(*) as cnt " +
+                            "FROM Visits WHERE strftime('%Y', visit_date) = strftime('%Y', 'now') " +
+                            "GROUP BY mo ORDER BY mo ASC";
+                    try (Statement s = conn.createStatement(); ResultSet rs = s.executeQuery(sql)) {
+                        while (rs.next()) {
+                            String mo = rs.getString("mo");
+                            String name = switch (mo != null ? mo : "") {
+                                case "01"->"Jan"; case "02"->"Feb"; case "03"->"Mar";
+                                case "04"->"Apr"; case "05"->"May"; case "06"->"Jun";
+                                case "07"->"Jul"; case "08"->"Aug"; case "09"->"Sep";
+                                case "10"->"Oct"; case "11"->"Nov"; case "12"->"Dec";
+                                default -> mo;
+                            };
+                            map.put(name, rs.getInt("cnt"));
+                        }
+                    }
+                    break;
+                }
+
+                default: { // weekly — 8-week window
+                    for (int i = 7; i >= 0; i--) {
+                        String lbl      = (i == 0) ? "W-now" : "W-" + i;
+                        int daysStart   = (i + 1) * 7;
+                        int daysEnd     = i * 7;
+                        String sql = "SELECT COUNT(*) FROM Visits " +
+                                "WHERE visit_date >= DATE('now', '-" + daysStart + " days') " +
+                                "AND visit_date < DATE('now', '-" + daysEnd + " days')";
+                        try (Statement s = conn.createStatement(); ResultSet rs = s.executeQuery(sql)) {
+                            map.put(lbl, rs.next() ? rs.getInt(1) : 0);
+                        }
+                    }
+                    break;
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("VisitTrendByPeriod Error: " + e.getMessage());
+        }
+        return map;
+    }
+
     public static java.util.Map<String, Integer> getVisitPurposeCount() {
         return getVisitPurposeCount("all");
     }

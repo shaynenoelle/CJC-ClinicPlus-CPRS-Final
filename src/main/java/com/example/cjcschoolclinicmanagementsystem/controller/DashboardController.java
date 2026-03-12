@@ -52,8 +52,14 @@ public class DashboardController {
     @FXML private BarChart<String, Number>   chartCollege;
     @FXML private PieChart                   chartPurpose;
 
-    // ── Filters ───────────────────────────────────────────────────
-    @FXML private ComboBox<String> cmbIllnessFilter;
+    // ── UNIFIED period filter (controls Rows 2 & 3) ───────────────
+    @FXML private ComboBox<String> cmbPeriod;
+
+    // ── Chart subtitle labels (update when period changes) ────────
+    @FXML private Label lblIllnessSubtitle;
+    @FXML private Label lblTrendSubtitle;
+    @FXML private Label lblCollegeSubtitle;
+    @FXML private Label lblPurposeSubtitle;
 
     // ── College color palette ─────────────────────────────────────
     private static final String[] COLLEGE_ORDER  =
@@ -66,7 +72,7 @@ public class DashboardController {
     private static final String NAV_DEFAULT =
             "-fx-background-color: transparent; -fx-text-fill: white;" +
                     "-fx-alignment: BASELINE_LEFT; -fx-cursor: hand;" +
-                    "-fx-font-size: 13; -fx-font-weight: bold;" +
+                    "-fx-font-size: 13; -fx-font-weight: normal;" +
                     "-fx-background-radius: 8; -fx-padding: 10 12 10 12;";
 
     // Active: white/light-gray bg, dark-red text
@@ -151,18 +157,45 @@ public class DashboardController {
 
     // ── Filters ───────────────────────────────────────────────────
     private void setupFilters() {
-        cmbIllnessFilter.setItems(FXCollections.observableArrayList("Daily", "Weekly", "Monthly"));
-        cmbIllnessFilter.setValue("Weekly");
+        cmbPeriod.setItems(FXCollections.observableArrayList("Daily", "Weekly", "Monthly"));
+        cmbPeriod.setValue("Weekly");
+    }
+
+    /** Returns lowercase period string from the unified dropdown. */
+    private String currentPeriod() {
+        String v = cmbPeriod.getValue();
+        return v != null ? v.toLowerCase() : "weekly";
+    }
+
+    /** Human-readable label for chart subtitles. */
+    private String periodLabel() {
+        return switch (currentPeriod()) {
+            case "daily"   -> "Today";
+            case "monthly" -> "This Month";
+            default        -> "This Week";
+        };
     }
 
     // ── Master load ───────────────────────────────────────────────
     private void loadDashboard() {
+        loadStatCards();   // Row 1 — always fixed, never filtered
+        loadCharts();      // Rows 2 & 3 — driven by cmbPeriod
+    }
+
+    // ── ROW 1: Stat cards — fixed, never affected by period ───────
+    private void loadStatCards() {
         loadCountCards();
         loadTotalPatients();
-        loadIllnessChart("weekly");
-        loadIllnessTrendChart();
-        loadCollegeBarChart();
-        loadPurposeChart();
+    }
+
+    // ── Rows 2 & 3: all four charts — driven by unified dropdown ──
+    private void loadCharts() {
+        String period = currentPeriod();
+        String label  = periodLabel();
+        loadIllnessChart(period, label);
+        loadIllnessTrendChart(period, label);
+        loadCollegeBarChart(period, label);
+        loadPurposeChart(period, label);
     }
 
     // ── ROW 1: Stat cards ─────────────────────────────────────────
@@ -188,8 +221,9 @@ public class DashboardController {
     }
 
     // ── ROW 2: Illness charts ─────────────────────────────────────
-    private void loadIllnessChart(String period) {
+    private void loadIllnessChart(String period, String label) {
         chartIllnesses.getData().clear();
+        lblIllnessSubtitle.setText("Most frequent diagnoses — " + label);
 
         XYChart.Series<String, Number> series = new XYChart.Series<>();
         series.setName("Diagnoses");
@@ -211,19 +245,27 @@ public class DashboardController {
                         node.setStyle("-fx-background-color: #8B0000; -fx-background-radius: 3;")));
     }
 
-    private void loadIllnessTrendChart() {
+    private void loadIllnessTrendChart(String period, String label) {
         chartMonthly.getData().clear();
 
-        Map<String, Integer> weeklyData = DatabaseManager.getVisitsByMonth();
+        String subtitleDetail = switch (period) {
+            case "daily"   -> "Hourly visits today";
+            case "monthly" -> "Monthly visits this year";
+            default        -> "Weekly visits over the past 8 weeks";
+        };
+        lblTrendSubtitle.setText(subtitleDetail);
+        ((CategoryAxis) chartMonthly.getXAxis()).setLabel(
+                switch (period) { case "daily" -> "Hour"; case "monthly" -> "Month"; default -> "Week"; });
+
+        Map<String, Integer> data = DatabaseManager.getVisitTrendByPeriod(period);
 
         XYChart.Series<String, Number> series = new XYChart.Series<>();
-        series.setName("Total Visits");
+        series.setName("Visits — " + label);
 
-        if (weeklyData.isEmpty()) {
+        if (data.isEmpty()) {
             series.getData().add(new XYChart.Data<>("No data", 0));
         } else {
-            weeklyData.forEach((month, count) ->
-                    series.getData().add(new XYChart.Data<>(month, count)));
+            data.forEach((k, v) -> series.getData().add(new XYChart.Data<>(k, v)));
         }
         chartMonthly.getData().add(series);
 
@@ -233,10 +275,12 @@ public class DashboardController {
     }
 
     // ── ROW 3: College bar chart ──────────────────────────────────
-    private void loadCollegeBarChart() {
+    private void loadCollegeBarChart(String period, String label) {
         chartCollege.getData().clear();
+        vboxCollegeBreakdown.getChildren().clear();
+        lblCollegeSubtitle.setText("Visits by department — " + label);
 
-        Map<String, Integer> data = DatabaseManager.getPatientsByCollege();
+        Map<String, Integer> data = DatabaseManager.getVisitsByCollegePeriod(period);
 
         for (int i = 0; i < COLLEGE_ORDER.length; i++) {
             String college = COLLEGE_ORDER[i];
@@ -251,19 +295,29 @@ public class DashboardController {
             final String c   = color;
             final int    idx = i;
             javafx.application.Platform.runLater(() -> {
-                chartCollege.getData().get(idx).getData().forEach(d -> {
-                    if (d.getNode() != null)
-                        d.getNode().setStyle("-fx-background-color: " + c +
-                                "; -fx-background-radius: 3;");
-                });
+                if (idx < chartCollege.getData().size()) {
+                    chartCollege.getData().get(idx).getData().forEach(d -> {
+                        if (d.getNode() != null)
+                            d.getNode().setStyle("-fx-background-color: " + c +
+                                    "; -fx-background-radius: 3;");
+                    });
+                }
             });
+
+            // Breakdown text below chart (only depts with visits)
+            if (count > 0) {
+                Label lbl = new Label(college + ": " + count);
+                lbl.setStyle("-fx-font-size: 10; -fx-text-fill: #666;");
+                vboxCollegeBreakdown.getChildren().add(lbl);
+            }
         }
     }
 
     // ── Purpose pie ───────────────────────────────────────────────
-    private void loadPurposeChart() {
+    private void loadPurposeChart(String period, String label) {
         chartPurpose.getData().clear();
-        Map<String, Integer> data = DatabaseManager.getVisitPurposeCount();
+        lblPurposeSubtitle.setText("Health-Related vs Med Cert — " + label);
+        Map<String, Integer> data = DatabaseManager.getVisitPurposeCount(period);
         if (data.isEmpty()) {
             chartPurpose.getData().add(new PieChart.Data("No data yet", 1));
             return;
@@ -276,10 +330,10 @@ public class DashboardController {
     // ── FXML event handlers ───────────────────────────────────────
     @FXML private void refreshDashboard() { loadDashboard(); }
 
+    /** Called when the unified period dropdown changes — reloads only Rows 2 & 3. */
     @FXML
-    private void onIllnessFilterChanged() {
-        String selected = cmbIllnessFilter.getValue();
-        if (selected != null) loadIllnessChart(selected.toLowerCase());
+    private void onPeriodChanged() {
+        loadCharts();   // Row 1 stat cards intentionally NOT reloaded
     }
 
     @FXML private void exportDaily()   { exportDashboardData("daily"); }
@@ -287,6 +341,15 @@ public class DashboardController {
     @FXML private void exportMonthly() { exportDashboardData("monthly"); }
 
     private void exportDashboardData(String period) {
+        // Sync the dropdown and charts to match the export period
+        String label = switch (period) {
+            case "daily"   -> "Daily";
+            case "monthly" -> "Monthly";
+            default        -> "Weekly";
+        };
+        cmbPeriod.setValue(label);
+        loadCharts();  // refresh charts so what's on screen = what's in the export
+
         Window owner = mainBorderPane != null && mainBorderPane.getScene() != null
                 ? mainBorderPane.getScene().getWindow() : null;
 

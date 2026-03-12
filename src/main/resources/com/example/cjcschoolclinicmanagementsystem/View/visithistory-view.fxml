@@ -70,6 +70,9 @@
         <Button text="Apply" onAction="#filterCustomRange"
                 style="-fx-background-color: #555; -fx-text-fill: white;
                        -fx-background-radius: 6; -fx-cursor: hand; -fx-font-size: 12;"/>
+        <Button text="✕ Clear" onAction="#clearDateFilter"
+                style="-fx-background-color: #eee; -fx-text-fill: #555;
+                       -fx-background-radius: 6; -fx-cursor: hand; -fx-font-size: 12;"/>
 
         <Region HBox.hgrow="ALWAYS"/>
         <Label fx:id="lblCount" text="0 records"

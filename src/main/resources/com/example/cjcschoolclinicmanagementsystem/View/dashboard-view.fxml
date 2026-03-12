@@ -95,28 +95,30 @@
                 <padding><Insets top="18" bottom="18" left="18" right="18"/></padding>
 
                 <!-- HEADER -->
-                <HBox alignment="CENTER_LEFT">
+                <HBox alignment="CENTER_LEFT" spacing="10">
                     <VBox HBox.hgrow="ALWAYS">
                         <Label fx:id="lblDashboardTitle" text="Dashboard"
                                style="-fx-font-size: 20; -fx-font-weight: bold; -fx-text-fill: #8B0000;"/>
                         <Label text="Overview of clinic activity"
                                style="-fx-font-size: 11; -fx-text-fill: #888;"/>
                     </VBox>
-                    <HBox spacing="8" alignment="CENTER_RIGHT">
-                        <MenuButton text="⬇ Export" fx:id="btnExport"
-                                    style="-fx-background-color: #8B0000; -fx-text-fill: white;
-                                           -fx-mark-color: white; -fx-background-radius: 6;
-                                           -fx-cursor: hand; -fx-font-size: 11;">
-                            <items>
-                                <MenuItem text="Daily"   onAction="#exportDaily"/>
-                                <MenuItem text="Weekly"  onAction="#exportWeekly"/>
-                                <MenuItem text="Monthly" onAction="#exportMonthly"/>
-                            </items>
-                        </MenuButton>
-                        <Button text="⟳ Refresh" onAction="#refreshDashboard"
-                                style="-fx-background-color: #f0f0f0; -fx-text-fill: #555;
-                                       -fx-background-radius: 6; -fx-cursor: hand; -fx-font-size: 11;"/>
-                    </HBox>
+                    <!-- UNIFIED period dropdown — controls all Row 2 & 3 charts -->
+                    <Label text="View period:" style="-fx-font-size: 11; -fx-text-fill: #555;"/>
+                    <ComboBox fx:id="cmbPeriod" onAction="#onPeriodChanged"
+                              prefWidth="110" style="-fx-font-size: 12;"/>
+                    <MenuButton text="⬇ Export" fx:id="btnExport"
+                                style="-fx-background-color: #8B0000; -fx-text-fill: white;
+                                       -fx-mark-color: white; -fx-background-radius: 6;
+                                       -fx-cursor: hand; -fx-font-size: 11;">
+                        <items>
+                            <MenuItem text="Daily"   onAction="#exportDaily"/>
+                            <MenuItem text="Weekly"  onAction="#exportWeekly"/>
+                            <MenuItem text="Monthly" onAction="#exportMonthly"/>
+                        </items>
+                    </MenuButton>
+                    <Button text="⟳ Refresh" onAction="#refreshDashboard"
+                            style="-fx-background-color: #f0f0f0; -fx-text-fill: #555;
+                                   -fx-background-radius: 6; -fx-cursor: hand; -fx-font-size: 11;"/>
                 </HBox>
 
                 <!-- ═══ ROW 1: Stat Cards ═══ -->
@@ -178,7 +180,7 @@
                                style="-fx-font-size: 10; -fx-text-fill: #e65100; -fx-font-weight: bold;"/>
                         <Label fx:id="lblUnattended" text="0"
                                style="-fx-font-size: 28; -fx-font-weight: bold; -fx-text-fill: #e65100;"/>
-                        <Label text="waiting for care"
+                        <Label text="Today: waiting for care"
                                style="-fx-font-size: 9; -fx-text-fill: #bf360c;"/>
                     </VBox>
                 </HBox>
@@ -194,10 +196,9 @@
                             <Label text="Top Diagnoses"
                                    style="-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #333;"
                                    HBox.hgrow="ALWAYS"/>
-                            <ComboBox fx:id="cmbIllnessFilter" onAction="#onIllnessFilterChanged"
-                                      prefWidth="100" style="-fx-font-size: 11;"/>
                         </HBox>
-                        <Label text="Most frequent diagnoses — sorted by count"
+                        <Label fx:id="lblIllnessSubtitle"
+                               text="Most frequent diagnoses — This Week"
                                style="-fx-font-size: 10; -fx-text-fill: #999;"/>
                         <BarChart fx:id="chartIllnesses" prefHeight="230" maxHeight="260"
                                   VBox.vgrow="ALWAYS" animated="true" legendVisible="false">
@@ -210,9 +211,10 @@
                                  -fx-border-color: #e0e0e0; -fx-border-radius: 10;
                                  -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.06),8,0,0,2);">
                         <padding><Insets top="14" bottom="14" left="14" right="14"/></padding>
-                        <Label text="Illness Trend (8 Weeks)"
+                        <Label text="Illness Trend"
                                style="-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #333;"/>
-                        <Label text="Is a diagnosis spreading?"
+                        <Label fx:id="lblTrendSubtitle"
+                               text="Weekly visits over the past 8 weeks"
                                style="-fx-font-size: 10; -fx-text-fill: #999;"/>
                         <LineChart fx:id="chartMonthly" prefHeight="230" maxHeight="260"
                                    VBox.vgrow="ALWAYS" animated="true" legendVisible="true">
@@ -231,12 +233,13 @@
                         <padding><Insets top="14" bottom="14" left="14" right="14"/></padding>
                         <Label text="Visits by College / Dept"
                                style="-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #333;"/>
-                        <Label text="CCIS · COE · CHS · CABE · CEDAS · CSP · BED · Employees"
+                        <Label fx:id="lblCollegeSubtitle"
+                               text="Visits by department — This Week"
                                style="-fx-font-size: 9; -fx-text-fill: #999;"/>
                         <BarChart fx:id="chartCollege" prefHeight="200" maxHeight="240"
                                   VBox.vgrow="ALWAYS" animated="true" legendVisible="true">
                             <xAxis><CategoryAxis label="College / Dept"/></xAxis>
-                            <yAxis><NumberAxis label="Patients"/></yAxis>
+                            <yAxis><NumberAxis label="Visits"/></yAxis>
                         </BarChart>
                         <VBox fx:id="vboxCollegeBreakdown" spacing="3"/>
                     </VBox>
@@ -247,7 +250,8 @@
                         <padding><Insets top="14" bottom="14" left="14" right="14"/></padding>
                         <Label text="Purpose of Visit"
                                style="-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #333;"/>
-                        <Label text="Health-Related vs Med Cert"
+                        <Label fx:id="lblPurposeSubtitle"
+                               text="Health-Related vs Med Cert — This Week"
                                style="-fx-font-size: 10; -fx-text-fill: #999;"/>
                         <PieChart fx:id="chartPurpose" prefHeight="200" maxHeight="240"
                                   VBox.vgrow="ALWAYS" animated="true" legendVisible="true"/>

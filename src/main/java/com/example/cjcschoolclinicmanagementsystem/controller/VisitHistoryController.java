@@ -223,6 +223,12 @@ public class VisitHistoryController {
         if (currentPage < totalPages - 1) { currentPage++; applySearch(); }
     }
 
+    @FXML private void clearDateFilter() {
+        if (dpFrom != null) dpFrom.setValue(null);
+        if (dpTo   != null) dpTo.setValue(null);
+        filterDaily();
+    }
+
     @FXML private void filterDaily() {
         currentFilter = "daily"; currentPage = 0; updateFilterButtons(btnDaily); refreshTable(); }
     @FXML private void filterWeekly() {
