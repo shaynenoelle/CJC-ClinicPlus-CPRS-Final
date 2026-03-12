@@ -26,42 +26,66 @@ public class DashboardController {
     @FXML private VBox       sidebar;
     @FXML private ImageView  logoImg;
     @FXML private Label      lblClinicName;
+    @FXML private Label      lblSubtitle;
     @FXML private Label      lblDashboardTitle;
     @FXML private MenuButton btnExport;
     private javafx.scene.Node dashboardCenter;
+
+    // ── Nav buttons (all 5 need fx:id for highlight) ──────────────
+    @FXML private Button btnDashboard;
+    @FXML private Button btnPatientRecords;
+    @FXML private Button btnLogbook;
+    @FXML private Button btnVisitHistory;
+    @FXML private Button btnSettings;
 
     // ── Stat-card labels ──────────────────────────────────────────
     @FXML private Label lblToday;
     @FXML private Label lblWeekly;
     @FXML private Label lblMonthly;
     @FXML private Label lblTotalPatients;
-    @FXML private Label lblUnattended;       // NEW — checked-in but not yet attended
+    @FXML private Label lblUnattended;
 
     // ── Charts ────────────────────────────────────────────────────
-    @FXML private VBox    vboxCollegeBreakdown;
-    @FXML private BarChart<String, Number>   chartIllnesses;  // Category on X, Number on Y
-    @FXML private LineChart<String, Number>  chartMonthly;    // illness trend over 8 weeks
-    @FXML private BarChart<String, Number>   chartCollege;    // visits by college, colored bars
+    @FXML private VBox                       vboxCollegeBreakdown;
+    @FXML private BarChart<String, Number>   chartIllnesses;
+    @FXML private LineChart<String, Number>  chartMonthly;
+    @FXML private BarChart<String, Number>   chartCollege;
     @FXML private PieChart                   chartPurpose;
 
     // ── Filters ───────────────────────────────────────────────────
-
     @FXML private ComboBox<String> cmbIllnessFilter;
 
     // ── College color palette ─────────────────────────────────────
-    // CCIS=blue, COE=orange, CHS=pink, CABE=yellow, CEDAS=maroon, CSP=green, BED=red, Employees=purple
     private static final String[] COLLEGE_ORDER  =
             {"CCIS", "COE", "CHS", "CABE", "CEDAS", "CSP", "BED", "Employees"};
     private static final String[] COLLEGE_COLORS =
             {"#1976D2", "#FF9800", "#E91E63", "#FDD835", "#8B0000", "#388E3C", "#D32F2F", "#7B1FA2"};
 
+    // ── Nav style constants ───────────────────────────────────────
+    // Default: transparent bg, white text
+    private static final String NAV_DEFAULT =
+            "-fx-background-color: transparent; -fx-text-fill: white;" +
+                    "-fx-alignment: BASELINE_LEFT; -fx-cursor: hand;" +
+                    "-fx-font-size: 13; -fx-font-weight: bold;" +
+                    "-fx-background-radius: 8; -fx-padding: 10 12 10 12;";
+
+    // Active: white/light-gray bg, dark-red text
+    private static final String NAV_ACTIVE =
+            "-fx-background-color: #f0f0f0; -fx-text-fill: #8B0000;" +
+                    "-fx-alignment: BASELINE_LEFT; -fx-cursor: hand;" +
+                    "-fx-font-size: 13; -fx-font-weight: bold;" +
+                    "-fx-background-radius: 8; -fx-padding: 10 12 10 12;";
+
+    // ─────────────────────────────────────────────────────────────
     @FXML
     public void initialize() {
         setupFilters();
         loadDashboard();
         dashboardCenter = mainBorderPane.getCenter();
 
-        // Force white text/arrow on MenuButton after render
+        // Dashboard is the default active screen on load
+        setActiveNav(btnDashboard);
+
         javafx.application.Platform.runLater(() -> {
             if (btnExport != null) {
                 btnExport.lookupAll(".label").forEach(n ->
@@ -71,40 +95,51 @@ public class DashboardController {
                 btnExport.lookupAll(".arrow").forEach(n ->
                         n.setStyle("-fx-background-color: white;"));
             }
-            // Attach responsive bindings after scene is available
             setupResponsiveBindings();
         });
     }
 
+    // ── Active nav highlight ──────────────────────────────────────
     /**
-     * Binds sidebar width, logo size, and label visibility to the window width.
-     * At &lt;1100 px the sidebar collapses to icon-only mode (80 px).
+     * Resets all nav buttons to default style, then applies the active
+     * style to whichever button was just clicked.
      */
+    private void setActiveNav(Button active) {
+        Button[] navButtons = {
+                btnDashboard, btnPatientRecords, btnLogbook, btnVisitHistory, btnSettings
+        };
+        for (Button btn : navButtons) {
+            if (btn != null) btn.setStyle(NAV_DEFAULT);
+        }
+        if (active != null) active.setStyle(NAV_ACTIVE);
+    }
+
+    // ── Responsive bindings ───────────────────────────────────────
     private void setupResponsiveBindings() {
         if (mainBorderPane.getScene() == null) return;
 
         javafx.scene.Scene scene = mainBorderPane.getScene();
 
-        // Sidebar width: 20% of window, clamped between 80 and 260
         sidebar.prefWidthProperty().bind(
                 Bindings.createDoubleBinding(
                         () -> Math.max(80, Math.min(260, scene.getWidth() * 0.18)),
                         scene.widthProperty()));
 
-        // Clinic name: hide on narrow screens
         lblClinicName.visibleProperty().bind(
                 Bindings.createBooleanBinding(
                         () -> scene.getWidth() >= 960, scene.widthProperty()));
         lblClinicName.managedProperty().bind(lblClinicName.visibleProperty());
 
-        // Logo scales with sidebar
+        // Subtitle hides when sidebar is narrow (same threshold as name)
+        lblSubtitle.visibleProperty().bind(lblClinicName.visibleProperty());
+        lblSubtitle.managedProperty().bind(lblSubtitle.visibleProperty());
+
         logoImg.fitWidthProperty().bind(
                 Bindings.createDoubleBinding(
                         () -> scene.getWidth() < 960 ? 32.0 : 48.0,
                         scene.widthProperty()));
         logoImg.fitHeightProperty().bind(logoImg.fitWidthProperty());
 
-        // Dashboard title font size: fluid between 16 and 22
         lblDashboardTitle.styleProperty().bind(
                 Bindings.createStringBinding(
                         () -> {
@@ -114,13 +149,13 @@ public class DashboardController {
                         scene.widthProperty()));
     }
 
+    // ── Filters ───────────────────────────────────────────────────
     private void setupFilters() {
         cmbIllnessFilter.setItems(FXCollections.observableArrayList("Daily", "Weekly", "Monthly"));
         cmbIllnessFilter.setValue("Weekly");
-
     }
 
-    // ── Main load ─────────────────────────────────────────────────
+    // ── Master load ───────────────────────────────────────────────
     private void loadDashboard() {
         loadCountCards();
         loadTotalPatients();
@@ -135,8 +170,6 @@ public class DashboardController {
         lblToday  .setText(String.valueOf(DatabaseManager.getVisitCount("today")));
         lblWeekly .setText(String.valueOf(DatabaseManager.getVisitCount("weekly")));
         lblMonthly.setText(String.valueOf(DatabaseManager.getVisitCount("monthly")));
-
-        // Unattended = checked in today but chief_complaint is still empty
         int unattended = DatabaseManager.getUnattendedToday();
         lblUnattended.setText(String.valueOf(unattended));
     }
@@ -154,12 +187,7 @@ public class DashboardController {
         });
     }
 
-    // ── ROW 2: Hero illness charts ────────────────────────────────
-
-    /**
-     * Horizontal bar chart — categories on Y axis, count on X axis.
-     * Sorted by count descending so the longest bar is at the top.
-     */
+    // ── ROW 2: Illness charts ─────────────────────────────────────
     private void loadIllnessChart(String period) {
         chartIllnesses.getData().clear();
 
@@ -170,7 +198,6 @@ public class DashboardController {
         if (data.isEmpty()) {
             series.getData().add(new XYChart.Data<>("No data yet", 0));
         } else {
-            // Sort descending, limit to top 5
             data.entrySet().stream()
                     .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
                     .limit(5)
@@ -179,20 +206,14 @@ public class DashboardController {
 
         chartIllnesses.getData().add(series);
 
-        // Style bars maroon after render
         javafx.application.Platform.runLater(() ->
                 chartIllnesses.lookupAll(".bar").forEach(node ->
                         node.setStyle("-fx-background-color: #8B0000; -fx-background-radius: 3;")));
     }
 
-    /**
-     * Illness trend — line chart over the last 8 weeks.
-     * Each series is a top diagnosis plotted week-by-week.
-     */
     private void loadIllnessTrendChart() {
         chartMonthly.getData().clear();
 
-        // Get weekly visit counts (existing method) as a simple total trend
         Map<String, Integer> weeklyData = DatabaseManager.getVisitsByMonth();
 
         XYChart.Series<String, Number> series = new XYChart.Series<>();
@@ -206,18 +227,12 @@ public class DashboardController {
         }
         chartMonthly.getData().add(series);
 
-        // Style line red
         javafx.application.Platform.runLater(() ->
                 chartMonthly.lookupAll(".chart-series-line").forEach(node ->
                         node.setStyle("-fx-stroke: #8B0000; -fx-stroke-width: 2;")));
     }
 
     // ── ROW 3: College bar chart ──────────────────────────────────
-
-    /**
-     * Colored bar chart — one series per college so each bar gets its own color.
-     * Order: CCIS, COE, CHS, CABE, CEDAS, CSP, BED, Employees
-     */
     private void loadCollegeBarChart() {
         chartCollege.getData().clear();
 
@@ -233,9 +248,8 @@ public class DashboardController {
             series.getData().add(new XYChart.Data<>(college, count));
             chartCollege.getData().add(series);
 
-            // Apply color after nodes are created
-            final String c = color;
-            final int idx  = i;
+            final String c   = color;
+            final int    idx = i;
             javafx.application.Platform.runLater(() -> {
                 chartCollege.getData().get(idx).getData().forEach(d -> {
                     if (d.getNode() != null)
@@ -260,7 +274,7 @@ public class DashboardController {
     }
 
     // ── FXML event handlers ───────────────────────────────────────
-    @FXML private void refreshDashboard()       { loadDashboard(); }
+    @FXML private void refreshDashboard() { loadDashboard(); }
 
     @FXML
     private void onIllnessFilterChanged() {
@@ -274,13 +288,11 @@ public class DashboardController {
 
     private void exportDashboardData(String period) {
         Window owner = mainBorderPane != null && mainBorderPane.getScene() != null
-                ? mainBorderPane.getScene().getWindow()
-                : null;
+                ? mainBorderPane.getScene().getWindow() : null;
 
         FileChooser chooser = new FileChooser();
         chooser.setTitle("Export Dashboard Data");
         chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("CSV files", "*.csv"));
-
         String stamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmm"));
         chooser.setInitialFileName("dashboard_" + period + "_" + stamp + ".csv");
 
@@ -289,11 +301,11 @@ public class DashboardController {
 
         boolean ok = DatabaseManager.exportDashboardToCSV(selected.getAbsolutePath(), period);
         if (ok) {
-            Alert alert = new Alert(Alert.AlertType.INFORMATION);
-            alert.setTitle("Export Successful");
-            alert.setHeaderText(null);
-            alert.setContentText("Dashboard data exported to:\n" + selected.getAbsolutePath());
-            alert.showAndWait();
+            Alert a = new Alert(Alert.AlertType.INFORMATION);
+            a.setTitle("Export Successful");
+            a.setHeaderText(null);
+            a.setContentText("Dashboard data exported to:\n" + selected.getAbsolutePath());
+            a.showAndWait();
         } else {
             showError("Export Failed", "Could not export dashboard data.");
         }
@@ -301,16 +313,31 @@ public class DashboardController {
 
     // ── Nav ───────────────────────────────────────────────────────
     @FXML private void showDashboard() {
+        setActiveNav(btnDashboard);
         mainBorderPane.setCenter(dashboardCenter);
         loadDashboard();
     }
-    @FXML private void showPatientRegistry() { loadView("patient-registry-view.fxml"); }
-    @FXML private void showLogbook()         { loadView("logbook-view.fxml"); }
-    @FXML private void showVisitHistory()    { loadView("visithistory-view.fxml"); }
-    @FXML private void handleLogout()        { System.exit(0); }
+
+    @FXML private void showPatientRegistry() {
+        setActiveNav(btnPatientRecords);
+        loadView("patient-registry-view.fxml");
+    }
+
+    @FXML private void showLogbook() {
+        setActiveNav(btnLogbook);
+        loadView("logbook-view.fxml");
+    }
+
+    @FXML private void showVisitHistory() {
+        setActiveNav(btnVisitHistory);
+        loadView("visithistory-view.fxml");
+    }
+
+    @FXML private void handleLogout() { System.exit(0); }
 
     @FXML
     private void openSettings() {
+        setActiveNav(btnSettings);
         try {
             String fxmlPath = "/com/example/cjcschoolclinicmanagementsystem/View/settings-view.fxml";
             URL resource = getClass().getResource(fxmlPath);
@@ -320,6 +347,7 @@ public class DashboardController {
             }
             if (resource == null) {
                 showError("File Not Found", "Could not locate settings-view.fxml");
+                setActiveNav(null); // clear highlight if settings failed to open
                 return;
             }
             FXMLLoader loader = new FXMLLoader(resource);
