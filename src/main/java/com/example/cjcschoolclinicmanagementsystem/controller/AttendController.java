@@ -3,6 +3,8 @@ package com.example.cjcschoolclinicmanagementsystem.controller;
 import com.example.cjcschoolclinicmanagementsystem.database.DatabaseManager;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.stage.Stage;
 
 import java.time.LocalDate;
@@ -266,6 +268,58 @@ public class AttendController {
         } else {
             lblSaveStatus.setText("Save failed. Try again.");
             lblSaveStatus.setStyle("-fx-text-fill: #e74c3c;");
+        }
+    }
+
+    // ── Tab/Enter navigation for Vital Signs ─────────────────────
+    @FXML
+    private void onTempKeyPressed(KeyEvent e) {
+        if (e.getCode() == KeyCode.TAB && !e.isShiftDown()) {
+            e.consume();
+            txtBpSystolic.requestFocus();
+        }
+    }
+
+    // ── Tab/Enter navigation for Visit Details TextAreas ─────────
+    // Tab moves focus to next field; Enter on Remarks triggers Save
+    @FXML
+    private void onComplaintKeyPressed(KeyEvent e) {
+        if (e.getCode() == KeyCode.TAB && !e.isShiftDown()) {
+            e.consume();
+            txtDiagnosis.requestFocus();
+        }
+    }
+
+    @FXML
+    private void onDiagnosisKeyPressed(KeyEvent e) {
+        if (e.getCode() == KeyCode.TAB && !e.isShiftDown()) {
+            e.consume();
+            txtTreatment.requestFocus();
+        } else if (e.getCode() == KeyCode.TAB && e.isShiftDown()) {
+            e.consume();
+            txtComplaint.requestFocus();
+        }
+    }
+
+    @FXML
+    private void onTreatmentKeyPressed(KeyEvent e) {
+        if (e.getCode() == KeyCode.TAB && !e.isShiftDown()) {
+            e.consume();
+            txtRemarks.requestFocus();
+        } else if (e.getCode() == KeyCode.TAB && e.isShiftDown()) {
+            e.consume();
+            txtDiagnosis.requestFocus();
+        }
+    }
+
+    @FXML
+    private void onRemarksKeyPressed(KeyEvent e) {
+        if (e.getCode() == KeyCode.ENTER && e.isControlDown()) {
+            // Ctrl+Enter triggers Save from anywhere
+            onSaveRecord();
+        } else if (e.getCode() == KeyCode.TAB && e.isShiftDown()) {
+            e.consume();
+            txtTreatment.requestFocus();
         }
     }
 

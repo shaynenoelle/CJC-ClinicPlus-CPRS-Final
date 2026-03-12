@@ -275,6 +275,12 @@ public class LogbookController {
     }
 
     // ── Filters ───────────────────────────────────────────────────
+    @FXML private void clearDateFilter() {
+        if (dpFrom != null) dpFrom.setValue(null);
+        if (dpTo   != null) dpTo.setValue(null);
+        filterToday();
+    }
+
     @FXML private void filterToday() {
         currentFilter = "daily";
         updateFilterButtons(btnToday);

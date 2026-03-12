@@ -78,19 +78,23 @@
     </TableView>
 
     <!-- FOOTER -->
-    <HBox alignment="CENTER_LEFT" spacing="12.0"
+    <HBox alignment="CENTER" spacing="0"
           style="-fx-background-color: white; -fx-border-color: #e0e0e0; -fx-border-radius: 6; -fx-padding: 8 14 8 14;">
+        <!-- Left: Total Patients -->
         <Label fx:id="lblTotal" text="Total Patients: 0" style="-fx-font-size: 12; -fx-text-fill: #555;" />
-        <Region HBox.hgrow="ALWAYS" />
+        <!-- Center: Pagination -->
+        <HBox alignment="CENTER" spacing="10" HBox.hgrow="ALWAYS">
+            <Button fx:id="btnPrev" onAction="#prevPage"
+                    style="-fx-background-color: #8B0000; -fx-text-fill: white; -fx-cursor: hand; -fx-background-radius: 6; -fx-font-size: 11; -fx-padding: 5 14 5 14;"
+                    text="Prev" />
+            <Label fx:id="lblPage" text="Page 1 of 1" style="-fx-font-size: 12; -fx-text-fill: #333;" />
+            <Button fx:id="btnNext" onAction="#nextPage"
+                    style="-fx-background-color: #8B0000; -fx-text-fill: white; -fx-cursor: hand; -fx-background-radius: 6; -fx-font-size: 11; -fx-padding: 5 14 5 14;"
+                    text="Next" />
+        </HBox>
+        <!-- Right: Refresh -->
         <Button onAction="#refreshTable"
                 style="-fx-background-color: #eee; -fx-cursor: hand; -fx-background-radius: 4; -fx-font-size: 12;"
                 text="⟳ Refresh" />
-        <Button fx:id="btnPrev" onAction="#prevPage"
-                style="-fx-background-color: #8B0000; -fx-text-fill: white; -fx-cursor: hand; -fx-background-radius: 4;"
-                text="◀" />
-        <Label fx:id="lblPage" text="Page 1 of 1" style="-fx-font-size: 12; -fx-text-fill: #333;" />
-        <Button fx:id="btnNext" onAction="#nextPage"
-                style="-fx-background-color: #8B0000; -fx-text-fill: white; -fx-cursor: hand; -fx-background-radius: 4;"
-                text="▶" />
     </HBox>
 </VBox>

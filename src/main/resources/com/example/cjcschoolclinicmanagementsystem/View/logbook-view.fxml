@@ -24,8 +24,8 @@
                    style="-fx-font-size: 11; -fx-text-fill: #888888;"/>
         </VBox>
 
-        <!-- Date filter buttons — wraps on small screens -->
-        <FlowPane hgap="6" vgap="6" alignment="CENTER_RIGHT">
+        <!-- Date filter buttons — all on one line -->
+        <HBox spacing="6" alignment="CENTER_RIGHT">
             <Button fx:id="btnToday" text="Today"
                     onAction="#filterToday"
                     style="-fx-background-color: #8B0000; -fx-text-fill: white;
@@ -50,7 +50,11 @@
             <Button text="Apply" onAction="#filterCustomRange"
                     style="-fx-background-color: #555; -fx-text-fill: white;
                            -fx-background-radius: 6; -fx-cursor: hand; -fx-font-size: 12;"/>
-        </FlowPane>
+            <Button text="✕ Clear" onAction="#clearDateFilter"
+                    style="-fx-background-color: #eee; -fx-text-fill: #555;
+                           -fx-background-radius: 6; -fx-cursor: hand; -fx-font-size: 12;"/>
+        </HBox>
+
     </HBox>
 
     <HBox spacing="16" VBox.vgrow="ALWAYS">
@@ -202,7 +206,7 @@
                     <Label fx:id="lblVisitorCount" text="0 patients"
                            style="-fx-font-size: 12; -fx-text-fill: #888;"/>
                 </VBox>
-                <Button text="Refresh"
+                <Button text="⟳ Refresh"
                         onAction="#refreshLogbook"
                         style="-fx-background-color: #f0f0f0;
                                -fx-text-fill: #555;
@@ -214,6 +218,9 @@
             <TableView fx:id="tblLogbook"
                        VBox.vgrow="ALWAYS"
                        style="-fx-background-color: transparent;">
+                <columnResizePolicy>
+                    <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
+                </columnResizePolicy>
                 <columns>
                     <TableColumn fx:id="colId"      text="Patient ID" prefWidth="110"/>
                     <TableColumn fx:id="colName"    text="Name"       prefWidth="160"/>

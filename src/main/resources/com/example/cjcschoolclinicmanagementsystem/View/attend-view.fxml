@@ -104,6 +104,7 @@
                                promptText="e.g. 36.5"
                                prefWidth="180" prefHeight="38"
                                onKeyReleased="#validateVitals"
+                               onKeyPressed="#onTempKeyPressed"
                                GridPane.rowIndex="0" GridPane.columnIndex="1"
                                style="-fx-background-radius: 5; -fx-border-color: #ddd;
                                       -fx-border-radius: 5; -fx-padding: 8; -fx-font-size: 13;"/>
@@ -179,6 +180,7 @@
                 <TextArea fx:id="txtComplaint"
                           promptText="What did the patient come in for?"
                           prefHeight="80" wrapText="true"
+                          onKeyPressed="#onComplaintKeyPressed"
                           style="-fx-background-radius: 5; -fx-border-color: #ddd;
                                  -fx-border-radius: 5; -fx-font-size: 13;"/>
 
@@ -187,6 +189,7 @@
                 <TextArea fx:id="txtDiagnosis"
                           promptText="Identified illness or condition"
                           prefHeight="80" wrapText="true"
+                          onKeyPressed="#onDiagnosisKeyPressed"
                           style="-fx-background-radius: 5; -fx-border-color: #ddd;
                                  -fx-border-radius: 5; -fx-font-size: 13;"/>
 
@@ -195,6 +198,7 @@
                 <TextArea fx:id="txtTreatment"
                           promptText="Medication, rest, referral..."
                           prefHeight="80" wrapText="true"
+                          onKeyPressed="#onTreatmentKeyPressed"
                           style="-fx-background-radius: 5; -fx-border-color: #ddd;
                                  -fx-border-radius: 5; -fx-font-size: 13;"/>
 
@@ -203,6 +207,7 @@
                 <TextArea fx:id="txtRemarks"
                           promptText="Additional observations..."
                           prefHeight="80" wrapText="true"
+                          onKeyPressed="#onRemarksKeyPressed"
                           style="-fx-background-radius: 5; -fx-border-color: #ddd;
                                  -fx-border-radius: 5; -fx-font-size: 13;"/>
             </VBox>
