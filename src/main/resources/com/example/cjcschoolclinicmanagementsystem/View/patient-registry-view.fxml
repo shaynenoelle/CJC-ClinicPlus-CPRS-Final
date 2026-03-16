@@ -15,13 +15,8 @@
             <Label text="Patient List Record" textFill="#8B0000">
                 <font><Font name="System Bold" size="20.0" /></font>
             </Label>
-            <HBox spacing="6" alignment="CENTER_LEFT">
-                <Label text="School Year:" style="-fx-font-size: 12; -fx-text-fill: #555;" />
-                <TextField fx:id="txtSchoolYear" prefWidth="110"
-                           style="-fx-font-size: 12; -fx-border-color: #ccc; -fx-border-radius: 4; -fx-background-radius: 4; -fx-padding: 3 6 3 6; -fx-text-fill: #8B0000; -fx-font-weight: bold;" />
-                <Button onAction="#saveSchoolYear" text="Save"
-                        style="-fx-background-color: #8B0000; -fx-text-fill: white; -fx-font-size: 11; -fx-cursor: hand; -fx-background-radius: 4; -fx-padding: 3 10 3 10;" />
-            </HBox>
+            <Label text="Registered Patients and Health Records"
+                   style="-fx-font-size: 11; -fx-text-fill: #888888;"/>
         </VBox>
         <Region HBox.hgrow="ALWAYS" />
         <Button fx:id="btnShowArchived" onAction="#toggleArchived"

@@ -126,9 +126,10 @@
                                           style="-fx-border-color: #ccc; -fx-border-radius: 4;" />
                             </VBox>
                             <VBox spacing="4" HBox.hgrow="ALWAYS">
-                                <Label text="Course" style="-fx-font-size: 11; -fx-text-fill: #555;" />
-                                <TextField fx:id="txtCourse" promptText="e.g. BSCS, BSN, Grade 10"
-                                           style="-fx-border-color: #ccc; -fx-border-radius: 4; -fx-background-radius: 4; -fx-padding: 7;" />
+                                <Label text="Course (type or select)" style="-fx-font-size: 11; -fx-text-fill: #555;" />
+                                <ComboBox fx:id="comboCourse" prefWidth="220" editable="true"
+                                          promptText="e.g. BSCS, BSN, Grade 10"
+                                          style="-fx-border-color: #ccc; -fx-border-radius: 4;" />
                             </VBox>
                         </HBox>
                     </VBox>

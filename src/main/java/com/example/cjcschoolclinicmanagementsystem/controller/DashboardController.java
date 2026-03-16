@@ -39,11 +39,15 @@ public class DashboardController {
     @FXML private Button btnSettings;
 
     // ── Stat-card labels ──────────────────────────────────────────
-    @FXML private Label lblToday;
-    @FXML private Label lblWeekly;
-    @FXML private Label lblMonthly;
+    @FXML private Label lblTotalVisits;       // period-driven (replaces Today/Weekly/Monthly)
+    @FXML private Label lblVisitsCardTitle;   // e.g. "VISITS THIS WEEK"
+    @FXML private Label lblVisitsCardSub;     // e.g. "this week"
     @FXML private Label lblTotalPatients;
     @FXML private Label lblUnattended;
+
+    // ── Live queue panel ──────────────────────────────────────────
+    @FXML private VBox  vboxQueueRows;
+    @FXML private Label lblQueueEmpty;
 
     // ── Charts ────────────────────────────────────────────────────
     @FXML private VBox                       vboxCollegeBreakdown;
@@ -178,14 +182,8 @@ public class DashboardController {
 
     // ── Master load ───────────────────────────────────────────────
     private void loadDashboard() {
-        loadStatCards();   // Row 1 — always fixed, never filtered
+        loadStatCards();   // Row 1 + queue panel
         loadCharts();      // Rows 2 & 3 — driven by cmbPeriod
-    }
-
-    // ── ROW 1: Stat cards — fixed, never affected by period ───────
-    private void loadStatCards() {
-        loadCountCards();
-        loadTotalPatients();
     }
 
     // ── Rows 2 & 3: all four charts — driven by unified dropdown ──
@@ -198,27 +196,96 @@ public class DashboardController {
         loadPurposeChart(period, label);
     }
 
-    // ── ROW 1: Stat cards ─────────────────────────────────────────
-    private void loadCountCards() {
-        lblToday  .setText(String.valueOf(DatabaseManager.getVisitCount("today")));
-        lblWeekly .setText(String.valueOf(DatabaseManager.getVisitCount("weekly")));
-        lblMonthly.setText(String.valueOf(DatabaseManager.getVisitCount("monthly")));
-        int unattended = DatabaseManager.getUnattendedToday();
-        lblUnattended.setText(String.valueOf(unattended));
+    // ── ROW 1: Stat cards — Visits follows period; others fixed ───
+    private void loadStatCards() {
+        // Period-driven visit count
+        String period = currentPeriod();
+        int visits = DatabaseManager.getVisitCount(period);
+        lblTotalVisits.setText(String.valueOf(visits));
+
+        // Update card title and subtitle to match period
+        String title = switch (period) {
+            case "daily"   -> "VISITS TODAY";
+            case "monthly" -> "VISITS THIS MONTH";
+            default        -> "VISITS THIS WEEK";
+        };
+        String sub = switch (period) {
+            case "daily"   -> "check-ins today";
+            case "monthly" -> "this month";
+            default        -> "this week";
+        };
+        lblVisitsCardTitle.setText(title);
+        lblVisitsCardSub.setText(sub);
+
+        // Fixed cards
+        lblTotalPatients.setText(String.valueOf(DatabaseManager.getTotalPatients()));
+        lblUnattended.setText(String.valueOf(DatabaseManager.getUnattendedToday()));
+
+        // Live queue panel
+        loadQueuePanel();
     }
 
-    private void loadTotalPatients() {
-        int total = DatabaseManager.getTotalPatients();
-        lblTotalPatients.setText(String.valueOf(total));
+    // ── Live queue panel ──────────────────────────────────────────
+    private void loadQueuePanel() {
+        vboxQueueRows.getChildren().clear();
+        java.util.List<java.util.Map<String, String>> queue =
+                DatabaseManager.getQueueToday();
 
-        vboxCollegeBreakdown.getChildren().clear();
-        Map<String, Integer> byCollege = DatabaseManager.getPatientsByCollege();
-        byCollege.forEach((college, count) -> {
-            Label lbl = new Label(college + ": " + count);
-            lbl.setStyle("-fx-font-size: 11; -fx-text-fill: #666;");
-            vboxCollegeBreakdown.getChildren().add(lbl);
-        });
+        if (queue.isEmpty()) {
+            lblQueueEmpty.setVisible(true);
+            lblQueueEmpty.setManaged(true);
+        } else {
+            lblQueueEmpty.setVisible(false);
+            lblQueueEmpty.setManaged(false);
+
+            for (java.util.Map<String, String> row : queue) {
+                String name      = row.getOrDefault("full_name",  "Unknown");
+                String timeIn    = row.getOrDefault("time_in",    "—");
+                String waiting   = row.getOrDefault("waiting",    "");
+                String allergies = row.getOrDefault("allergies",  "");
+                String conditions= row.getOrDefault("conditions", "");
+
+                // Build one queue row
+                javafx.scene.layout.HBox hbox = new javafx.scene.layout.HBox(10);
+                hbox.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+                hbox.setStyle("-fx-background-color: #fafafa; -fx-border-color: #eeeeee; " +
+                        "-fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 8 12;");
+
+                Label lblName = new Label("👤 " + name);
+                lblName.setStyle("-fx-font-weight: bold; -fx-font-size: 12; -fx-text-fill: #333;");
+                lblName.setMinWidth(200);
+
+                Label lblTime = new Label("In: " + timeIn);
+                lblTime.setStyle("-fx-font-size: 11; -fx-text-fill: #777;");
+                lblTime.setMinWidth(80);
+
+                Label lblWait = new Label(waiting.isEmpty() ? "" : "⏱ " + waiting);
+                lblWait.setStyle("-fx-font-size: 11; -fx-text-fill: #e65100; -fx-font-weight: bold;");
+                lblWait.setMinWidth(90);
+
+                hbox.getChildren().addAll(lblName, lblTime, lblWait);
+
+                // Allergy/condition flags — shown in red if present
+                boolean hasFlag = (!allergies.isBlank() && !allergies.equals("None") && !allergies.equals("—"))
+                        || (!conditions.isBlank() && !conditions.equals("None") && !conditions.equals("—"));
+                if (hasFlag) {
+                    StringBuilder flagText = new StringBuilder("⚠ ");
+                    if (!allergies.isBlank() && !allergies.equals("None") && !allergies.equals("—"))
+                        flagText.append("Allergies: ").append(allergies).append("  ");
+                    if (!conditions.isBlank() && !conditions.equals("None") && !conditions.equals("—"))
+                        flagText.append("Conditions: ").append(conditions);
+                    Label lblFlag = new Label(flagText.toString().trim());
+                    lblFlag.setStyle("-fx-font-size: 10; -fx-text-fill: #c62828; " +
+                            "-fx-font-weight: bold; -fx-wrap-text: true;");
+                    lblFlag.setMaxWidth(340);
+                    hbox.getChildren().add(lblFlag);
+                }
+
+                vboxQueueRows.getChildren().add(hbox);
+            }
+        }
     }
+
 
     // ── ROW 2: Illness charts ─────────────────────────────────────
     private void loadIllnessChart(String period, String label) {
@@ -330,10 +397,11 @@ public class DashboardController {
     // ── FXML event handlers ───────────────────────────────────────
     @FXML private void refreshDashboard() { loadDashboard(); }
 
-    /** Called when the unified period dropdown changes — reloads only Rows 2 & 3. */
+    /** Called when the unified period dropdown changes — reloads stat cards AND charts. */
     @FXML
     private void onPeriodChanged() {
-        loadCharts();   // Row 1 stat cards intentionally NOT reloaded
+        loadStatCards();  // visits card title/number follows period
+        loadCharts();
     }
 
     @FXML private void exportDaily()   { exportDashboardData("daily"); }

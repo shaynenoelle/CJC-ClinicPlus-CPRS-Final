@@ -32,7 +32,6 @@ public class PatientRegistryController {
     @FXML private TableColumn<Patient,String> colStatus, colAction;
 
     @FXML private TextField        txtSearch;
-    @FXML private TextField        txtSchoolYear;   // inline school year edit
     @FXML private ComboBox<String> cmbCollege, cmbType, cmbYear, cmbSort;
     @FXML private Label            lblTotal, lblPage;
     @FXML private Button           btnPrev, btnNext, btnShowArchived;
@@ -50,7 +49,6 @@ public class PatientRegistryController {
     public void initialize() {
         setupColumns();
         setupFilters();
-        loadSchoolYear();
         refreshTable();
 
         // Bind column widths as percentages of table width — responsive layout
@@ -82,27 +80,6 @@ public class PatientRegistryController {
         colMedHistory .prefWidthProperty().bind(w.multiply(0.125));
         colStatus     .prefWidthProperty().bind(w.multiply(0.055));
         colAction     .prefWidthProperty().bind(w.multiply(0.187));
-    }
-
-    // ── School Year inline edit ───────────────────────────────────
-    private void loadSchoolYear() {
-        String sy = DatabaseManager.getSetting("school_year", getCurrentSchoolYear());
-        txtSchoolYear.setText(sy);
-    }
-
-    private String getCurrentSchoolYear() {
-        int year  = java.time.LocalDate.now().getYear();
-        int month = java.time.LocalDate.now().getMonthValue();
-        return (month >= 6) ? year + "–" + (year + 1) : (year - 1) + "–" + year;
-    }
-
-    @FXML
-    private void saveSchoolYear() {
-        String val = txtSchoolYear.getText().trim();
-        if (!val.isBlank()) {
-            DatabaseManager.saveSetting("school_year", val);
-            showAlert(Alert.AlertType.INFORMATION, "Saved", "School year updated to: " + val);
-        }
     }
 
     // ── Column setup ──────────────────────────────────────────────
@@ -231,7 +208,7 @@ public class PatientRegistryController {
 
         cmbYear.setItems(FXCollections.observableArrayList(
                 "All Years",
-                "1st Year", "2nd Year", "3rd Year", "4th Year",
+                "1st Year", "2nd Year", "3rd Year", "4th Year", "5th Year",
                 "Kinder", "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6",
                 "Grade 7", "Grade 8", "Grade 9", "Grade 10", "Grade 11", "Grade 12", "N/A"));
         cmbYear.setValue("All Years");

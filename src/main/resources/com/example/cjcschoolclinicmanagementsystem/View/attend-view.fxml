@@ -23,7 +23,7 @@
             <Label fx:id="lblPatientName"
                    text="Patient Name"
                    HBox.hgrow="ALWAYS"
-                   maxWidth="Infinity"
+                   maxWidth="1.7976931348623157E308"
                    style="-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: #8B0000;"/>
         </VBox>
         <Region HBox.hgrow="ALWAYS"/>
@@ -177,18 +177,28 @@
 
                 <Label text="Chief Complaint *"
                        style="-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #444;"/>
+                <!-- Preset dropdown for complaint — editable so nurse can also type freely -->
+                <ComboBox fx:id="comboComplaint" editable="true" maxWidth="1.7976931348623157E308"
+                          promptText="Select preset or type complaint…"
+                          style="-fx-border-color: #ddd; -fx-border-radius: 5; -fx-font-size: 13;"/>
+                <!-- shown only when "Others (specify below)" is chosen -->
                 <TextArea fx:id="txtComplaint"
-                          promptText="What did the patient come in for?"
-                          prefHeight="80" wrapText="true"
+                          promptText="Describe complaint in detail…"
+                          prefHeight="60" wrapText="true" managed="false" visible="false"
                           onKeyPressed="#onComplaintKeyPressed"
                           style="-fx-background-radius: 5; -fx-border-color: #ddd;
                                  -fx-border-radius: 5; -fx-font-size: 13;"/>
 
                 <Label text="Diagnosis"
                        style="-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #444;"/>
+                <!-- Preset dropdown for diagnosis — editable so nurse can also type freely -->
+                <ComboBox fx:id="comboDiagnosis" editable="true" maxWidth="1.7976931348623157E308"
+                          promptText="Select preset or type diagnosis…"
+                          style="-fx-border-color: #ddd; -fx-border-radius: 5; -fx-font-size: 13;"/>
+                <!-- shown only when "Others (specify below)" is chosen -->
                 <TextArea fx:id="txtDiagnosis"
-                          promptText="Identified illness or condition"
-                          prefHeight="80" wrapText="true"
+                          promptText="Describe diagnosis in detail…"
+                          prefHeight="60" wrapText="true" managed="false" visible="false"
                           onKeyPressed="#onDiagnosisKeyPressed"
                           style="-fx-background-radius: 5; -fx-border-color: #ddd;
                                  -fx-border-radius: 5; -fx-font-size: 13;"/>

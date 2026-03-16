@@ -145,7 +145,13 @@ public class VisitHistoryController {
             stage.showAndWait();
             refreshTable();
         } catch (Exception e) {
-            System.err.println("Open form error: " + e.getMessage());
+            e.printStackTrace();
+            javafx.scene.control.Alert alert = new javafx.scene.control.Alert(
+                    javafx.scene.control.Alert.AlertType.ERROR);
+            alert.setTitle("Error Opening Form");
+            alert.setHeaderText("Could not open the attend form.");
+            alert.setContentText(e.getMessage() != null ? e.getMessage() : e.getClass().getName());
+            alert.showAndWait();
         }
     }
 

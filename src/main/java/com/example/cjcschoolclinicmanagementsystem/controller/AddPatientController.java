@@ -11,6 +11,8 @@ import javafx.stage.Stage;
 import java.time.LocalDate;
 import java.time.Period;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 
 public class AddPatientController {
 
@@ -29,7 +31,8 @@ public class AddPatientController {
     @FXML private RadioButton rbStudent, rbEmployee, rbCollege, rbBED;
     @FXML private VBox        paneStudentFields, paneEmployeeFields;
     @FXML private ComboBox<String> comboDept, comboYear, comboDeptEmployee;
-    @FXML private TextField   txtCourse, txtPosition;
+    @FXML private ComboBox<String> comboCourse;   // was txtCourse — now editable ComboBox
+    @FXML private TextField   txtPosition;
     @FXML private TextField   txtContact, txtEmail, txtAddress;
 
     // Contact & Emergency
@@ -45,12 +48,12 @@ public class AddPatientController {
     @FXML private ComboBox<String> comboArchiveReason;
 
     // ── State ─────────────────────────────────────────────────────
-    private boolean isEditMode = false;
-    private String  editPatientId = null;   // original ID for update
+    private boolean isEditMode    = false;
+    private String  editPatientId = null;
 
-    private static final String[] COLLEGE_DEPTS  = {"CCIS","COE","CABE","CEDAS","CHS","CSP"};
-    private static final String[] COLLEGE_YEARS  = {"1st Year","2nd Year","3rd Year","4th Year"};
-    private static final String[] BED_YEARS      = {
+    private static final String[] DEFAULT_COLLEGE_DEPTS = {"CCIS","COE","CABE","CEDAS","CHS","CSP"};
+    private static final String[] COLLEGE_YEARS = {"1st Year","2nd Year","3rd Year","4th Year"};
+    private static final String[] BED_YEARS     = {
             "Kinder",
             "Grade 1","Grade 2","Grade 3","Grade 4","Grade 5","Grade 6",
             "Grade 7","Grade 8","Grade 9","Grade 10","Grade 11","Grade 12"
@@ -64,14 +67,27 @@ public class AddPatientController {
         setupBirthDateListener();
         generatePatientId();
         loadSchoolYear();
-        // Default: Student + College
         rbStudent.setSelected(true);
         rbCollege.setSelected(true);
         onTypeChanged();
-        // Wire tab-change listener so buttons update when user clicks a tab directly
         tabPane.getSelectionModel().selectedIndexProperty().addListener(
                 (obs, oldIdx, newIdx) -> updateNavButtons(newIdx.intValue()));
         updateNavButtons(0);
+    }
+
+    // ── Load departments from DB, seed defaults if empty ─────────
+    private List<String> loadCollegeDepts() {
+        List<String> depts = DatabaseManager.getPresets("department");
+        if (depts == null || depts.isEmpty()) {
+            for (String d : DEFAULT_COLLEGE_DEPTS) DatabaseManager.addPreset("department", d);
+            depts = new ArrayList<>(List.of(DEFAULT_COLLEGE_DEPTS));
+        }
+        return depts;
+    }
+
+    // ── Load courses from DB ──────────────────────────────────────
+    private List<String> loadCourses() {
+        return DatabaseManager.getPresets("course");
     }
 
     private void setupCombos() {
@@ -79,8 +95,13 @@ public class AddPatientController {
         comboBloodType.setItems(FXCollections.observableArrayList(
                 "A+","A-","B+","B-","AB+","AB-","O+","O-","Unknown"));
 
-        comboDept.setItems(FXCollections.observableArrayList(COLLEGE_DEPTS));
-        comboDeptEmployee.setItems(FXCollections.observableArrayList(COLLEGE_DEPTS));
+        List<String> depts = loadCollegeDepts();
+        comboDept.setItems(FXCollections.observableArrayList(depts));
+        comboDeptEmployee.setItems(FXCollections.observableArrayList(depts));
+
+        // Course: editable ComboBox — nurse can type freely OR pick from preset list
+        comboCourse.setEditable(true);
+        comboCourse.setItems(FXCollections.observableArrayList(loadCourses()));
 
         comboArchiveReason.setItems(FXCollections.observableArrayList(
                 "Graduated","Transferred","Resigned","Other"));
@@ -98,31 +119,24 @@ public class AddPatientController {
 
     private void setupBirthDateListener() {
         dateBirth.valueProperty().addListener((obs, o, n) -> {
-            if (n != null) {
-                int age = Period.between(n, LocalDate.now()).getYears();
-                txtAge.setText(String.valueOf(age));
-            }
+            if (n != null) txtAge.setText(String.valueOf(Period.between(n, LocalDate.now()).getYears()));
         });
     }
 
     private void generatePatientId() {
-        // Format: YYYY-XXXX  where YYYY is current year and XXXX is next sequential number
         String nextId = DatabaseManager.generateNextPatientId();
         txtPatientId.setText(nextId);
         lblPatientIdDisplay.setText("Auto ID: " + nextId);
     }
 
     private void loadSchoolYear() {
-        String sy = DatabaseManager.getSetting("school_year", getCurrentSchoolYear());
-        txtSchoolYear.setText(sy);
+        txtSchoolYear.setText(DatabaseManager.getSetting("school_year", getCurrentSchoolYear()));
     }
 
     private String getCurrentSchoolYear() {
         int year = LocalDate.now().getYear();
         int month = LocalDate.now().getMonthValue();
-        // School year starts June
-        if (month >= 6) return year + "–" + (year + 1);
-        else return (year - 1) + "–" + year;
+        return month >= 6 ? year + "–" + (year + 1) : (year - 1) + "–" + year;
     }
 
     // ── Type toggle handlers ──────────────────────────────────────
@@ -140,84 +154,75 @@ public class AddPatientController {
     public void onSubTypeChanged() {
         if (!rbStudent.isSelected()) return;
         boolean isBED = rbBED.isSelected();
-        comboDept.setItems(FXCollections.observableArrayList(
-                isBED ? new String[]{"BED"} : COLLEGE_DEPTS));
-        comboYear.setItems(FXCollections.observableArrayList(
-                isBED ? BED_YEARS : COLLEGE_YEARS));
-        if (isBED) comboDept.setValue("BED");
-        else       comboDept.setValue(null);
+        if (isBED) {
+            comboDept.setItems(FXCollections.observableArrayList("BED"));
+            comboDept.setValue("BED");
+        } else {
+            comboDept.setItems(FXCollections.observableArrayList(loadCollegeDepts()));
+            comboDept.setValue(null);
+        }
+        comboYear.setItems(FXCollections.observableArrayList(isBED ? BED_YEARS : COLLEGE_YEARS));
         comboYear.setValue(null);
     }
 
     // ── Load patient for editing ──────────────────────────────────
     public void loadPatientForEdit(Patient p) {
-        isEditMode   = true;
+        isEditMode    = true;
         editPatientId = p.getId();
 
         lblFormTitle.setText("Edit Patient Profile");
         txtPatientId.setText(p.getId());
         lblPatientIdDisplay.setText("Patient ID: " + p.getId());
 
-        // Split full name: "Last, First MI" → fields
         String full = p.getName();
         if (full != null && full.contains(",")) {
             String[] parts = full.split(",", 2);
             txtLastName.setText(parts[0].trim());
             String rest = parts[1].trim();
-            // try to get MI
             if (rest.contains(" ")) {
-                int lastSpace = rest.lastIndexOf(" ");
+                int lastSpace   = rest.lastIndexOf(" ");
                 String possible = rest.substring(lastSpace + 1);
                 if (possible.length() <= 3 && possible.endsWith(".")) {
                     txtFirstName.setText(rest.substring(0, lastSpace).trim());
                     txtMiddleInitial.setText(possible);
-                } else {
-                    txtFirstName.setText(rest);
-                }
-            } else {
-                txtFirstName.setText(rest);
-            }
-        } else {
-            txtFirstName.setText(full);
-        }
+                } else { txtFirstName.setText(rest); }
+            } else { txtFirstName.setText(rest); }
+        } else { txtFirstName.setText(full); }
 
         txtStudentID.setText(p.getId());
         comboGender.setValue(p.getGender());
         comboBloodType.setValue(p.getBloodType());
 
         if (p.getBirthdate() != null && !p.getBirthdate().isBlank()) {
-            try { dateBirth.setValue(LocalDate.parse(p.getBirthdate())); }
-            catch (Exception ignored) {}
+            try { dateBirth.setValue(LocalDate.parse(p.getBirthdate())); } catch (Exception ignored) {}
         }
         txtAge.setText(p.getAge());
         txtContact.setText(p.getContact());
         txtEmail.setText(p.getEmail());
 
-        // Type — call onTypeChanged() FIRST so ComboBox items are populated,
-        // then re-apply values because onTypeChanged() resets them to null
         if ("Employee".equals(p.getType())) {
             rbEmployee.setSelected(true);
             onTypeChanged();
-            txtPosition.setText(p.getYear()); // position stored in year for employees
+            txtPosition.setText(p.getYear());
             comboDeptEmployee.setValue(p.getCourse());
         } else {
             rbStudent.setSelected(true);
             String year = p.getYear();
             boolean isBED = year != null && (year.startsWith("Grade") || year.startsWith("Kinder"));
-            if (isBED) rbBED.setSelected(true);
-            else       rbCollege.setSelected(true);
-            onTypeChanged();  // populates items — resets values to null, so set them after
+            if (isBED) rbBED.setSelected(true); else rbCollege.setSelected(true);
+            onTypeChanged();
             comboDept.setValue(p.getCourse());
             comboYear.setValue(year);
-            txtCourse.setText(p.getCollege()); // course name stored in college field
+            // Restore course name into the editable combo
+            String savedCourse = p.getCollege();
+            if (savedCourse != null && !savedCourse.isBlank()) {
+                comboCourse.setValue(savedCourse);
+            }
         }
 
-        // Emergency
         txtEmergencyName.setText(p.getEmergencyName());
         txtRelationship.setText(p.getRelationship());
         txtEmergencyContact.setText(p.getEmergencyContact());
-
-        // Medical
         txtAllergies.setText(p.getAllergies());
         txtConditions.setText(p.getConditions());
         txtHeight.setText(p.getHeight());
@@ -230,7 +235,6 @@ public class AddPatientController {
         if (txtMotherName    != null) txtMotherName.setText(p.getMotherName());
         if (txtMotherContact != null) txtMotherContact.setText(p.getMotherContact());
 
-        // Show status panel
         paneStatus.setVisible(true);
         paneStatus.setManaged(true);
         ToggleGroup statusGroup = new ToggleGroup();
@@ -243,30 +247,18 @@ public class AddPatientController {
     }
 
     // ── Tab navigation ────────────────────────────────────────────
-    /** Called by TabPane onMouseClicked so buttons stay in sync when user clicks a tab header */
     @FXML
     public void onTabChanged() {
         updateNavButtons(tabPane.getSelectionModel().getSelectedIndex());
     }
 
     private void updateNavButtons(int tabIndex) {
-        int lastTab = tabPane.getTabs().size() - 1;
+        int lastTab  = tabPane.getTabs().size() - 1;
         boolean isFirst = (tabIndex == 0);
         boolean isLast  = (tabIndex == lastTab);
-
-        // Back: hidden on first tab
-        btnBack.setVisible(!isFirst);
-        btnBack.setManaged(!isFirst);
-
-        // Next: shown on every tab except the last
-        btnNext.setVisible(!isLast);
-        btnNext.setManaged(!isLast);
-
-        // Save: shown only on the last tab
-        btnSave.setVisible(isLast);
-        btnSave.setManaged(isLast);
-
-        // Step indicator
+        btnBack.setVisible(!isFirst);  btnBack.setManaged(!isFirst);
+        btnNext.setVisible(!isLast);   btnNext.setManaged(!isLast);
+        btnSave.setVisible(isLast);    btnSave.setManaged(isLast);
         lblStep.setText("Step " + (tabIndex + 1) + " of " + (lastTab + 1));
         lblValidationMsg.setText("");
     }
@@ -274,31 +266,8 @@ public class AddPatientController {
     @FXML
     public void handleNext() {
         lblValidationMsg.setText("");
-        int current = tabPane.getSelectionModel().getSelectedIndex();
-
-        // Validate Tab 1 before moving to Tab 2
-        if (current == 0) {
-            if (isBlank(txtLastName) || isBlank(txtFirstName)) {
-                showValidationError("Last Name and First Name are required."); return;
-            }
-            if (dateBirth.getValue() == null) {
-                showValidationError("Birthdate is required."); return;
-            }
-            if (comboGender.getValue() == null) {
-                showValidationError("Gender is required."); return;
-            }
-            if (isBlank(txtContact)) {
-                showValidationError("Contact number is required."); return;
-            }
-            if (rbStudent.isSelected() && comboDept.getValue() == null) {
-                showValidationError("College / Dept is required."); return;
-            }
-            if (rbStudent.isSelected() && comboYear.getValue() == null) {
-                showValidationError("Year Level is required."); return;
-            }
-        }
-
-        tabPane.getSelectionModel().select(current + 1);
+        if (tabPane.getSelectionModel().getSelectedIndex() == 0 && !validateTab1()) return;
+        tabPane.getSelectionModel().select(tabPane.getSelectionModel().getSelectedIndex() + 1);
     }
 
     @FXML
@@ -307,30 +276,43 @@ public class AddPatientController {
         if (current > 0) tabPane.getSelectionModel().select(current - 1);
     }
 
+    private boolean validateTab1() {
+        if (isBlank(txtLastName) || isBlank(txtFirstName)) {
+            showValidationError("Last Name and First Name are required."); return false;
+        }
+        if (dateBirth.getValue() == null) {
+            showValidationError("Birthdate is required."); return false;
+        }
+        if (comboGender.getValue() == null) {
+            showValidationError("Gender is required."); return false;
+        }
+        if (isBlank(txtContact)) {
+            showValidationError("Contact number is required."); return false;
+        }
+        if (rbStudent.isSelected() && comboDept.getValue() == null) {
+            showValidationError("College / Dept is required."); return false;
+        }
+        if (rbStudent.isSelected() && comboYear.getValue() == null) {
+            showValidationError("Year Level is required."); return false;
+        }
+        return true;
+    }
+
+    // ── Helper: get value from an editable ComboBox ───────────────
+    private String getComboValue(ComboBox<String> combo) {
+        if (combo == null) return "";
+        String val = combo.getValue();
+        if (val != null) return val.trim();
+        // editable combo — check the editor text
+        if (combo.getEditor() != null) return combo.getEditor().getText().trim();
+        return "";
+    }
+
     // ── Save ──────────────────────────────────────────────────────
     @FXML
     private void handleSave() {
         lblValidationMsg.setText("");
-
-        // Required field validation
-        if (isBlank(txtLastName) || isBlank(txtFirstName)) {
-            showValidationError("Last Name and First Name are required."); return;
-        }
-        if (dateBirth.getValue() == null) {
-            showValidationError("Birthdate is required."); return;
-        }
-        if (comboGender.getValue() == null) {
-            showValidationError("Gender is required."); return;
-        }
-        if (isBlank(txtContact)) {
-            showValidationError("Contact number is required."); return;
-        }
-        if (rbStudent.isSelected() && comboDept.getValue() == null) {
-            showValidationError("College / Dept is required."); return;
-        }
-        if (rbStudent.isSelected() && comboYear.getValue() == null) {
-            showValidationError("Year Level is required."); return;
-        }
+        if (!validateTab1()) return;
         if (isBlank(txtEmergencyName) || isBlank(txtRelationship) || isBlank(txtEmergencyContact)) {
             showValidationError("Emergency Contact fields (Name, Relationship, Contact #) are required.");
             tabPane.getSelectionModel().select(1); return;
@@ -340,39 +322,36 @@ public class AddPatientController {
             tabPane.getSelectionModel().select(2); return;
         }
 
-        // Build full name
         String lastName  = txtLastName.getText().trim();
         String firstName = txtFirstName.getText().trim();
         String mi        = txtMiddleInitial.getText().trim();
         String fullName  = lastName + ", " + firstName + (mi.isBlank() ? "" : " " + mi);
 
-        String patientId  = txtPatientId.getText().trim();
-        String schoolEmpId = txtStudentID.getText().trim();
-        String type       = rbEmployee.isSelected() ? "Employee" : "Student";
-        String dept       = rbEmployee.isSelected()
-                ? (comboDeptEmployee.getValue() != null ? comboDeptEmployee.getValue() : "")
-                : (comboDept.getValue() != null ? comboDept.getValue() : "");
-        String yearLevel  = rbEmployee.isSelected() ? txtPosition.getText().trim()
-                : (comboYear.getValue() != null ? comboYear.getValue() : "");
-        String course     = txtCourse.getText().trim();
-        String gender     = comboGender.getValue();
-        String bloodType  = comboBloodType.getValue() != null ? comboBloodType.getValue() : "";
-        String birthdate  = dateBirth.getValue().format(DateTimeFormatter.ISO_LOCAL_DATE);
-        String age        = txtAge.getText().trim();
-        String contact    = txtContact.getText().trim();
-        String email      = txtEmail.getText().trim();
+        String patientId = txtPatientId.getText().trim();
+        String type      = rbEmployee.isSelected() ? "Employee" : "Student";
+        String dept      = rbEmployee.isSelected()
+                ? getComboValue(comboDeptEmployee)
+                : getComboValue(comboDept);
+        String yearLevel = rbEmployee.isSelected()
+                ? (txtPosition != null ? txtPosition.getText().trim() : "")
+                : getComboValue(comboYear);
+        String course    = getComboValue(comboCourse);  // editable combo — typed or selected
+        String gender    = comboGender.getValue();
+        String bloodType = comboBloodType.getValue() != null ? comboBloodType.getValue() : "";
+        String birthdate = dateBirth.getValue().format(DateTimeFormatter.ISO_LOCAL_DATE);
+        String age       = txtAge.getText().trim();
+        String contact   = txtContact.getText().trim();
+        String email     = txtEmail.getText().trim();
 
         String emergencyName    = txtEmergencyName.getText().trim();
         String relationship     = txtRelationship.getText().trim();
         String emergencyContact = txtEmergencyContact.getText().trim();
+        String allergies        = txtAllergies.getText().trim();
+        String conditions       = txtConditions.getText().trim();
+        String height           = txtHeight.getText().trim();
+        String weight           = txtWeight.getText().trim();
+        String medicalRemarks   = txtMedicalRemarks.getText().trim();
 
-        String allergies       = txtAllergies.getText().trim();
-        String conditions      = txtConditions.getText().trim();
-        String height          = txtHeight.getText().trim();
-        String weight          = txtWeight.getText().trim();
-        String medicalRemarks  = txtMedicalRemarks.getText().trim();
-
-        // ── Extra fields ──────────────────────────────────────────
         String address       = txtAddress       != null ? txtAddress.getText().trim()       : "";
         String fatherName    = txtFatherName    != null ? txtFatherName.getText().trim()    : "";
         String fatherContact = txtFatherContact != null ? txtFatherContact.getText().trim() : "";
@@ -380,22 +359,18 @@ public class AddPatientController {
         String motherContact = txtMotherContact != null ? txtMotherContact.getText().trim() : "";
         String position      = (rbEmployee.isSelected() && txtPosition != null)
                 ? txtPosition.getText().trim() : "";
-        String schoolYearVal = txtStudentID     != null ? txtStudentID.getText().trim()     : "";
+        String schoolYearVal = txtSchoolYear != null ? txtSchoolYear.getText().trim() : "";
 
         boolean success;
-
         if (isEditMode) {
-            // Archive status
             int isActive = (rbArchived != null && rbArchived.isSelected()) ? 0 : 1;
             success = DatabaseManager.updatePatientFull(
                     editPatientId, fullName, age, dept, yearLevel, gender, course,
                     contact, email, birthdate, type,
                     emergencyName, relationship, emergencyContact,
                     allergies, conditions, bloodType, height, weight, medicalRemarks,
-                    address, fatherName, fatherContact,
-                    motherName, motherContact,
-                    position, schoolYearVal
-            );
+                    address, fatherName, fatherContact, motherName, motherContact,
+                    position, schoolYearVal);
             if (success && rbArchived != null) {
                 DatabaseManager.setPatientActiveStatus(editPatientId, isActive);
             }
@@ -405,16 +380,13 @@ public class AddPatientController {
                     contact, email, birthdate, type,
                     emergencyName, relationship, emergencyContact,
                     allergies, conditions, bloodType, height, weight, medicalRemarks,
-                    address, fatherName, fatherContact,
-                    motherName, motherContact,
-                    position, schoolYearVal
-            );
+                    address, fatherName, fatherContact, motherName, motherContact,
+                    position, schoolYearVal);
         }
 
         if (success) {
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
-            alert.setTitle("Success");
-            alert.setHeaderText(null);
+            alert.setTitle("Success"); alert.setHeaderText(null);
             alert.setContentText(isEditMode ? "Patient updated successfully!" : "Patient saved successfully!");
             alert.showAndWait();
             closeForm();
@@ -423,12 +395,10 @@ public class AddPatientController {
         }
     }
 
-    @FXML
-    private void handleCancel() { closeForm(); }
+    @FXML private void handleCancel() { closeForm(); }
 
     private void closeForm() {
-        Stage stage = (Stage) txtLastName.getScene().getWindow();
-        stage.close();
+        ((Stage) txtLastName.getScene().getWindow()).close();
     }
 
     private boolean isBlank(TextField f) {

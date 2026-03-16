@@ -52,14 +52,14 @@
                            -fx-background-radius: 8; -fx-padding: 10 12 10 12;"/>
 
             <Button fx:id="btnPatientRecords" maxWidth="Infinity"
-                    onAction="#showPatientRegistry" text="👥  PATIENT RECORDS"
+                    onAction="#showPatientRegistry" text="👥  PATIENT LIST"
                     style="-fx-background-color: transparent; -fx-text-fill: white;
                            -fx-alignment: BASELINE_LEFT; -fx-cursor: hand;
                            -fx-font-size: 13; -fx-font-weight: normal;
                            -fx-background-radius: 8; -fx-padding: 10 12 10 12;"/>
 
             <Button fx:id="btnLogbook" maxWidth="Infinity"
-                    onAction="#showLogbook" text="📋  LOGBOOK"
+                    onAction="#showLogbook" text="📋  LOGBOOK / CHECK-IN"
                     style="-fx-background-color: transparent; -fx-text-fill: white;
                            -fx-alignment: BASELINE_LEFT; -fx-cursor: hand;
                            -fx-font-size: 13; -fx-font-weight: normal;
@@ -123,60 +123,39 @@
 
                 <!-- ═══ ROW 1: Stat Cards ═══ -->
                 <HBox spacing="10">
+                    <!-- Total Visits — follows period dropdown -->
                     <VBox alignment="CENTER" spacing="4" HBox.hgrow="ALWAYS"
                           style="-fx-background-color: white; -fx-background-radius: 10;
                                  -fx-border-color: #e0e0e0; -fx-border-radius: 10;
                                  -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.06),8,0,0,2);">
                         <padding><Insets top="14" bottom="14" left="12" right="12"/></padding>
-                        <Label text="Today's Visits"
+                        <Label fx:id="lblVisitsCardTitle" text="VISITS THIS WEEK"
                                style="-fx-font-size: 10; -fx-text-fill: #888; -fx-font-weight: bold;"/>
-                        <Label fx:id="lblToday" text="0"
+                        <Label fx:id="lblTotalVisits" text="0"
                                style="-fx-font-size: 28; -fx-font-weight: bold; -fx-text-fill: #8B0000;"/>
-                        <Label text="check-ins today"
+                        <Label fx:id="lblVisitsCardSub" text="for the selected period"
                                style="-fx-font-size: 9; -fx-text-fill: #aaa;"/>
                     </VBox>
+                    <!-- Total Registered — always fixed -->
                     <VBox alignment="CENTER" spacing="4" HBox.hgrow="ALWAYS"
                           style="-fx-background-color: white; -fx-background-radius: 10;
                                  -fx-border-color: #e0e0e0; -fx-border-radius: 10;
                                  -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.06),8,0,0,2);">
                         <padding><Insets top="14" bottom="14" left="12" right="12"/></padding>
-                        <Label text="This Week"
-                               style="-fx-font-size: 10; -fx-text-fill: #888; -fx-font-weight: bold;"/>
-                        <Label fx:id="lblWeekly" text="0"
-                               style="-fx-font-size: 28; -fx-font-weight: bold; -fx-text-fill: #555;"/>
-                        <Label text="visits this week"
-                               style="-fx-font-size: 9; -fx-text-fill: #aaa;"/>
-                    </VBox>
-                    <VBox alignment="CENTER" spacing="4" HBox.hgrow="ALWAYS"
-                          style="-fx-background-color: white; -fx-background-radius: 10;
-                                 -fx-border-color: #e0e0e0; -fx-border-radius: 10;
-                                 -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.06),8,0,0,2);">
-                        <padding><Insets top="14" bottom="14" left="12" right="12"/></padding>
-                        <Label text="This Month"
-                               style="-fx-font-size: 10; -fx-text-fill: #888; -fx-font-weight: bold;"/>
-                        <Label fx:id="lblMonthly" text="0"
-                               style="-fx-font-size: 28; -fx-font-weight: bold; -fx-text-fill: #555;"/>
-                        <Label text="visits this month"
-                               style="-fx-font-size: 9; -fx-text-fill: #aaa;"/>
-                    </VBox>
-                    <VBox alignment="CENTER" spacing="4" HBox.hgrow="ALWAYS"
-                          style="-fx-background-color: white; -fx-background-radius: 10;
-                                 -fx-border-color: #e0e0e0; -fx-border-radius: 10;
-                                 -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.06),8,0,0,2);">
-                        <padding><Insets top="14" bottom="14" left="12" right="12"/></padding>
-                        <Label text="Total Patients"
+                        <Label text="TOTAL REGISTERED"
                                style="-fx-font-size: 10; -fx-text-fill: #888; -fx-font-weight: bold;"/>
                         <Label fx:id="lblTotalPatients" text="0"
                                style="-fx-font-size: 28; -fx-font-weight: bold; -fx-text-fill: #1976D2;"/>
-                        <Label text="registered patients"
+                        <Label text="students &amp; employees"
                                style="-fx-font-size: 9; -fx-text-fill: #aaa;"/>
                     </VBox>
+                    <!-- Unattended — always fixed to today -->
                     <VBox alignment="CENTER" spacing="4" HBox.hgrow="ALWAYS"
                           style="-fx-background-color: #fff8e1; -fx-background-radius: 10;
                                  -fx-border-color: #ffe082; -fx-border-radius: 10;
                                  -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.06),8,0,0,2);">
                         <padding><Insets top="14" bottom="14" left="12" right="12"/></padding>
-                        <Label text="⚠ Unattended"
+                        <Label text="⚠  UNATTENDED"
                                style="-fx-font-size: 10; -fx-text-fill: #e65100; -fx-font-weight: bold;"/>
                         <Label fx:id="lblUnattended" text="0"
                                style="-fx-font-size: 28; -fx-font-weight: bold; -fx-text-fill: #e65100;"/>
@@ -184,6 +163,28 @@
                                style="-fx-font-size: 9; -fx-text-fill: #bf360c;"/>
                     </VBox>
                 </HBox>
+
+                <!-- ═══ LIVE QUEUE PANEL — always shows today's waiting patients ═══ -->
+                <VBox fx:id="vboxQueue" spacing="0"
+                      style="-fx-background-color: white; -fx-background-radius: 10;
+                             -fx-border-color: #e0e0e0; -fx-border-radius: 10;
+                             -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.06),8,0,0,2);">
+                    <padding><Insets top="12" bottom="12" left="14" right="14"/></padding>
+                    <HBox alignment="CENTER_LEFT" spacing="10">
+                        <Label text="🕐  Today's Queue"
+                               style="-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #333;"
+                               HBox.hgrow="ALWAYS"/>
+                        <Label text="Patients checked in and waiting · refreshes with dashboard"
+                               style="-fx-font-size: 10; -fx-text-fill: #999;"/>
+                    </HBox>
+                    <Separator style="-fx-padding: 6 0 6 0;">
+                        <VBox.margin><Insets top="8" bottom="8"/></VBox.margin>
+                    </Separator>
+                    <!-- Queue rows injected here by controller -->
+                    <VBox fx:id="vboxQueueRows" spacing="6"/>
+                    <Label fx:id="lblQueueEmpty" text="No patients currently waiting."
+                           style="-fx-font-size: 11; -fx-text-fill: #bbb; -fx-font-style: italic; -fx-padding: 4 0 0 0;"/>
+                </VBox>
 
                 <!-- ═══ ROW 2: Illness Charts ═══ -->
                 <HBox spacing="10">
