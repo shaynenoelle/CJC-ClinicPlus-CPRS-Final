@@ -81,24 +81,6 @@ public class LogbookController {
         setupLogbookTable();
         setCurrentTime();
         refreshLogbook();
-
-        // Bind logbook table column widths as percentages — responsive
-        javafx.application.Platform.runLater(() -> {
-            if (tblLogbook.getScene() != null) bindLogbookColumns();
-            else tblLogbook.sceneProperty().addListener((obs, ov, nv) -> {
-                if (nv != null) bindLogbookColumns();
-            });
-        });
-    }
-
-    private void bindLogbookColumns() {
-        javafx.beans.binding.DoubleBinding w = tblLogbook.widthProperty().subtract(18);
-        colId      .prefWidthProperty().bind(w.multiply(0.14));
-        colName    .prefWidthProperty().bind(w.multiply(0.24));
-        colTimeIn  .prefWidthProperty().bind(w.multiply(0.12));
-        colPurpose .prefWidthProperty().bind(w.multiply(0.16));
-        colTimeOut .prefWidthProperty().bind(w.multiply(0.12));
-        colAction  .prefWidthProperty().bind(w.multiply(0.22));
     }
 
     // ── Search table ──────────────────────────────────────────────

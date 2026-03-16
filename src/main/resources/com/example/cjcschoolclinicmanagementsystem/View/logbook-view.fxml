@@ -61,7 +61,7 @@
         <padding><Insets top="16" bottom="16" left="18" right="18"/></padding>
 
         <!-- LEFT: Check-in panel — fluid width, collapses gracefully -->
-        <VBox spacing="14" minWidth="280" prefWidth="340" maxWidth="400"
+        <VBox spacing="14" minWidth="300" prefWidth="420" maxWidth="460"
               style="-fx-background-color: white;
                      -fx-background-radius: 10;
                      -fx-border-color: #e0e0e0;
@@ -136,41 +136,46 @@
                 <Separator/>
 
                 <!-- Time In -->
-                <HBox spacing="10" alignment="CENTER_LEFT">
-                    <Label text="Time In:" prefWidth="80"
+                <VBox spacing="5">
+                    <Label text="Time In:"
                            style="-fx-font-size: 12; -fx-font-weight: bold; -fx-text-fill: #444;"/>
-                    <TextField fx:id="txtTimeIn"
-                               prefHeight="36" prefWidth="130"
-                               style="-fx-background-radius: 5;
-                                      -fx-border-color: #ddd;
-                                      -fx-border-radius: 5;
-                                      -fx-padding: 6 10 6 10;
-                                      -fx-font-size: 12;"/>
-                    <Button text="&#x23F1; Now"
-                            onAction="#setCurrentTime"
-                            style="-fx-background-color: #e8e8e8;
-                                   -fx-text-fill: #333;
-                                   -fx-background-radius: 5;
-                                   -fx-cursor: hand;
-                                   -fx-font-size: 11;"/>
-                </HBox>
+                    <HBox spacing="8" alignment="CENTER_LEFT">
+                        <TextField fx:id="txtTimeIn"
+                                   prefHeight="36"
+                                   HBox.hgrow="ALWAYS"
+                                   style="-fx-background-radius: 5;
+                                          -fx-border-color: #ddd;
+                                          -fx-border-radius: 5;
+                                          -fx-padding: 6 10 6 10;
+                                          -fx-font-size: 12;"/>
+                        <Button text="⏱ Now"
+                                onAction="#setCurrentTime"
+                                style="-fx-background-color: #e8e8e8;
+                                       -fx-text-fill: #333;
+                                       -fx-background-radius: 5;
+                                       -fx-cursor: hand;
+                                       -fx-font-size: 11;"/>
+                    </HBox>
+                </VBox>
 
                 <!-- Purpose -->
-                <HBox spacing="10" alignment="CENTER_LEFT">
-                    <Label text="Purpose:" prefWidth="80"
+                <VBox spacing="5">
+                    <Label text="Purpose:"
                            style="-fx-font-size: 12; -fx-font-weight: bold; -fx-text-fill: #444;"/>
-                    <RadioButton fx:id="rbHealthRelated"
-                                 text="Health-Related"
-                                 style="-fx-font-size: 12;">
-                        <toggleGroup>
-                            <ToggleGroup fx:id="purposeGroup"/>
-                        </toggleGroup>
-                    </RadioButton>
-                    <RadioButton fx:id="rbMedCert"
-                                 text="Med Cert"
-                                 toggleGroup="$purposeGroup"
-                                 style="-fx-font-size: 12;"/>
-                </HBox>
+                    <HBox spacing="16" alignment="CENTER_LEFT">
+                        <RadioButton fx:id="rbHealthRelated"
+                                     text="Health-Related"
+                                     style="-fx-font-size: 12;">
+                            <toggleGroup>
+                                <ToggleGroup fx:id="purposeGroup"/>
+                            </toggleGroup>
+                        </RadioButton>
+                        <RadioButton fx:id="rbMedCert"
+                                     text="Med Cert"
+                                     toggleGroup="$purposeGroup"
+                                     style="-fx-font-size: 12;"/>
+                    </HBox>
+                </VBox>
 
                 <!-- Confirm button -->
                 <Button text="Confirm Check-In"
@@ -223,9 +228,9 @@
                 </columnResizePolicy>
                 <columns>
                     <TableColumn fx:id="colId"      text="Patient ID" prefWidth="110"/>
-                    <TableColumn fx:id="colName"    text="Name"       prefWidth="160"/>
+                    <TableColumn fx:id="colName"    text="Name"       prefWidth="200"/>
                     <TableColumn fx:id="colTimeIn"  text="Time In"    prefWidth="80"/>
-                    <TableColumn fx:id="colPurpose" text="Purpose"    prefWidth="110"/>
+                    <TableColumn fx:id="colPurpose" text="Purpose"    prefWidth="130"/>
                     <TableColumn fx:id="colTimeOut" text="Time Out"   prefWidth="80"/>
                     <TableColumn fx:id="colAction"  text="Action"     prefWidth="160"/>
                 </columns>
