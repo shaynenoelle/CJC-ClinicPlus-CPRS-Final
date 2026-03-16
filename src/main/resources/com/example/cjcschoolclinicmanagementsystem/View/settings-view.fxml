@@ -2,7 +2,6 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<?import javafx.scene.text.Font?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 
@@ -11,11 +10,18 @@
       fx:controller="com.example.cjcschoolclinicmanagementsystem.controller.SettingsController"
       spacing="0" style="-fx-background-color: #F5F5F5;">
 
-    <!-- Header -->
-    <HBox style="-fx-background-color: #8B0000; -fx-padding: 16 25;">
-        <Label text="⚙  SETTINGS" textFill="WHITE">
-            <font><Font name="System Bold" size="20.0"/></font>
-        </Label>
+    <!-- Header — consistent with other main screens -->
+    <HBox style="-fx-background-color: white;
+                 -fx-border-color: #e0e0e0;
+                 -fx-border-width: 0 0 1 0;"
+          alignment="CENTER_LEFT">
+        <padding><javafx.geometry.Insets top="16" bottom="16" left="24" right="24"/></padding>
+        <VBox>
+            <Label text="Settings"
+                   style="-fx-font-size: 20; -fx-font-weight: bold; -fx-text-fill: #8B0000;"/>
+            <Label text="System configuration and preferences"
+                   style="-fx-font-size: 11; -fx-text-fill: #888888;"/>
+        </VBox>
     </HBox>
 
     <TabPane fx:id="mainTabPane" tabClosingPolicy="UNAVAILABLE" VBox.vgrow="ALWAYS"

@@ -401,35 +401,7 @@ public class DashboardController {
     @FXML
     private void openSettings() {
         setActiveNav(btnSettings);
-        try {
-            String fxmlPath = "/com/example/cjcschoolclinicmanagementsystem/View/settings-view.fxml";
-            URL resource = getClass().getResource(fxmlPath);
-            if (resource == null) {
-                resource = getClass().getClassLoader().getResource(
-                        "com/example/cjcschoolclinicmanagementsystem/View/settings-view.fxml");
-            }
-            if (resource == null) {
-                showError("File Not Found", "Could not locate settings-view.fxml");
-                setActiveNav(null); // clear highlight if settings failed to open
-                return;
-            }
-            FXMLLoader loader = new FXMLLoader(resource);
-            Parent root = loader.load();
-            javafx.stage.Stage stage = new javafx.stage.Stage();
-            stage.setTitle("Settings");
-            javafx.geometry.Rectangle2D screen =
-                    javafx.stage.Screen.getPrimary().getVisualBounds();
-            double w = Math.min(960, screen.getWidth()  * 0.82);
-            double h = Math.min(740, screen.getHeight() * 0.88);
-            stage.setScene(new javafx.scene.Scene(root, w, h));
-            stage.setMinWidth(760);
-            stage.setMinHeight(580);
-            stage.setResizable(true);
-            stage.initModality(javafx.stage.Modality.APPLICATION_MODAL);
-            stage.showAndWait();
-        } catch (Exception e) {
-            showError("Error", "Failed to open settings:\n" + e.getMessage());
-        }
+        loadView("settings-view.fxml");
     }
 
     private void loadView(String fxmlFile) {
