@@ -1,10 +1,18 @@
 package com.example.cjcschoolclinicmanagementsystem.controller;
 
+import javafx.beans.property.SimpleStringProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import com.example.cjcschoolclinicmanagementsystem.database.DatabaseManager;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.layout.*;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 import java.time.LocalDate;
@@ -31,12 +39,22 @@ public class AttendController {
     @FXML private TextField txtTimeIn;
     @FXML private TextField txtTimeOut;
 
+    // ── Previous visits table ─────────────────────────────────────
+    @FXML private TableView<Map<String, String>> tblPreviousVisits;
+    @FXML private TableColumn<Map<String, String>, String> colPrevDate;
+    @FXML private TableColumn<Map<String, String>, String> colPrevComplaint;
+    @FXML private TableColumn<Map<String, String>, String> colPrevDiagnosis;
+    @FXML private TableColumn<Map<String, String>, String> colPrevTreatment;
+    @FXML private TableColumn<Map<String, String>, String> colPrevRemarks;
+    @FXML private TableColumn<Map<String, String>, String> colPrevVitals;
+
     // ── Tab navigation controls ───────────────────────────────────
     @FXML private TabPane tabPane;
     @FXML private Button  btnBack, btnNext, btnSave;
     @FXML private Label   lblStep;
 
     private int visitId;
+    private String currentPatientId = "";
 
     @FXML
     public void initialize() {
@@ -44,6 +62,28 @@ public class AttendController {
         tabPane.getSelectionModel().selectedIndexProperty().addListener(
                 (obs, oldIdx, newIdx) -> updateNavButtons(newIdx.intValue()));
         updateNavButtons(0);
+
+        // Set up previous visits table columns
+        if (tblPreviousVisits != null) {
+            colPrevDate.setCellValueFactory(d ->
+                    new SimpleStringProperty(
+                            d.getValue().getOrDefault("visit_date", "")));
+            colPrevComplaint.setCellValueFactory(d ->
+                    new SimpleStringProperty(
+                            d.getValue().getOrDefault("chief_complaint", "—")));
+            colPrevDiagnosis.setCellValueFactory(d ->
+                    new SimpleStringProperty(
+                            d.getValue().getOrDefault("diagnosis", "—")));
+            colPrevTreatment.setCellValueFactory(d ->
+                    new SimpleStringProperty(
+                            d.getValue().getOrDefault("treatment", "—")));
+            colPrevRemarks.setCellValueFactory(d ->
+                    new SimpleStringProperty(
+                            d.getValue().getOrDefault("remarks", "—")));
+            colPrevVitals.setCellValueFactory(d ->
+                    new SimpleStringProperty(
+                            buildVitalsString(d.getValue())));
+        }
     }
 
     // ── Tab navigation ────────────────────────────────────────────
@@ -95,6 +135,7 @@ public class AttendController {
 
     public void setVisitData(Map<String, String> visitRow) {
         visitId = Integer.parseInt(visitRow.get("visit_id"));
+        currentPatientId = visitRow.getOrDefault("patient_id", "");
         lblPatientName.setText(visitRow.get("full_name"));
         lblDate.setText(visitRow.get("visit_date"));
 
@@ -133,6 +174,9 @@ public class AttendController {
             txtTreatment.setText(visitRow.get("treatment"));
         if (visitRow.get("remarks") != null)
             txtRemarks.setText(visitRow.get("remarks"));
+
+        // Load previous visits for comparison
+        loadRecentVisits(currentPatientId, visitRow.get("visit_date"));
     }
 
     @FXML
@@ -271,68 +315,6 @@ public class AttendController {
         }
     }
 
-    // ── Preset pickers ────────────────────────────────────────────
-    // Shows a popup menu of preset values; clicking one APPENDS it to the field
-    // (comma-separated if something is already typed) so nurses can combine terms.
-
-    @FXML
-    private void showComplaintPresets() {
-        showPresetPopup("complaint", txtComplaint);
-    }
-
-    @FXML
-    private void showDiagnosisPresets() {
-        showPresetPopup("diagnosis", txtDiagnosis);
-    }
-
-    @FXML
-    private void showTreatmentPresets() {
-        showPresetPopup("medicine", txtTreatment);
-    }
-
-    private void showPresetPopup(String category, TextArea targetField) {
-        java.util.List<String> presets =
-                DatabaseManager.getPresets(category);
-
-        if (presets.isEmpty()) {
-            // Friendly nudge if no presets configured yet
-            javafx.scene.control.Tooltip tip = new javafx.scene.control.Tooltip(
-                    "No presets yet — add some in Settings > Clinical Presets.");
-            tip.setAutoHide(true);
-            tip.show(targetField.getScene().getWindow(),
-                    targetField.localToScreen(0, 0).getX(),
-                    targetField.localToScreen(0, 0).getY() - 30);
-            new Thread(() -> {
-                try { Thread.sleep(2500); } catch (InterruptedException ignored) {}
-                javafx.application.Platform.runLater(tip::hide);
-            }).start();
-            return;
-        }
-
-        ContextMenu menu = new ContextMenu();
-        menu.setStyle("-fx-font-size: 12;");
-
-        for (String preset : presets) {
-            MenuItem item = new MenuItem(preset);
-            item.setOnAction(e -> {
-                String current = targetField.getText().trim();
-                if (current.isEmpty()) {
-                    targetField.setText(preset);
-                } else {
-                    // Append with comma+space so multiple presets can be combined
-                    targetField.setText(current + ", " + preset);
-                }
-                targetField.positionCaret(targetField.getText().length());
-                targetField.requestFocus();
-            });
-            menu.getItems().add(item);
-        }
-
-        // Show below the TextArea
-        menu.show(targetField,
-                javafx.geometry.Side.BOTTOM, 0, 0);
-    }
-
     // ── Tab/Enter navigation for Vital Signs ─────────────────────
     @FXML
     private void onTempKeyPressed(KeyEvent e) {
@@ -383,6 +365,36 @@ public class AttendController {
             e.consume();
             txtTreatment.requestFocus();
         }
+    }
+
+    // ── Previous visits loader ────────────────────────────────────
+    private void loadRecentVisits(String patientId, String currentVisitDate) {
+        if (tblPreviousVisits == null || patientId == null || patientId.isEmpty()) return;
+
+        java.util.List<Map<String, String>> visits =
+                DatabaseManager.getVisitsForPatient(patientId);
+
+        // Exclude the current visit (not yet saved, has no complaint yet)
+        visits.removeIf(v ->
+                currentVisitDate != null &&
+                        currentVisitDate.equals(v.getOrDefault("visit_date", "")) &&
+                        v.getOrDefault("chief_complaint", "").isEmpty());
+
+        tblPreviousVisits.setItems(
+                FXCollections.observableArrayList(visits));
+    }
+
+    private String buildVitalsString(Map<String, String> v) {
+        StringBuilder sb = new StringBuilder();
+        String temp = v.getOrDefault("temperature", "");
+        String bp   = v.getOrDefault("blood_pressure", "");
+        String hr   = v.getOrDefault("heart_rate", "");
+        String o2   = v.getOrDefault("oxygen_sat", "");
+        if (!temp.isEmpty()) sb.append("T:").append(temp).append("°C  ");
+        if (!bp.isEmpty())   sb.append("BP:").append(bp).append("  ");
+        if (!hr.isEmpty())   sb.append("HR:").append(hr).append("  ");
+        if (!o2.isEmpty())   sb.append("O2:").append(o2).append("%");
+        return sb.toString().trim();
     }
 
     @FXML
