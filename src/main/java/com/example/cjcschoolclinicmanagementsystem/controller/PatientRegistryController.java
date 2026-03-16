@@ -454,6 +454,23 @@ public class PatientRegistryController {
         }
     }
 
+    private void openAttendFormReadOnly(Map<String,String> visitRow, String patientName) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource(
+                    "/com/example/cjcschoolclinicmanagementsystem/View/attend-view.fxml"));
+            Stage stage = new Stage();
+            stage.setTitle("View Visit — " + patientName);
+            stage.initModality(Modality.APPLICATION_MODAL);
+            stage.setScene(new Scene(loader.load()));
+            AttendController ctrl = loader.getController();
+            ctrl.setVisitData(visitRow);
+            ctrl.setReadOnly(true);
+            stage.showAndWait();
+        } catch (IOException e) {
+            showAlert(Alert.AlertType.ERROR, "Error", "Cannot open visit:\n" + e.getMessage());
+        }
+    }
+
     // ── View Profile ──────────────────────────────────────────────
     private void openViewProfile(Patient patient) {
         Stage stage = new Stage();
@@ -569,18 +586,85 @@ public class PatientRegistryController {
 
         TableView<Map<String,String>> table = new TableView<>();
         table.setPrefHeight(220);
+        table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
 
+        // ── Data columns ──────────────────────────────────────────
         String[] cols   = {"visit_date","time_in","time_out","purpose","chief_complaint","diagnosis","treatment","remarks"};
         String[] hdrs   = {"Date","Time In","Time Out","Purpose","Complaint","Diagnosis","Treatment","Remarks"};
-        double[] widths = {100,80,80,120,160,160,160,160};
+        double[] widths = {0.09, 0.07, 0.07, 0.09, 0.13, 0.13, 0.13, 0.11};
         for (int i = 0; i < cols.length; i++) {
             final String key = cols[i];
             TableColumn<Map<String,String>, String> tc = new TableColumn<>(hdrs[i]);
-            tc.setPrefWidth(widths[i]);
             tc.setCellValueFactory(d -> new javafx.beans.property.SimpleStringProperty(
                     d.getValue().getOrDefault(key, "")));
             table.getColumns().add(tc);
         }
+
+        // ── Vitals column ─────────────────────────────────────────
+        TableColumn<Map<String,String>, String> colVitals = new TableColumn<>("Vitals");
+        colVitals.setCellValueFactory(d -> {
+            Map<String,String> v = d.getValue();
+            StringBuilder sb = new StringBuilder();
+            String temp = v.getOrDefault("temperature", "");
+            String bp   = v.getOrDefault("blood_pressure", "");
+            String hr   = v.getOrDefault("heart_rate", "");
+            String o2   = v.getOrDefault("oxygen_sat", "");
+            if (!temp.isEmpty()) sb.append("T:").append(temp).append("°  ");
+            if (!bp.isEmpty())   sb.append("BP:").append(bp).append("  ");
+            if (!hr.isEmpty())   sb.append("HR:").append(hr).append("  ");
+            if (!o2.isEmpty())   sb.append("O2:").append(o2).append("%");
+            return new javafx.beans.property.SimpleStringProperty(sb.toString().trim());
+        });
+        table.getColumns().add(colVitals);
+
+        // ── Action column: View / Edit / Delete ───────────────────
+        TableColumn<Map<String,String>, String> colAction = new TableColumn<>("Action");
+        colAction.setCellFactory(col -> new TableCell<>() {
+            final Button btnView   = new Button("View");
+            final Button btnEdit   = new Button("Edit");
+            final Button btnDelete = new Button("Delete");
+            final HBox   actionBox = new HBox(4, btnView, btnEdit, btnDelete);
+            {
+                btnView.setStyle("-fx-background-color: #2196F3; -fx-text-fill: white;" +
+                        "-fx-background-radius: 4; -fx-cursor: hand; -fx-font-size: 10;");
+                btnEdit.setStyle("-fx-background-color: #8B0000; -fx-text-fill: white;" +
+                        "-fx-background-radius: 4; -fx-cursor: hand; -fx-font-size: 10;");
+                btnDelete.setStyle("-fx-background-color: #e74c3c; -fx-text-fill: white;" +
+                        "-fx-background-radius: 4; -fx-cursor: hand; -fx-font-size: 10;");
+
+                btnView.setOnAction(e -> {
+                    Map<String,String> row = getTableView().getItems().get(getIndex());
+                    openAttendFormReadOnly(row, patient.getName());
+                });
+                btnEdit.setOnAction(e -> {
+                    Map<String,String> row = getTableView().getItems().get(getIndex());
+                    openAttendForm(row, patient.getName());
+                    table.setItems(FXCollections.observableArrayList(
+                            DatabaseManager.getVisitsForPatient(patient.getId())));
+                });
+                btnDelete.setOnAction(e -> {
+                    Map<String,String> row = getTableView().getItems().get(getIndex());
+                    Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+                    alert.setTitle("Delete Visit");
+                    alert.setHeaderText("Delete this visit record?");
+                    alert.setContentText("Date: " + row.getOrDefault("visit_date", "") +
+                            "\nComplaint: " + row.getOrDefault("chief_complaint", "—"));
+                    alert.showAndWait().ifPresent(resp -> {
+                        if (resp == ButtonType.OK && row.containsKey("visit_id")) {
+                            DatabaseManager.deleteVisit(Integer.parseInt(row.get("visit_id")));
+                            table.setItems(FXCollections.observableArrayList(
+                                    DatabaseManager.getVisitsForPatient(patient.getId())));
+                        }
+                    });
+                });
+            }
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                setGraphic(empty ? null : actionBox);
+            }
+        });
+        table.getColumns().add(colAction);
 
         table.setItems(FXCollections.observableArrayList(
                 DatabaseManager.getVisitsForPatient(patient.getId())));
