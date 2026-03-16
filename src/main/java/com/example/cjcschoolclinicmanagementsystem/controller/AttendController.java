@@ -271,6 +271,68 @@ public class AttendController {
         }
     }
 
+    // ── Preset pickers ────────────────────────────────────────────
+    // Shows a popup menu of preset values; clicking one APPENDS it to the field
+    // (comma-separated if something is already typed) so nurses can combine terms.
+
+    @FXML
+    private void showComplaintPresets() {
+        showPresetPopup("complaint", txtComplaint);
+    }
+
+    @FXML
+    private void showDiagnosisPresets() {
+        showPresetPopup("diagnosis", txtDiagnosis);
+    }
+
+    @FXML
+    private void showTreatmentPresets() {
+        showPresetPopup("medicine", txtTreatment);
+    }
+
+    private void showPresetPopup(String category, TextArea targetField) {
+        java.util.List<String> presets =
+                DatabaseManager.getPresets(category);
+
+        if (presets.isEmpty()) {
+            // Friendly nudge if no presets configured yet
+            javafx.scene.control.Tooltip tip = new javafx.scene.control.Tooltip(
+                    "No presets yet — add some in Settings > Clinical Presets.");
+            tip.setAutoHide(true);
+            tip.show(targetField.getScene().getWindow(),
+                    targetField.localToScreen(0, 0).getX(),
+                    targetField.localToScreen(0, 0).getY() - 30);
+            new Thread(() -> {
+                try { Thread.sleep(2500); } catch (InterruptedException ignored) {}
+                javafx.application.Platform.runLater(tip::hide);
+            }).start();
+            return;
+        }
+
+        ContextMenu menu = new ContextMenu();
+        menu.setStyle("-fx-font-size: 12;");
+
+        for (String preset : presets) {
+            MenuItem item = new MenuItem(preset);
+            item.setOnAction(e -> {
+                String current = targetField.getText().trim();
+                if (current.isEmpty()) {
+                    targetField.setText(preset);
+                } else {
+                    // Append with comma+space so multiple presets can be combined
+                    targetField.setText(current + ", " + preset);
+                }
+                targetField.positionCaret(targetField.getText().length());
+                targetField.requestFocus();
+            });
+            menu.getItems().add(item);
+        }
+
+        // Show below the TextArea
+        menu.show(targetField,
+                javafx.geometry.Side.BOTTOM, 0, 0);
+    }
+
     // ── Tab/Enter navigation for Vital Signs ─────────────────────
     @FXML
     private void onTempKeyPressed(KeyEvent e) {

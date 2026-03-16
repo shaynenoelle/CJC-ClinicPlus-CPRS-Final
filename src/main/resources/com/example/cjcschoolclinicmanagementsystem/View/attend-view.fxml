@@ -175,28 +175,52 @@
             <VBox spacing="12">
                 <padding><Insets top="16" bottom="8" left="4" right="4"/></padding>
 
-                <Label text="Chief Complaint *"
-                       style="-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #444;"/>
+                <!-- Chief Complaint -->
+                <HBox spacing="8" alignment="CENTER_LEFT">
+                    <Label text="Chief Complaint *"
+                           style="-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #444;"/>
+                    <Button text="▾ Presets" onAction="#showComplaintPresets"
+                            style="-fx-background-color: #e8f0fe; -fx-text-fill: #1a56db;
+                                   -fx-border-color: #b3c7f9; -fx-border-radius: 4;
+                                   -fx-background-radius: 4; -fx-cursor: hand;
+                                   -fx-font-size: 11; -fx-padding: 3 10 3 10;"/>
+                </HBox>
                 <TextArea fx:id="txtComplaint"
-                          promptText="What did the patient come in for?"
+                          promptText="Type freely or pick from Presets above..."
                           prefHeight="80" wrapText="true"
                           onKeyPressed="#onComplaintKeyPressed"
                           style="-fx-background-radius: 5; -fx-border-color: #ddd;
                                  -fx-border-radius: 5; -fx-font-size: 13;"/>
 
-                <Label text="Diagnosis"
-                       style="-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #444;"/>
+                <!-- Diagnosis -->
+                <HBox spacing="8" alignment="CENTER_LEFT">
+                    <Label text="Diagnosis"
+                           style="-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #444;"/>
+                    <Button text="▾ Presets" onAction="#showDiagnosisPresets"
+                            style="-fx-background-color: #e8f0fe; -fx-text-fill: #1a56db;
+                                   -fx-border-color: #b3c7f9; -fx-border-radius: 4;
+                                   -fx-background-radius: 4; -fx-cursor: hand;
+                                   -fx-font-size: 11; -fx-padding: 3 10 3 10;"/>
+                </HBox>
                 <TextArea fx:id="txtDiagnosis"
-                          promptText="Identified illness or condition"
+                          promptText="Type freely or pick from Presets above..."
                           prefHeight="80" wrapText="true"
                           onKeyPressed="#onDiagnosisKeyPressed"
                           style="-fx-background-radius: 5; -fx-border-color: #ddd;
                                  -fx-border-radius: 5; -fx-font-size: 13;"/>
 
-                <Label text="Treatment Given"
-                       style="-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #444;"/>
+                <!-- Treatment -->
+                <HBox spacing="8" alignment="CENTER_LEFT">
+                    <Label text="Treatment Given"
+                           style="-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #444;"/>
+                    <Button text="▾ Presets" onAction="#showTreatmentPresets"
+                            style="-fx-background-color: #e8f0fe; -fx-text-fill: #1a56db;
+                                   -fx-border-color: #b3c7f9; -fx-border-radius: 4;
+                                   -fx-background-radius: 4; -fx-cursor: hand;
+                                   -fx-font-size: 11; -fx-padding: 3 10 3 10;"/>
+                </HBox>
                 <TextArea fx:id="txtTreatment"
-                          promptText="Medication, rest, referral..."
+                          promptText="Type freely or pick from Presets above..."
                           prefHeight="80" wrapText="true"
                           onKeyPressed="#onTreatmentKeyPressed"
                           style="-fx-background-radius: 5; -fx-border-color: #ddd;

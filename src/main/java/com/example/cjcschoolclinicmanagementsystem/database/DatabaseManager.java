@@ -1172,5 +1172,72 @@ public class DatabaseManager {
             return false;
         }
     }
-}
 
+    // ── PRESET LISTS (Diagnosis, Complaint, Medicine, Dept, Course) ──
+
+    /** Ensures the Presets table exists. Called before every preset operation. */
+    public static void ensurePresetsTable() {
+        String sql = "CREATE TABLE IF NOT EXISTS Presets (" +
+                "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                "category TEXT NOT NULL, " +
+                "value TEXT NOT NULL, " +
+                "UNIQUE(category, value))";
+        try (Connection conn = connect(); Statement stmt = conn.createStatement()) {
+            stmt.execute(sql);
+        } catch (SQLException e) {
+            System.err.println("EnsurePresets Error: " + e.getMessage());
+        }
+    }
+
+    /** Returns all preset values for a given category (e.g. "diagnosis", "complaint", "medicine", "department", "course"). */
+    public static List<String> getPresets(String category) {
+        ensurePresetsTable();
+        List<String> list = new ArrayList<>();
+        String sql = "SELECT value FROM Presets WHERE category = ? ORDER BY value ASC";
+        try (Connection conn = connect(); PreparedStatement p = conn.prepareStatement(sql)) {
+            p.setString(1, category);
+            ResultSet rs = p.executeQuery();
+            while (rs.next()) list.add(rs.getString("value"));
+        } catch (SQLException e) {
+            System.err.println("GetPresets Error: " + e.getMessage());
+        }
+        return list;
+    }
+
+    /** Adds a new preset value. Returns true if added, false if duplicate or error. */
+    public static boolean addPreset(String category, String value) {
+        ensurePresetsTable();
+        String sql = "INSERT OR IGNORE INTO Presets(category, value) VALUES(?, ?)";
+        try (Connection conn = connect(); PreparedStatement p = conn.prepareStatement(sql)) {
+            p.setString(1, category);
+            p.setString(2, value.trim());
+            return p.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("AddPreset Error: " + e.getMessage());
+            return false;
+        }
+    }
+
+    /** Removes a preset value. Returns true if deleted. */
+    public static boolean removePreset(String category, String value) {
+        ensurePresetsTable();
+        String sql = "DELETE FROM Presets WHERE category = ? AND value = ?";
+        try (Connection conn = connect(); PreparedStatement p = conn.prepareStatement(sql)) {
+            p.setString(1, category);
+            p.setString(2, value);
+            return p.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("RemovePreset Error: " + e.getMessage());
+            return false;
+        }
+    }
+
+    // ── SCHOOL YEAR ───────────────────────────────────────────────
+    public static String getSchoolYear() {
+        return getSetting("school_year", "2025-2026");
+    }
+
+    public static void saveSchoolYear(String value) {
+        saveSetting("school_year", value.trim());
+    }
+}
