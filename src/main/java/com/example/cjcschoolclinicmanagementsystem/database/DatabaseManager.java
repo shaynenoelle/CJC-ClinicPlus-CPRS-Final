@@ -380,8 +380,9 @@ public class DatabaseManager {
     // ── GET VISIT HISTORY FOR ONE PATIENT ────────────────────────
     public static List<java.util.Map<String, String>> getVisitsForPatient(String patientId) {
         List<java.util.Map<String, String>> list = new ArrayList<>();
-        String sql = "SELECT visit_date, time_in, time_out, purpose, chief_complaint, " +
-                "diagnosis, treatment, remarks " +
+        String sql = "SELECT visit_id, patient_id, visit_date, time_in, time_out, purpose, chief_complaint, " +
+                "diagnosis, treatment, remarks, temperature, blood_pressure, " +
+                "heart_rate, oxygen_sat " +
                 "FROM Visits WHERE patient_id = ? ORDER BY visit_date DESC, time_in DESC";
         try (Connection conn = connect();
              PreparedStatement p = conn.prepareStatement(sql)) {
@@ -389,6 +390,8 @@ public class DatabaseManager {
             ResultSet rs = p.executeQuery();
             while (rs.next()) {
                 java.util.Map<String, String> row = new java.util.LinkedHashMap<>();
+                row.put("visit_id",        nvl(rs.getString("visit_id")));
+                row.put("patient_id",      nvl(rs.getString("patient_id")));
                 row.put("visit_date",      nvl(rs.getString("visit_date")));
                 row.put("time_in",         nvl(rs.getString("time_in")));
                 row.put("time_out",        nvl(rs.getString("time_out")));
@@ -397,6 +400,10 @@ public class DatabaseManager {
                 row.put("diagnosis",       nvl(rs.getString("diagnosis")));
                 row.put("treatment",       nvl(rs.getString("treatment")));
                 row.put("remarks",         nvl(rs.getString("remarks")));
+                row.put("temperature",     nvl(rs.getString("temperature")));
+                row.put("blood_pressure",  nvl(rs.getString("blood_pressure")));
+                row.put("heart_rate",      nvl(rs.getString("heart_rate")));
+                row.put("oxygen_sat",      nvl(rs.getString("oxygen_sat")));
                 list.add(row);
             }
         } catch (SQLException e) {
