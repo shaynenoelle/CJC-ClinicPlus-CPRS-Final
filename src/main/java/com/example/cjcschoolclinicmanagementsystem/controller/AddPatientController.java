@@ -52,7 +52,7 @@ public class AddPatientController {
     private String  editPatientId = null;
 
     private static final String[] DEFAULT_COLLEGE_DEPTS = {"CCIS","COE","CABE","CEDAS","CHS","CSP"};
-    private static final String[] COLLEGE_YEARS = {"1st Year","2nd Year","3rd Year","4th Year"};
+    private static final String[] COLLEGE_YEARS = {"1st Year","2nd Year","3rd Year","4th Year", "5th year"};
     private static final String[] BED_YEARS     = {
             "Kinder",
             "Grade 1","Grade 2","Grade 3","Grade 4","Grade 5","Grade 6",
