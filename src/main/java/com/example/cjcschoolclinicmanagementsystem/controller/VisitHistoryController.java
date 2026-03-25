@@ -91,8 +91,9 @@ public class VisitHistoryController {
                 new SimpleStringProperty(d.getValue().getOrDefault("time_out", "—")));
         colPurpose.setCellValueFactory(d ->
                 new SimpleStringProperty(d.getValue().getOrDefault("purpose", "")));
+        // Cues are stored in chief_complaint; diagnosis mirrors it (report-layer only)
         colDiagnosis.setCellValueFactory(d ->
-                new SimpleStringProperty(d.getValue().getOrDefault("diagnosis", "—")));
+                new SimpleStringProperty(d.getValue().getOrDefault("chief_complaint", "—")));
 
         // Action column: View + Edit + Delete
         colAction.setCellFactory(col -> new TableCell<>() {
@@ -184,7 +185,7 @@ public class VisitHistoryController {
                 .filter(row ->
                         query.isEmpty() ||
                                 row.getOrDefault("full_name", "").toLowerCase().contains(query) ||
-                                row.getOrDefault("diagnosis", "").toLowerCase().contains(query) ||
+                                row.getOrDefault("chief_complaint", "").toLowerCase().contains(query) ||
                                 row.getOrDefault("course_dept", "").toLowerCase().contains(query) ||
                                 row.getOrDefault("patient_id", "").toLowerCase().contains(query))
                 .collect(Collectors.toList());
@@ -222,7 +223,7 @@ public class VisitHistoryController {
         long total = allData.stream().filter(row ->
                 query.isEmpty() ||
                         row.getOrDefault("full_name","").toLowerCase().contains(query) ||
-                        row.getOrDefault("diagnosis","").toLowerCase().contains(query) ||
+                        row.getOrDefault("chief_complaint","").toLowerCase().contains(query) ||
                         row.getOrDefault("course_dept","").toLowerCase().contains(query) ||
                         row.getOrDefault("patient_id","").toLowerCase().contains(query)).count();
         int totalPages = Math.max(1, (int) Math.ceil((double) total / PAGE_SIZE));

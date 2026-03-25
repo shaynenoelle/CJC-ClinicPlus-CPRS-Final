@@ -13,8 +13,10 @@ import javafx.scene.layout.*;
 import javafx.stage.Stage;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class AttendController {
 
@@ -30,13 +32,10 @@ public class AttendController {
     @FXML private Label lblHrWarning;
     @FXML private Label lblO2Warning;
 
-    // Complaint: editable ComboBox + optional TextArea for "Others"
-    @FXML private ComboBox<String> comboComplaint;
-    @FXML private TextArea         txtComplaint;
-
-    // Diagnosis: editable ComboBox + optional TextArea for "Others"
-    @FXML private ComboBox<String> comboDiagnosis;
-    @FXML private TextArea         txtDiagnosis;
+    // ── Cues (merged complaint + diagnosis) ───────────────────────
+    @FXML private ComboBox<String> comboCues;   // preset picker / free-type
+    @FXML private FlowPane         cuesFlowPane; // chip display area
+    @FXML private Button           btnAddCue;
 
     @FXML private TextArea  txtTreatment;
     @FXML private TextArea  txtRemarks;
@@ -45,10 +44,9 @@ public class AttendController {
     @FXML private TextField txtTimeOut;
 
     // ── Previous visits table ─────────────────────────────────────
-    @FXML private TableView<Map<String, String>> tblPreviousVisits;
+    @FXML private TableView<Map<String, String>>           tblPreviousVisits;
     @FXML private TableColumn<Map<String, String>, String> colPrevDate;
-    @FXML private TableColumn<Map<String, String>, String> colPrevComplaint;
-    @FXML private TableColumn<Map<String, String>, String> colPrevDiagnosis;
+    @FXML private TableColumn<Map<String, String>, String> colPrevCues;       // renamed from colPrevComplaint
     @FXML private TableColumn<Map<String, String>, String> colPrevTreatment;
     @FXML private TableColumn<Map<String, String>, String> colPrevRemarks;
     @FXML private TableColumn<Map<String, String>, String> colPrevVitals;
@@ -58,26 +56,28 @@ public class AttendController {
     @FXML private Button  btnBack, btnNext, btnSave;
     @FXML private Label   lblStep;
 
-    private static final String OTHERS = "Others (specify below)";
+    // Internal list of cues currently selected for this visit
+    private final List<String> selectedCues = new ArrayList<>();
 
-    private int    visitId;
-    private String currentPatientId = "";
+    private boolean isReadOnly      = false;
+    private int     visitId;
+    private String  currentPatientId = "";
 
+    // ─────────────────────────────────────────────────────────────
     @FXML
     public void initialize() {
         tabPane.getSelectionModel().selectedIndexProperty().addListener(
                 (obs, oldIdx, newIdx) -> updateNavButtons(newIdx.intValue()));
         updateNavButtons(0);
 
-        setupPresetCombos();
+        setupCuesCombo();
 
         if (tblPreviousVisits != null) {
             colPrevDate.setCellValueFactory(d ->
                     new SimpleStringProperty(d.getValue().getOrDefault("visit_date", "")));
-            colPrevComplaint.setCellValueFactory(d ->
+            // Show cues — stored in chief_complaint
+            colPrevCues.setCellValueFactory(d ->
                     new SimpleStringProperty(d.getValue().getOrDefault("chief_complaint", "—")));
-            colPrevDiagnosis.setCellValueFactory(d ->
-                    new SimpleStringProperty(d.getValue().getOrDefault("diagnosis", "—")));
             colPrevTreatment.setCellValueFactory(d ->
                     new SimpleStringProperty(d.getValue().getOrDefault("treatment", "—")));
             colPrevRemarks.setCellValueFactory(d ->
@@ -87,61 +87,104 @@ public class AttendController {
         }
     }
 
-    // ── Preset combo setup ────────────────────────────────────────
-    private void setupPresetCombos() {
-        // Chief Complaint
-        List<String> complaints = new ArrayList<>(DatabaseManager.getPresets("complaint"));
-        complaints.add(OTHERS);
-        comboComplaint.setItems(FXCollections.observableArrayList(complaints));
-        comboComplaint.setPromptText("Select preset or type complaint…");
-        comboComplaint.valueProperty().addListener((obs, oldVal, newVal) -> {
-            boolean isOther = OTHERS.equals(newVal);
-            if (txtComplaint != null) {
-                txtComplaint.setVisible(isOther);
-                txtComplaint.setManaged(isOther);
-            }
-        });
+    // ── Cues combo setup ──────────────────────────────────────────
+    private void setupCuesCombo() {
+        // Load presets from both complaint and diagnosis buckets so the nurse
+        // has the full list available in one dropdown.
+        List<String> presets = new ArrayList<>(DatabaseManager.getPresets("complaint"));
+        List<String> diagPresets = DatabaseManager.getPresets("diagnosis");
+        for (String d : diagPresets) {
+            if (!presets.contains(d)) presets.add(d);
+        }
+        presets.sort(String.CASE_INSENSITIVE_ORDER);
+        comboCues.setItems(FXCollections.observableArrayList(presets));
+        comboCues.setPromptText("Select preset or type a cue…");
 
-        // Diagnosis
-        List<String> diagnoses = new ArrayList<>(DatabaseManager.getPresets("diagnosis"));
-        diagnoses.add(OTHERS);
-        comboDiagnosis.setItems(FXCollections.observableArrayList(diagnoses));
-        comboDiagnosis.setPromptText("Select preset or type diagnosis…");
-        comboDiagnosis.valueProperty().addListener((obs, oldVal, newVal) -> {
-            boolean isOther = OTHERS.equals(newVal);
-            if (txtDiagnosis != null) {
-                txtDiagnosis.setVisible(isOther);
-                txtDiagnosis.setManaged(isOther);
+        // Allow pressing Enter inside the combo editor to add the cue
+        comboCues.getEditor().setOnKeyPressed(e -> {
+            if (e.getCode() == KeyCode.ENTER) {
+                e.consume();
+                onAddCue();
             }
         });
     }
 
-    // ── Resolve final value from a combo + textarea pair ─────────
-    // Priority: if "Others" is selected → use the textarea text.
-    // Otherwise use getValue() first, then getEditor() text as fallback.
-    private String resolveValue(ComboBox<String> combo, TextArea area) {
-        String val = combo.getValue();
-        if (OTHERS.equals(val)) {
-            return area != null ? area.getText().trim() : "";
+    // ── Add a cue chip ────────────────────────────────────────────
+    @FXML
+    private void onAddCue() {
+        // getValue() catches a selected preset; getEditor().getText() catches free-typed text
+        String value = comboCues.getValue() != null
+                ? comboCues.getValue().trim()
+                : comboCues.getEditor().getText().trim();
+
+        if (value.isEmpty()) return;
+
+        // Avoid exact duplicates (case-insensitive)
+        boolean duplicate = selectedCues.stream()
+                .anyMatch(c -> c.equalsIgnoreCase(value));
+        if (duplicate) {
+            comboCues.getEditor().clear();
+            comboCues.setValue(null);
+            return;
         }
-        if (val != null && !val.isBlank()) return val.trim();
-        // Editable combo — user may have typed without selecting a list item
-        if (combo.getEditor() != null) {
-            String editorText = combo.getEditor().getText();
-            if (editorText != null && !editorText.isBlank()) return editorText.trim();
-        }
-        return "";
+
+        addCueChip(value);
+        comboCues.getEditor().clear();
+        comboCues.setValue(null);
     }
 
-    // ── Pre-fill a combo from a saved database value ──────────────
-    // If the saved value is in the preset list, select it.
-    // If not, it means the nurse typed it freely — set it via setValue
-    // so getValue() returns it later in resolveValue().
-    private void prefillCombo(ComboBox<String> combo, String savedValue) {
-        if (savedValue == null || savedValue.isBlank()) return;
-        // setValue works on editable ComboBox for both preset and free-typed values.
-        // The listener only reacts to OTHERS — any other value just displays safely.
-        combo.setValue(savedValue);
+    /**
+     * Creates a visual chip for the given cue text and appends it to the
+     * FlowPane. Also registers the cue in selectedCues.
+     */
+    private void addCueChip(String cue) {
+        if (cue == null || cue.isBlank()) return;
+        selectedCues.add(cue);
+
+        Label lbl = new Label(cue);
+        lbl.setStyle("-fx-font-size: 12; -fx-text-fill: white;");
+
+        Button removeBtn = new Button("×");
+        removeBtn.setStyle(
+                "-fx-background-color: transparent; -fx-text-fill: rgba(255,255,255,0.85);" +
+                        "-fx-font-size: 13; -fx-font-weight: bold; -fx-cursor: hand;" +
+                        "-fx-padding: 0 2 0 4;");
+        removeBtn.setOnAction(e -> removeCue(cue));
+
+        HBox chip = new HBox(4, lbl, removeBtn);
+        chip.setStyle(
+                "-fx-background-color: #8B0000; -fx-background-radius: 14;" +
+                        "-fx-padding: 4 10 4 10; -fx-alignment: CENTER_LEFT;");
+        chip.setUserData(cue); // used for removal lookup
+
+        if (isReadOnly) removeBtn.setVisible(false);
+
+        cuesFlowPane.getChildren().add(chip);
+    }
+
+    /** Removes a cue from both the selectedCues list and the FlowPane. */
+    private void removeCue(String cue) {
+        selectedCues.remove(cue);
+        cuesFlowPane.getChildren().removeIf(node ->
+                cue.equals(node.getUserData()));
+    }
+
+    /** Returns the comma-separated cues string for DB storage. */
+    private String getCuesString() {
+        return selectedCues.stream()
+                .filter(s -> !s.isBlank())
+                .collect(Collectors.joining(", "));
+    }
+
+    /** Clears all chips and the internal list, then re-populates from a saved string. */
+    private void loadCuesFromString(String saved) {
+        selectedCues.clear();
+        cuesFlowPane.getChildren().clear();
+        if (saved == null || saved.isBlank()) return;
+        Arrays.stream(saved.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .forEach(this::addCueChip);
     }
 
     // ── Tab navigation ────────────────────────────────────────────
@@ -151,7 +194,7 @@ public class AttendController {
     }
 
     private void updateNavButtons(int tabIndex) {
-        int lastTab = tabPane.getTabs().size() - 1;
+        int lastTab  = tabPane.getTabs().size() - 1;
         boolean isFirst = (tabIndex == 0);
         boolean isLast  = (tabIndex == lastTab);
         btnBack.setVisible(!isFirst);  btnBack.setManaged(!isFirst);
@@ -183,8 +226,9 @@ public class AttendController {
         if (current > 0) tabPane.getSelectionModel().select(current - 1);
     }
 
+    // ── Load visit data into form ─────────────────────────────────
     public void setVisitData(Map<String, String> visitRow) {
-        visitId = Integer.parseInt(visitRow.get("visit_id"));
+        visitId          = Integer.parseInt(visitRow.get("visit_id"));
         currentPatientId = visitRow.getOrDefault("patient_id", "");
         lblPatientName.setText(visitRow.get("full_name"));
         lblDate.setText(visitRow.get("visit_date"));
@@ -212,9 +256,8 @@ public class AttendController {
         String o2 = visitRow.get("oxygen_sat");
         if (o2 != null && !o2.isEmpty()) txtOxygen.setText(o2);
 
-        // Pre-fill complaint and diagnosis combos with saved values
-        prefillCombo(comboComplaint, visitRow.getOrDefault("chief_complaint", ""));
-        prefillCombo(comboDiagnosis, visitRow.getOrDefault("diagnosis", ""));
+        // Load saved cues — stored in chief_complaint as comma-separated string
+        loadCuesFromString(visitRow.getOrDefault("chief_complaint", ""));
 
         if (visitRow.get("treatment") != null) txtTreatment.setText(visitRow.get("treatment"));
         if (visitRow.get("remarks")   != null) txtRemarks.setText(visitRow.get("remarks"));
@@ -222,6 +265,7 @@ public class AttendController {
         loadRecentVisits(currentPatientId, visitRow.get("visit_date"));
     }
 
+    // ── Vitals validation ─────────────────────────────────────────
     @FXML
     private void validateVitals() {
         try {
@@ -258,17 +302,17 @@ public class AttendController {
         } catch (NumberFormatException e) { lblO2Warning.setText(""); }
     }
 
+    // ── Save record ───────────────────────────────────────────────
     @FXML
     private void onSaveRecord() {
         if (txtTimeIn.getText() != null && !txtTimeIn.getText().trim().isEmpty()) {
             DatabaseManager.updateTimeIn(visitId, txtTimeIn.getText().trim());
         }
 
-        String complaint = resolveValue(comboComplaint, txtComplaint);
-        String diagnosis = resolveValue(comboDiagnosis, txtDiagnosis);
-
-        if (complaint.isEmpty()) {
-            lblSaveStatus.setText("⚠ Chief Complaint is required.");
+        // Cues string → stored in chief_complaint; also mirrored to diagnosis for reports
+        String cues = getCuesString();
+        if (cues.isEmpty()) {
+            lblSaveStatus.setText("⚠ At least one Cue is required.");
             lblSaveStatus.setStyle("-fx-text-fill: #e74c3c;");
             return;
         }
@@ -300,10 +344,12 @@ public class AttendController {
             return;
         }
 
+        // diagnosis is auto-populated from cues (kept for dashboard/report queries)
         boolean success = DatabaseManager.saveVisitRecord(
                 visitId, tempStr, bpSys + "/" + bpDia,
                 txtHeartRate.getText().trim(), txtOxygen.getText().trim(),
-                complaint, diagnosis,
+                cues,  /* chief_complaint */
+                cues,  /* diagnosis — mirrors cues; report layer reads this */
                 txtTreatment.getText().trim(), txtRemarks.getText().trim());
 
         if (success) {
@@ -327,16 +373,13 @@ public class AttendController {
     @FXML private void onTempKeyPressed(KeyEvent e) {
         if (e.getCode() == KeyCode.TAB && !e.isShiftDown()) { e.consume(); txtBpSystolic.requestFocus(); }
     }
-    @FXML private void onComplaintKeyPressed(KeyEvent e) {
-        if (e.getCode() == KeyCode.TAB && !e.isShiftDown()) { e.consume(); comboDiagnosis.requestFocus(); }
-    }
-    @FXML private void onDiagnosisKeyPressed(KeyEvent e) {
-        if      (e.getCode() == KeyCode.TAB && !e.isShiftDown()) { e.consume(); txtTreatment.requestFocus(); }
-        else if (e.getCode() == KeyCode.TAB &&  e.isShiftDown()) { e.consume(); comboComplaint.requestFocus(); }
+    @FXML private void onCuesKeyPressed(KeyEvent e) {
+        if      (e.getCode() == KeyCode.ENTER)                              { e.consume(); onAddCue(); }
+        else if (e.getCode() == KeyCode.TAB && !e.isShiftDown()) { e.consume(); txtTreatment.requestFocus(); }
     }
     @FXML private void onTreatmentKeyPressed(KeyEvent e) {
         if      (e.getCode() == KeyCode.TAB && !e.isShiftDown()) { e.consume(); txtRemarks.requestFocus(); }
-        else if (e.getCode() == KeyCode.TAB &&  e.isShiftDown()) { e.consume(); comboDiagnosis.requestFocus(); }
+        else if (e.getCode() == KeyCode.TAB &&  e.isShiftDown()) { e.consume(); comboCues.requestFocus(); }
     }
     @FXML private void onRemarksKeyPressed(KeyEvent e) {
         if      (e.getCode() == KeyCode.ENTER && e.isControlDown()) onSaveRecord();
@@ -346,7 +389,7 @@ public class AttendController {
     // ── Previous visits ───────────────────────────────────────────
     private void loadRecentVisits(String patientId, String currentVisitDate) {
         if (tblPreviousVisits == null || patientId == null || patientId.isEmpty()) return;
-        java.util.List<Map<String, String>> visits = DatabaseManager.getVisitsForPatient(patientId);
+        List<Map<String, String>> visits = DatabaseManager.getVisitsForPatient(patientId);
         visits.removeIf(v ->
                 currentVisitDate != null &&
                         currentVisitDate.equals(v.getOrDefault("visit_date", "")) &&
@@ -367,6 +410,35 @@ public class AttendController {
         return sb.toString().trim();
     }
 
+    // ── Read-only mode (View from Visit History) ──────────────────
+    public void setReadOnly(boolean readOnly) {
+        isReadOnly = readOnly;
+
+        txtTemperature.setEditable(!readOnly);
+        txtBpSystolic.setEditable(!readOnly);
+        txtBpDiastolic.setEditable(!readOnly);
+        txtHeartRate.setEditable(!readOnly);
+        txtOxygen.setEditable(!readOnly);
+
+        // Disable cues input
+        comboCues.setDisable(readOnly);
+        if (btnAddCue != null) btnAddCue.setDisable(readOnly);
+
+        // Hide × buttons on existing chips when read-only
+        cuesFlowPane.getChildren().forEach(node -> {
+            if (node instanceof HBox chip) {
+                chip.getChildren().stream()
+                        .filter(n -> n instanceof Button)
+                        .forEach(n -> n.setVisible(false));
+            }
+        });
+
+        txtTreatment.setEditable(!readOnly);
+        txtRemarks.setEditable(!readOnly);
+        txtTimeIn.setEditable(!readOnly);
+        txtTimeOut.setEditable(!readOnly);
+    }
+
     @FXML private void onCancel() {
         ((Stage) lblSaveStatus.getScene().getWindow()).close();
     }
@@ -377,25 +449,5 @@ public class AttendController {
     @FXML private void setTimeOut() {
         txtTimeOut.setText(java.time.LocalTime.now()
                 .format(java.time.format.DateTimeFormatter.ofPattern("HH:mm")));
-    }
-
-    public void setReadOnly(boolean readOnly) {
-        txtTemperature.setEditable(!readOnly);
-        txtBpSystolic.setEditable(!readOnly);
-        txtBpDiastolic.setEditable(!readOnly);
-        txtHeartRate.setEditable(!readOnly);
-        txtOxygen.setEditable(!readOnly);
-        // For combos: make the editor read-only instead of disabling the whole control
-        // setDisable(true) was the bug — it greys out the combo and blocks all interaction
-        if (comboComplaint.getEditor() != null)  comboComplaint.getEditor().setEditable(!readOnly);
-        if (comboDiagnosis.getEditor() != null)   comboDiagnosis.getEditor().setEditable(!readOnly);
-        comboComplaint.setMouseTransparent(readOnly);
-        comboDiagnosis.setMouseTransparent(readOnly);
-        if (txtComplaint != null) txtComplaint.setEditable(!readOnly);
-        if (txtDiagnosis != null) txtDiagnosis.setEditable(!readOnly);
-        txtTreatment.setEditable(!readOnly);
-        txtRemarks.setEditable(!readOnly);
-        txtTimeIn.setEditable(!readOnly);
-        txtTimeOut.setEditable(!readOnly);
     }
 }

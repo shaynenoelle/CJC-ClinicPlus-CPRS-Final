@@ -93,7 +93,7 @@
                 <TableColumn fx:id="colTimeIn"    text="Time In"     prefWidth="80"/>
                 <TableColumn fx:id="colTimeOut"   text="Time Out"    prefWidth="80"/>
                 <TableColumn fx:id="colPurpose"   text="Purpose"     prefWidth="110"/>
-                <TableColumn fx:id="colDiagnosis" text="Diagnosis"   prefWidth="150"/>
+                <TableColumn fx:id="colDiagnosis" text="Cues"        prefWidth="150"/>
                 <TableColumn fx:id="colAction"    text="Action"      prefWidth="140"/>
             </columns>
         </TableView>
