@@ -3,7 +3,6 @@ package com.example.cjcschoolclinicmanagementsystem.controller;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import com.example.cjcschoolclinicmanagementsystem.database.DatabaseManager;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
@@ -25,10 +24,12 @@ public class AttendController {
     @FXML private TextField txtBpDiastolic;
     @FXML private TextField txtHeartRate;
     @FXML private TextField txtOxygen;
+    @FXML private TextField txtRespiratoryRate;
     @FXML private Label lblTempWarning;
     @FXML private Label lblBpWarning;
     @FXML private Label lblHrWarning;
     @FXML private Label lblO2Warning;
+    @FXML private Label lblRespWarning;
 
     // Complaint: editable ComboBox + optional TextArea for "Others"
     @FXML private ComboBox<String> comboComplaint;
@@ -163,16 +164,6 @@ public class AttendController {
 
     @FXML
     public void onNext() {
-        if (txtTemperature.getText().trim().isEmpty()) {
-            lblSaveStatus.setText("⚠ Temperature is required before proceeding.");
-            lblSaveStatus.setStyle("-fx-text-fill: #e74c3c;");
-            return;
-        }
-        if (txtBpSystolic.getText().trim().isEmpty() || txtBpDiastolic.getText().trim().isEmpty()) {
-            lblSaveStatus.setText("⚠ Blood Pressure is required before proceeding.");
-            lblSaveStatus.setStyle("-fx-text-fill: #e74c3c;");
-            return;
-        }
         lblSaveStatus.setText("");
         tabPane.getSelectionModel().select(tabPane.getSelectionModel().getSelectedIndex() + 1);
     }
@@ -211,6 +202,9 @@ public class AttendController {
 
         String o2 = visitRow.get("oxygen_sat");
         if (o2 != null && !o2.isEmpty()) txtOxygen.setText(o2);
+
+        String respRate = visitRow.get("respiratory_rate");
+        if (respRate != null && !respRate.isEmpty()) txtRespiratoryRate.setText(respRate);
 
         // Pre-fill complaint and diagnosis combos with saved values
         prefillCombo(comboComplaint, visitRow.getOrDefault("chief_complaint", ""));
@@ -256,6 +250,14 @@ public class AttendController {
             lblO2Warning.setStyle(ok ? "-fx-text-fill: #27ae60; -fx-font-size: 11;"
                     : "-fx-text-fill: #e74c3c; -fx-font-size: 11;");
         } catch (NumberFormatException e) { lblO2Warning.setText(""); }
+
+        try {
+            int rr = Integer.parseInt(txtRespiratoryRate.getText().trim());
+            boolean ok = rr >= 12 && rr <= 20;
+            lblRespWarning.setText(ok ? "✔ Normal" : "⚠ Abnormal");
+            lblRespWarning.setStyle(ok ? "-fx-text-fill: #27ae60; -fx-font-size: 11;"
+                    : "-fx-text-fill: #e74c3c; -fx-font-size: 11;");
+        } catch (NumberFormatException e) { lblRespWarning.setText(""); }
     }
 
     @FXML
@@ -274,37 +276,72 @@ public class AttendController {
         }
 
         String tempStr = txtTemperature.getText().trim();
-        if (tempStr.isEmpty()) {
-            lblSaveStatus.setText("⚠ Temperature is required.");
-            lblSaveStatus.setStyle("-fx-text-fill: #e74c3c;");
-            return;
-        }
-        try { Double.parseDouble(tempStr); }
-        catch (NumberFormatException e) {
-            lblSaveStatus.setText("⚠ Temperature must be a valid number (e.g. 36.5).");
-            lblSaveStatus.setStyle("-fx-text-fill: #e74c3c;");
-            return;
+        if (!tempStr.isEmpty()) {
+            try { Double.parseDouble(tempStr); }
+            catch (NumberFormatException e) {
+                lblSaveStatus.setText("⚠ Temperature must be a valid number (e.g. 36.5).");
+                lblSaveStatus.setStyle("-fx-text-fill: #e74c3c;");
+                return;
+            }
         }
 
         String bpSys = txtBpSystolic.getText().trim();
         String bpDia = txtBpDiastolic.getText().trim();
-        if (bpSys.isEmpty() || bpDia.isEmpty()) {
-            lblSaveStatus.setText("⚠ Blood Pressure (systolic / diastolic) is required.");
-            lblSaveStatus.setStyle("-fx-text-fill: #e74c3c;");
-            return;
+        if (!bpSys.isEmpty() || !bpDia.isEmpty()) {
+            if (bpSys.isEmpty() || bpDia.isEmpty()) {
+                lblSaveStatus.setText("⚠ Enter both BP values or leave both blank.");
+                lblSaveStatus.setStyle("-fx-text-fill: #e74c3c;");
+                return;
+            }
+            try { Integer.parseInt(bpSys); Integer.parseInt(bpDia); }
+            catch (NumberFormatException e) {
+                lblSaveStatus.setText("⚠ Blood Pressure values must be whole numbers.");
+                lblSaveStatus.setStyle("-fx-text-fill: #e74c3c;");
+                return;
+            }
         }
-        try { Integer.parseInt(bpSys); Integer.parseInt(bpDia); }
-        catch (NumberFormatException e) {
-            lblSaveStatus.setText("⚠ Blood Pressure values must be whole numbers.");
-            lblSaveStatus.setStyle("-fx-text-fill: #e74c3c;");
-            return;
+
+        String heartRate = txtHeartRate.getText().trim();
+        if (!heartRate.isEmpty()) {
+            try { Integer.parseInt(heartRate); }
+            catch (NumberFormatException e) {
+                lblSaveStatus.setText("⚠ Heart Rate must be a whole number.");
+                lblSaveStatus.setStyle("-fx-text-fill: #e74c3c;");
+                return;
+            }
+        }
+
+        String oxygen = txtOxygen.getText().trim();
+        if (!oxygen.isEmpty()) {
+            try { Double.parseDouble(oxygen); }
+            catch (NumberFormatException e) {
+                lblSaveStatus.setText("⚠ O2 Saturation must be a valid number.");
+                lblSaveStatus.setStyle("-fx-text-fill: #e74c3c;");
+                return;
+            }
+        }
+
+        String respiratoryRate = txtRespiratoryRate.getText().trim();
+        if (!respiratoryRate.isEmpty()) {
+            try { Integer.parseInt(respiratoryRate); }
+            catch (NumberFormatException e) {
+                lblSaveStatus.setText("⚠ Respiratory Rate must be a whole number.");
+                lblSaveStatus.setStyle("-fx-text-fill: #e74c3c;");
+                return;
+            }
         }
 
         boolean success = DatabaseManager.saveVisitRecord(
-                visitId, tempStr, bpSys + "/" + bpDia,
-                txtHeartRate.getText().trim(), txtOxygen.getText().trim(),
-                complaint, diagnosis,
-                txtTreatment.getText().trim(), txtRemarks.getText().trim());
+                visitId,
+                tempStr,
+                bpSys.isEmpty() ? "" : bpSys + "/" + bpDia,
+                heartRate,
+                oxygen,
+                respiratoryRate,
+                complaint,
+                diagnosis,
+                txtTreatment.getText().trim(),
+                txtRemarks.getText().trim());
 
         if (success) {
             String timeOut = txtTimeOut.getText() != null ? txtTimeOut.getText().trim() : "";
@@ -360,10 +397,12 @@ public class AttendController {
         String bp   = v.getOrDefault("blood_pressure", "");
         String hr   = v.getOrDefault("heart_rate", "");
         String o2   = v.getOrDefault("oxygen_sat", "");
+        String rr   = v.getOrDefault("respiratory_rate", "");
         if (!temp.isEmpty()) sb.append("T:").append(temp).append("°C  ");
         if (!bp.isEmpty())   sb.append("BP:").append(bp).append("  ");
         if (!hr.isEmpty())   sb.append("HR:").append(hr).append("  ");
-        if (!o2.isEmpty())   sb.append("O2:").append(o2).append("%");
+        if (!o2.isEmpty())   sb.append("O2:").append(o2).append("%  ");
+        if (!rr.isEmpty())   sb.append("RR:").append(rr);
         return sb.toString().trim();
     }
 
@@ -385,6 +424,7 @@ public class AttendController {
         txtBpDiastolic.setEditable(!readOnly);
         txtHeartRate.setEditable(!readOnly);
         txtOxygen.setEditable(!readOnly);
+        txtRespiratoryRate.setEditable(!readOnly);
         // For combos: make the editor read-only instead of disabling the whole control
         // setDisable(true) was the bug — it greys out the combo and blocks all interaction
         if (comboComplaint.getEditor() != null)  comboComplaint.getEditor().setEditable(!readOnly);

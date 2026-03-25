@@ -586,10 +586,12 @@ public class PatientRegistryController {
             String bp   = v.getOrDefault("blood_pressure", "");
             String hr   = v.getOrDefault("heart_rate", "");
             String o2   = v.getOrDefault("oxygen_sat", "");
+            String rr   = v.getOrDefault("respiratory_rate", "");
             if (!temp.isEmpty()) sb.append("T:").append(temp).append("°  ");
             if (!bp.isEmpty())   sb.append("BP:").append(bp).append("  ");
             if (!hr.isEmpty())   sb.append("HR:").append(hr).append("  ");
-            if (!o2.isEmpty())   sb.append("O2:").append(o2).append("%");
+            if (!o2.isEmpty())   sb.append("O2:").append(o2).append("%  ");
+            if (!rr.isEmpty())   sb.append("RR:").append(rr);
             return new javafx.beans.property.SimpleStringProperty(sb.toString().trim());
         });
         table.getColumns().add(colVitals);
@@ -708,3 +710,4 @@ public class PatientRegistryController {
         a.showAndWait();
     }
 }
+

@@ -23,6 +23,7 @@ public class DatabaseManager {
                 { "Patients", "mother_contact TEXT DEFAULT ''" },
                 { "Patients", "position TEXT DEFAULT ''" },
                 { "Patients", "school_year TEXT DEFAULT ''" },
+                { "Visits", "respiratory_rate TEXT DEFAULT ''" }
         };
         try (Connection conn = connect(); Statement stmt = conn.createStatement()) {
             for (String[] pair : alterStatements) {
@@ -277,9 +278,10 @@ public class DatabaseManager {
 
     // ── VISITS ────────────────────────────────────────────────────
     public static List<java.util.Map<String, String>> getVisitsForPatient(String patientId) {
+        ensureColumns();
         List<java.util.Map<String, String>> list = new ArrayList<>();
         String sql = "SELECT visit_id, patient_id, visit_date, time_in, time_out, purpose, chief_complaint, " +
-                "diagnosis, treatment, remarks, temperature, blood_pressure, heart_rate, oxygen_sat " +
+                "diagnosis, treatment, remarks, temperature, blood_pressure, heart_rate, oxygen_sat, respiratory_rate " +
                 "FROM Visits WHERE patient_id = ? ORDER BY visit_date DESC, time_in DESC";
         try (Connection conn = connect(); PreparedStatement p = conn.prepareStatement(sql)) {
             p.setString(1, patientId);
@@ -300,6 +302,7 @@ public class DatabaseManager {
                 row.put("blood_pressure",  nvl(rs.getString("blood_pressure")));
                 row.put("heart_rate",      nvl(rs.getString("heart_rate")));
                 row.put("oxygen_sat",      nvl(rs.getString("oxygen_sat")));
+                row.put("respiratory_rate", nvl(rs.getString("respiratory_rate")));
                 list.add(row);
             }
         } catch (SQLException e) { System.err.println("GetVisitsForPatient Error: " + e.getMessage()); }
@@ -311,7 +314,8 @@ public class DatabaseManager {
         try (Connection conn = connect(); PreparedStatement p = conn.prepareStatement(sql)) {
             p.setString(1, patientId); p.setString(2, timeIn); p.setString(3, purpose);
             p.executeUpdate(); return true;
-        } catch (SQLException e) { System.err.println("CheckIn Error: " + e.getMessage()); return false; }
+        } catch (SQLException e) { System.err.println("CheckIn Error: " + e.getMessage()); return false;
+        }
     }
 
     public static List<java.util.Map<String, String>> getTodayVisits() {
@@ -378,21 +382,24 @@ public class DatabaseManager {
     }
 
     public static boolean saveVisitRecord(int visitId, String temperature, String bloodPressure,
-                                          String heartRate, String oxygenSat, String complaint,
-                                          String diagnosis, String treatment, String remarks) {
+                                          String heartRate, String oxygenSat, String respiratoryRate,
+                                          String complaint, String diagnosis, String treatment, String remarks) {
+        ensureColumns();
         String sql = "UPDATE Visits SET temperature=?, blood_pressure=?, heart_rate=?, " +
-                "oxygen_sat=?, chief_complaint=?, diagnosis=?, treatment=?, remarks=? WHERE visit_id=?";
+                "oxygen_sat=?, respiratory_rate=?, chief_complaint=?, diagnosis=?, treatment=?, remarks=? WHERE visit_id=?";
         try (Connection conn = connect(); PreparedStatement p = conn.prepareStatement(sql)) {
             p.setString(1, temperature); p.setString(2, bloodPressure);
             p.setString(3, heartRate);   p.setString(4, oxygenSat);
-            p.setString(5, complaint);   p.setString(6, diagnosis);
-            p.setString(7, treatment);   p.setString(8, remarks);
-            p.setInt(9, visitId);
+            p.setString(5, respiratoryRate); p.setString(6, complaint);
+            p.setString(7, diagnosis);   p.setString(8, treatment);
+            p.setString(9, remarks);
+            p.setInt(10, visitId);
             p.executeUpdate(); return true;
         } catch (SQLException e) { System.err.println("SaveVisit Error: " + e.getMessage()); return false; }
     }
 
     public static List<java.util.Map<String, String>> getAllVisits(String filter) {
+        ensureColumns();
         List<java.util.Map<String, String>> list = new ArrayList<>();
         String dateFilter = switch (filter.toLowerCase()) {
             case "daily"   -> "WHERE v.visit_date = DATE('now')";
@@ -403,7 +410,7 @@ public class DatabaseManager {
         String sql = "SELECT v.visit_id, v.patient_id, p.full_name, v.visit_date, " +
                 "v.time_in, v.time_out, v.purpose, v.chief_complaint, " +
                 "v.diagnosis, v.treatment, v.remarks, v.temperature, " +
-                "v.blood_pressure, v.heart_rate, v.oxygen_sat, p.course_dept " +
+                "v.blood_pressure, v.heart_rate, v.oxygen_sat, v.respiratory_rate, p.course_dept " +
                 "FROM Visits v JOIN Patients p ON v.patient_id = p.patient_id " +
                 dateFilter + " ORDER BY v.visit_date DESC, v.time_in DESC";
         try (Connection conn = connect(); Statement stmt = conn.createStatement();
@@ -414,11 +421,12 @@ public class DatabaseManager {
     }
 
     public static List<java.util.Map<String, String>> getVisitsByDateRange(String from, String to) {
+        ensureColumns();
         List<java.util.Map<String, String>> list = new ArrayList<>();
         String sql = "SELECT v.visit_id, v.patient_id, p.full_name, v.visit_date, " +
                 "v.time_in, v.time_out, v.purpose, v.chief_complaint, " +
                 "v.diagnosis, v.treatment, v.remarks, v.temperature, " +
-                "v.blood_pressure, v.heart_rate, v.oxygen_sat, p.course_dept " +
+                "v.blood_pressure, v.heart_rate, v.oxygen_sat, v.respiratory_rate, p.course_dept " +
                 "FROM Visits v JOIN Patients p ON v.patient_id = p.patient_id " +
                 "WHERE v.visit_date BETWEEN ? AND ? ORDER BY v.visit_date DESC, v.time_in DESC";
         try (Connection conn = connect(); PreparedStatement p = conn.prepareStatement(sql)) {
@@ -453,6 +461,7 @@ public class DatabaseManager {
         row.put("blood_pressure",  nvl(rs.getString("blood_pressure")));
         row.put("heart_rate",      nvl(rs.getString("heart_rate")));
         row.put("oxygen_sat",      nvl(rs.getString("oxygen_sat")));
+        row.put("respiratory_rate", nvl(rs.getString("respiratory_rate")));
         try { row.put("course_dept", nvl(rs.getString("course_dept"))); } catch (SQLException ignored) {}
         return row;
     }
@@ -798,23 +807,25 @@ public class DatabaseManager {
     }
 
     public static boolean exportVisitsToCSV(String filePath) {
+        ensureColumns();
         String sql = "SELECT v.visit_id, v.patient_id, p.full_name, v.visit_date, v.time_in, v.time_out, " +
                 "v.purpose, v.chief_complaint, v.diagnosis, v.treatment, v.remarks, " +
-                "v.temperature, v.blood_pressure, v.heart_rate, v.oxygen_sat " +
+                "v.temperature, v.blood_pressure, v.heart_rate, v.oxygen_sat, v.respiratory_rate " +
                 "FROM Visits v JOIN Patients p ON v.patient_id = p.patient_id ORDER BY v.visit_date DESC";
         try (Connection conn = connect(); Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql);
              java.io.PrintWriter pw = new java.io.PrintWriter(new java.io.FileWriter(filePath))) {
             pw.println("Visit ID,Patient ID,Full Name,Date,Time In,Time Out,Purpose," +
-                    "Chief Complaint,Diagnosis,Treatment,Remarks,Temperature,Blood Pressure,Heart Rate,SpO2");
+                    "Chief Complaint,Diagnosis,Treatment,Remarks,Temperature,Blood Pressure,Heart Rate,SpO2,Respiratory Rate");
             while (rs.next()) {
                 pw.printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"," +
-                                "\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"%n",
+                                "\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"%n",
                         safe(rs.getString("visit_id")), safe(rs.getString("patient_id")), safe(rs.getString("full_name")),
                         safe(rs.getString("visit_date")), safe(rs.getString("time_in")), safe(rs.getString("time_out")),
                         safe(rs.getString("purpose")), safe(rs.getString("chief_complaint")), safe(rs.getString("diagnosis")),
                         safe(rs.getString("treatment")), safe(rs.getString("remarks")), safe(rs.getString("temperature")),
-                        safe(rs.getString("blood_pressure")), safe(rs.getString("heart_rate")), safe(rs.getString("oxygen_sat")));
+                        safe(rs.getString("blood_pressure")), safe(rs.getString("heart_rate")), safe(rs.getString("oxygen_sat")),
+                        safe(rs.getString("respiratory_rate")));
             }
             return true;
         } catch (Exception e) { System.err.println("ExportVisitsCSV Error: " + e.getMessage()); return false; }
