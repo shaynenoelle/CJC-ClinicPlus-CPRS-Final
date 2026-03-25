@@ -30,6 +30,7 @@ public class VisitHistoryController {
     @FXML private TableColumn<Map<String, String>, String> colPurpose;
     @FXML private TableColumn<Map<String, String>, String> colDiagnosis;
     @FXML private TableColumn<Map<String, String>, String> colAction;
+    @FXML private TableColumn<Map<String, String>, String> colAttendedBy;
     @FXML private Label lblCount;
     @FXML private Button btnDaily;
     @FXML private Button btnWeekly;
@@ -68,14 +69,15 @@ public class VisitHistoryController {
 
     private void bindColumnWidths() {
         javafx.beans.binding.DoubleBinding w = tblVisits.widthProperty().subtract(20);
-        colDate      .prefWidthProperty().bind(w.multiply(0.10));
-        colPatientId .prefWidthProperty().bind(w.multiply(0.11));
-        colName      .prefWidthProperty().bind(w.multiply(0.18));
-        colTimeIn    .prefWidthProperty().bind(w.multiply(0.08));
-        colTimeOut   .prefWidthProperty().bind(w.multiply(0.08));
-        colPurpose   .prefWidthProperty().bind(w.multiply(0.11));
-        colDiagnosis .prefWidthProperty().bind(w.multiply(0.18));
-        colAction    .prefWidthProperty().bind(w.multiply(0.16));
+        colDate       .prefWidthProperty().bind(w.multiply(0.09));
+        colPatientId  .prefWidthProperty().bind(w.multiply(0.10));
+        colName       .prefWidthProperty().bind(w.multiply(0.16));
+        colTimeIn     .prefWidthProperty().bind(w.multiply(0.07));
+        colTimeOut    .prefWidthProperty().bind(w.multiply(0.07));
+        colPurpose    .prefWidthProperty().bind(w.multiply(0.09));
+        colDiagnosis  .prefWidthProperty().bind(w.multiply(0.15));
+        colAttendedBy .prefWidthProperty().bind(w.multiply(0.11));
+        colAction     .prefWidthProperty().bind(w.multiply(0.16));
     }
 
     private void setupTable() {
@@ -94,6 +96,8 @@ public class VisitHistoryController {
         // Cues are stored in chief_complaint; diagnosis mirrors it (report-layer only)
         colDiagnosis.setCellValueFactory(d ->
                 new SimpleStringProperty(d.getValue().getOrDefault("chief_complaint", "—")));
+        colAttendedBy.setCellValueFactory(d ->
+                new SimpleStringProperty(d.getValue().getOrDefault("attended_by", "—")));
 
         // Action column: View + Edit + Delete
         colAction.setCellFactory(col -> new TableCell<>() {

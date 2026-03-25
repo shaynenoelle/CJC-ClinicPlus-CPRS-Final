@@ -12,6 +12,7 @@ import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import com.example.cjcschoolclinicmanagementsystem.database.DatabaseManager;
+import com.example.cjcschoolclinicmanagementsystem.SessionManager;
 import java.io.IOException;
 import java.time.LocalDateTime;
 
@@ -105,6 +106,7 @@ public class LoginController {
                 txtPasswordVisible.getText() : txtPassword.getText();
 
         if (DatabaseManager.validateLogin(user, pass)) {
+            SessionManager.setCurrentUser(user); // ← store logged-in nurse's name
             System.out.println("[AUDIT LOG] Access Granted: " + user + " at " + LocalDateTime.now());
             try {
                 switchToDashboard();

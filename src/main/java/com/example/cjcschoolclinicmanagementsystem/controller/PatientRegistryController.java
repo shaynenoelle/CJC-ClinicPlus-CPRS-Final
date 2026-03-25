@@ -567,14 +567,17 @@ public class PatientRegistryController {
 
         // ── Data columns ──────────────────────────────────────────
         // chief_complaint holds the merged Cues string; diagnosis mirrors it (report-layer only)
-        String[] cols   = {"visit_date","time_in","time_out","purpose","chief_complaint","treatment","remarks"};
-        String[] hdrs   = {"Date","Time In","Time Out","Purpose","Cues","Treatment","Remarks"};
-        double[] widths = {0.09, 0.07, 0.07, 0.09, 0.20, 0.15, 0.13};
+        String[] cols   = {"visit_date","time_in","time_out","purpose","chief_complaint","treatment","remarks","attended_by"};
+        String[] hdrs   = {"Date","Time In","Time Out","Purpose","Cues","Treatment","Remarks","Attended By"};
+        double[] widths = {0.09, 0.07, 0.07, 0.09, 0.18, 0.13, 0.12, 0.10};
         for (int i = 0; i < cols.length; i++) {
             final String key = cols[i];
             TableColumn<Map<String,String>, String> tc = new TableColumn<>(hdrs[i]);
-            tc.setCellValueFactory(d -> new javafx.beans.property.SimpleStringProperty(
-                    d.getValue().getOrDefault(key, "")));
+            tc.setCellValueFactory(d -> {
+                String val = d.getValue().getOrDefault(key, "");
+                return new javafx.beans.property.SimpleStringProperty(
+                        val == null || val.isBlank() ? "—" : val);
+            });
             table.getColumns().add(tc);
         }
 

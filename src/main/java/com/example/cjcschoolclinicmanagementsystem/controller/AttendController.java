@@ -5,6 +5,7 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import com.example.cjcschoolclinicmanagementsystem.database.DatabaseManager;
+import com.example.cjcschoolclinicmanagementsystem.SessionManager;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
@@ -40,6 +41,7 @@ public class AttendController {
     @FXML private TextArea  txtTreatment;
     @FXML private TextArea  txtRemarks;
     @FXML private Label     lblSaveStatus;
+    @FXML private Label     lblAttendedBy;
     @FXML private TextField txtTimeIn;
     @FXML private TextField txtTimeOut;
 
@@ -263,6 +265,12 @@ public class AttendController {
         if (visitRow.get("remarks")   != null) txtRemarks.setText(visitRow.get("remarks"));
 
         loadRecentVisits(currentPatientId, visitRow.get("visit_date"));
+
+        // Show who attended — existing record value, or current logged-in user for new records
+        String attendedBy = visitRow.getOrDefault("attended_by", "");
+        if (lblAttendedBy != null) {
+            lblAttendedBy.setText(attendedBy.isBlank() ? SessionManager.getCurrentUser() : attendedBy);
+        }
     }
 
     // ── Vitals validation ─────────────────────────────────────────
@@ -345,12 +353,17 @@ public class AttendController {
         }
 
         // diagnosis is auto-populated from cues (kept for dashboard/report queries)
+        String attendedBy = (lblAttendedBy != null && !lblAttendedBy.getText().isBlank())
+                ? lblAttendedBy.getText()
+                : SessionManager.getCurrentUser();
+
         boolean success = DatabaseManager.saveVisitRecord(
                 visitId, tempStr, bpSys + "/" + bpDia,
                 txtHeartRate.getText().trim(), txtOxygen.getText().trim(),
                 cues,  /* chief_complaint */
                 cues,  /* diagnosis — mirrors cues; report layer reads this */
-                txtTreatment.getText().trim(), txtRemarks.getText().trim());
+                txtTreatment.getText().trim(), txtRemarks.getText().trim(),
+                attendedBy);
 
         if (success) {
             String timeOut = txtTimeOut.getText() != null ? txtTimeOut.getText().trim() : "";

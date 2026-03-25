@@ -34,6 +34,11 @@
                        style="-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #333;"/>
             </VBox>
             <VBox alignment="CENTER_RIGHT" spacing="2">
+                <Label text="Attended by:" style="-fx-font-size: 11; -fx-text-fill: #888;"/>
+                <Label fx:id="lblAttendedBy"
+                       style="-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #8B0000;"/>
+            </VBox>
+            <VBox alignment="CENTER_RIGHT" spacing="2">
                 <Label text="Time In:"
                        style="-fx-font-size: 11; -fx-text-fill: #888;"/>
                 <HBox spacing="6" alignment="CENTER_RIGHT">

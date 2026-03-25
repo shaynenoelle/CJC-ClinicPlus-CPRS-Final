@@ -48,6 +48,7 @@ public class LogbookController {
     @FXML private TableColumn<Map<String, String>, String> colTimeIn;
     @FXML private TableColumn<Map<String, String>, String> colPurpose;
     @FXML private TableColumn<Map<String, String>, String> colTimeOut;
+    @FXML private TableColumn<Map<String, String>, String> colAttendedBy;   // ← NEW
     @FXML private TableColumn<Map<String, String>, String> colAction;
     @FXML private Label lblVisitorCount;
     @FXML private Label lblLogbookTitle;
@@ -117,6 +118,12 @@ public class LogbookController {
                 new SimpleStringProperty(d.getValue().getOrDefault("purpose", "")));
         colTimeOut.setCellValueFactory(d ->
                 new SimpleStringProperty(d.getValue().getOrDefault("time_out", "—")));
+
+        // ── Attended By column ────────────────────────────────────
+        colAttendedBy.setCellValueFactory(d -> {
+            String val = d.getValue().getOrDefault("attended_by", "");
+            return new SimpleStringProperty(val == null || val.isBlank() ? "—" : val);
+        });
 
         // Single Attend / ✔ Done button — always opens the attend form
         // Red = not yet attended, Green = record saved (still editable)

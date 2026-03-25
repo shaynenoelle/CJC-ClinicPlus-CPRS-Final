@@ -175,8 +175,8 @@ public class AddPatientController {
 
         lblFormTitle.setText("Edit Patient Profile");
         txtPatientId.setText(p.getId());
-        lblPatientIdDisplay.setText("Editing: " + p.getId());
-        txtPatientId.setEditable(false); // ID cannot be changed once saved
+        lblPatientIdDisplay.setText("Student / Employee ID");
+        txtPatientId.setEditable(true); // ID can be corrected after saving
 
         String full = p.getName();
         if (full != null && full.contains(",")) {
@@ -215,7 +215,19 @@ public class AddPatientController {
             if (isBED) rbBED.setSelected(true); else rbCollege.setSelected(true);
             onTypeChanged();
             comboDept.setValue(p.getCourse());
+            // If saved dept value isn't in the list (custom dept), add it so getValue() works
+            if (p.getCourse() != null && !p.getCourse().isBlank()
+                    && !comboDept.getItems().contains(p.getCourse())) {
+                comboDept.getItems().add(p.getCourse());
+                comboDept.setValue(p.getCourse());
+            }
             comboYear.setValue(year);
+            // If saved year value isn't in the list, add it so getValue() works
+            if (year != null && !year.isBlank()
+                    && !comboYear.getItems().contains(year)) {
+                comboYear.getItems().add(year);
+                comboYear.setValue(year);
+            }
             // Restore course name into the editable combo
             String savedCourse = p.getCollege();
             if (savedCourse != null && !savedCourse.isBlank()) {
@@ -280,12 +292,14 @@ public class AddPatientController {
     }
 
     private boolean validateTab1() {
-        // Patient ID required and must be unique (only check on add, not edit)
-        if (!isEditMode) {
-            if (isBlank(txtPatientId)) {
-                showValidationError("Student / Employee ID is required."); return false;
-            }
-            String enteredId = txtPatientId.getText().trim();
+        // Patient ID is required in both add and edit mode
+        if (isBlank(txtPatientId)) {
+            showValidationError("Student / Employee ID is required."); return false;
+        }
+        String enteredId = txtPatientId.getText().trim();
+        // In edit mode, only check duplicate if the ID was actually changed
+        boolean idChanged = !enteredId.equals(editPatientId);
+        if (!isEditMode || idChanged) {
             if (DatabaseManager.patientExists(enteredId)) {
                 showValidationError("ID \"" + enteredId + "\" is already registered. Use a different ID."); return false;
             }
@@ -325,7 +339,10 @@ public class AddPatientController {
     @FXML
     private void handleSave() {
         lblValidationMsg.setText("");
-        if (!validateTab1()) return;
+        if (!validateTab1()) {
+            tabPane.getSelectionModel().select(0);
+            return;
+        }
         if (isBlank(txtEmergencyName) || isBlank(txtRelationship) || isBlank(txtEmergencyContact)) {
             showValidationError("Emergency Contact fields (Name, Relationship, Contact #) are required.");
             tabPane.getSelectionModel().select(1); return;
@@ -379,14 +396,15 @@ public class AddPatientController {
         if (isEditMode) {
             int isActive = (rbArchived != null && rbArchived.isSelected()) ? 0 : 1;
             success = DatabaseManager.updatePatientFull(
-                    editPatientId, fullName, age, dept, yearLevel, gender, course,
+                    editPatientId, patientId, fullName, age, dept, yearLevel, gender, course,
                     contact, email, birthdate, type,
                     emergencyName, relationship, emergencyContact,
                     allergies, conditions, bloodType, height, weight, medicalRemarks,
                     address, fatherName, fatherContact, motherName, motherContact,
                     position, schoolYearVal);
             if (success && rbArchived != null) {
-                DatabaseManager.setPatientActiveStatus(editPatientId, isActive);
+                // Use the new ID (patientId) in case it was changed
+                DatabaseManager.setPatientActiveStatus(patientId, isActive);
             }
         } else {
             success = DatabaseManager.addPatientFull(

@@ -23,6 +23,7 @@ public class DatabaseManager {
                 { "Patients", "mother_contact TEXT DEFAULT ''" },
                 { "Patients", "position TEXT DEFAULT ''" },
                 { "Patients", "school_year TEXT DEFAULT ''" },
+                { "Visits",   "attended_by TEXT DEFAULT ''" },
         };
         try (Connection conn = connect(); Statement stmt = conn.createStatement()) {
             for (String[] pair : alterStatements) {
@@ -116,14 +117,14 @@ public class DatabaseManager {
                                         String emergencyName, String relationship, String emergencyContact,
                                         String allergies, String conditions, String bloodType,
                                         String height, String weight, String medicalRemarks) {
-        return updatePatientFull(id, name, age, course, year, gender, college,
+        return updatePatientFull(id, id, name, age, course, year, gender, college,
                 contact, email, birthdate, type, emergencyName, relationship, emergencyContact,
                 allergies, conditions, bloodType, height, weight, medicalRemarks,
                 "", "", "", "", "", "", "");
     }
 
     public static boolean updatePatientFull(
-            String id, String name, String age,
+            String oldId, String newId, String name, String age,
             String course, String year, String gender, String college,
             String contact, String email, String birthdate, String type,
             String emergencyName, String relationship, String emergencyContact,
@@ -133,27 +134,39 @@ public class DatabaseManager {
             String motherName, String motherContact,
             String position, String schoolYear) {
         String sql = "UPDATE Patients SET " +
-                "full_name=?, age=?, course_dept=?, year_level=?, gender=?, college=?, " +
+                "patient_id=?, full_name=?, age=?, course_dept=?, year_level=?, gender=?, college=?, " +
                 "contact_number=?, email=?, birthdate=?, type=?, emergency_name=?, " +
                 "relationship=?, emergency_contact=?, allergies=?, conditions=?, blood_type=?, " +
                 "height=?, weight=?, medical_remarks=?, address=?, father_name=?, father_contact=?, " +
                 "mother_name=?, mother_contact=?, position=?, school_year=? WHERE patient_id=?";
         try (Connection conn = connect(); PreparedStatement p = conn.prepareStatement(sql)) {
-            p.setString(1,  name);         p.setString(2,  age);
-            p.setString(3,  course);       p.setString(4,  year);
-            p.setString(5,  gender);       p.setString(6,  college);
-            p.setString(7,  contact);      p.setString(8,  email);
-            p.setString(9,  birthdate);    p.setString(10, type);
-            p.setString(11, emergencyName);p.setString(12, relationship);
-            p.setString(13, emergencyContact);p.setString(14, allergies);
-            p.setString(15, conditions);   p.setString(16, bloodType);
-            p.setString(17, height);       p.setString(18, weight);
-            p.setString(19, medicalRemarks);p.setString(20, address);
-            p.setString(21, fatherName);   p.setString(22, fatherContact);
-            p.setString(23, motherName);   p.setString(24, motherContact);
-            p.setString(25, position);     p.setString(26, schoolYear);
-            p.setString(27, id);
-            p.executeUpdate();
+            p.setString(1,  newId);        p.setString(2,  name);
+            p.setString(3,  age);          p.setString(4,  course);
+            p.setString(5,  year);         p.setString(6,  gender);
+            p.setString(7,  college);      p.setString(8,  contact);
+            p.setString(9,  email);        p.setString(10, birthdate);
+            p.setString(11, type);         p.setString(12, emergencyName);
+            p.setString(13, relationship); p.setString(14, emergencyContact);
+            p.setString(15, allergies);    p.setString(16, conditions);
+            p.setString(17, bloodType);    p.setString(18, height);
+            p.setString(19, weight);       p.setString(20, medicalRemarks);
+            p.setString(21, address);      p.setString(22, fatherName);
+            p.setString(23, fatherContact);p.setString(24, motherName);
+            p.setString(25, motherContact);p.setString(26, position);
+            p.setString(27, schoolYear);   p.setString(28, oldId);
+            int rows = p.executeUpdate();
+            if (rows == 0) {
+                System.err.println("Update Patient: No rows affected for patient_id='" + oldId + "'.");
+                return false;
+            }
+            // Cascade ID change to Visits table if patient_id was changed
+            if (!oldId.equals(newId)) {
+                try (PreparedStatement pv = conn.prepareStatement(
+                        "UPDATE Visits SET patient_id=? WHERE patient_id=?")) {
+                    pv.setString(1, newId); pv.setString(2, oldId);
+                    pv.executeUpdate();
+                }
+            }
             return true;
         } catch (SQLException e) {
             System.err.println("Update Patient DB Error: " + e.getMessage());
@@ -279,7 +292,7 @@ public class DatabaseManager {
     public static List<java.util.Map<String, String>> getVisitsForPatient(String patientId) {
         List<java.util.Map<String, String>> list = new ArrayList<>();
         String sql = "SELECT visit_id, patient_id, visit_date, time_in, time_out, purpose, chief_complaint, " +
-                "diagnosis, treatment, remarks, temperature, blood_pressure, heart_rate, oxygen_sat " +
+                "diagnosis, treatment, remarks, temperature, blood_pressure, heart_rate, oxygen_sat, attended_by " +
                 "FROM Visits WHERE patient_id = ? ORDER BY visit_date DESC, time_in DESC";
         try (Connection conn = connect(); PreparedStatement p = conn.prepareStatement(sql)) {
             p.setString(1, patientId);
@@ -300,6 +313,7 @@ public class DatabaseManager {
                 row.put("blood_pressure",  nvl(rs.getString("blood_pressure")));
                 row.put("heart_rate",      nvl(rs.getString("heart_rate")));
                 row.put("oxygen_sat",      nvl(rs.getString("oxygen_sat")));
+                row.put("attended_by",     nvl(rs.getString("attended_by")));
                 list.add(row);
             }
         } catch (SQLException e) { System.err.println("GetVisitsForPatient Error: " + e.getMessage()); }
@@ -307,9 +321,17 @@ public class DatabaseManager {
     }
 
     public static boolean checkInPatient(String patientId, String timeIn, String purpose) {
-        String sql = "INSERT INTO Visits(patient_id, visit_date, time_in, purpose) VALUES(?, DATE('now'), ?, ?)";
+        return checkInPatient(patientId, timeIn, purpose,
+                com.example.cjcschoolclinicmanagementsystem.SessionManager.getCurrentUser());
+    }
+
+    public static boolean checkInPatient(String patientId, String timeIn,
+                                         String purpose, String attendedBy) {
+        String sql = "INSERT INTO Visits(patient_id, visit_date, time_in, purpose, attended_by)" +
+                " VALUES(?, DATE('now'), ?, ?, ?)";
         try (Connection conn = connect(); PreparedStatement p = conn.prepareStatement(sql)) {
-            p.setString(1, patientId); p.setString(2, timeIn); p.setString(3, purpose);
+            p.setString(1, patientId); p.setString(2, timeIn);
+            p.setString(3, purpose);   p.setString(4, attendedBy == null ? "" : attendedBy);
             p.executeUpdate(); return true;
         } catch (SQLException e) { System.err.println("CheckIn Error: " + e.getMessage()); return false; }
     }
@@ -379,15 +401,17 @@ public class DatabaseManager {
 
     public static boolean saveVisitRecord(int visitId, String temperature, String bloodPressure,
                                           String heartRate, String oxygenSat, String complaint,
-                                          String diagnosis, String treatment, String remarks) {
+                                          String diagnosis, String treatment, String remarks,
+                                          String attendedBy) {
         String sql = "UPDATE Visits SET temperature=?, blood_pressure=?, heart_rate=?, " +
-                "oxygen_sat=?, chief_complaint=?, diagnosis=?, treatment=?, remarks=? WHERE visit_id=?";
+                "oxygen_sat=?, chief_complaint=?, diagnosis=?, treatment=?, remarks=?, " +
+                "attended_by=? WHERE visit_id=?";
         try (Connection conn = connect(); PreparedStatement p = conn.prepareStatement(sql)) {
             p.setString(1, temperature); p.setString(2, bloodPressure);
             p.setString(3, heartRate);   p.setString(4, oxygenSat);
             p.setString(5, complaint);   p.setString(6, diagnosis);
             p.setString(7, treatment);   p.setString(8, remarks);
-            p.setInt(9, visitId);
+            p.setString(9, attendedBy);  p.setInt(10, visitId);
             p.executeUpdate(); return true;
         } catch (SQLException e) { System.err.println("SaveVisit Error: " + e.getMessage()); return false; }
     }
@@ -403,7 +427,7 @@ public class DatabaseManager {
         String sql = "SELECT v.visit_id, v.patient_id, p.full_name, v.visit_date, " +
                 "v.time_in, v.time_out, v.purpose, v.chief_complaint, " +
                 "v.diagnosis, v.treatment, v.remarks, v.temperature, " +
-                "v.blood_pressure, v.heart_rate, v.oxygen_sat, p.course_dept " +
+                "v.blood_pressure, v.heart_rate, v.oxygen_sat, p.course_dept, v.attended_by " +
                 "FROM Visits v JOIN Patients p ON v.patient_id = p.patient_id " +
                 dateFilter + " ORDER BY v.visit_date DESC, v.time_in DESC";
         try (Connection conn = connect(); Statement stmt = conn.createStatement();
@@ -418,7 +442,7 @@ public class DatabaseManager {
         String sql = "SELECT v.visit_id, v.patient_id, p.full_name, v.visit_date, " +
                 "v.time_in, v.time_out, v.purpose, v.chief_complaint, " +
                 "v.diagnosis, v.treatment, v.remarks, v.temperature, " +
-                "v.blood_pressure, v.heart_rate, v.oxygen_sat, p.course_dept " +
+                "v.blood_pressure, v.heart_rate, v.oxygen_sat, p.course_dept, v.attended_by " +
                 "FROM Visits v JOIN Patients p ON v.patient_id = p.patient_id " +
                 "WHERE v.visit_date BETWEEN ? AND ? ORDER BY v.visit_date DESC, v.time_in DESC";
         try (Connection conn = connect(); PreparedStatement p = conn.prepareStatement(sql)) {
@@ -453,7 +477,8 @@ public class DatabaseManager {
         row.put("blood_pressure",  nvl(rs.getString("blood_pressure")));
         row.put("heart_rate",      nvl(rs.getString("heart_rate")));
         row.put("oxygen_sat",      nvl(rs.getString("oxygen_sat")));
-        try { row.put("course_dept", nvl(rs.getString("course_dept"))); } catch (SQLException ignored) {}
+        try { row.put("course_dept",  nvl(rs.getString("course_dept")));  } catch (SQLException ignored) {}
+        try { row.put("attended_by",  nvl(rs.getString("attended_by")));  } catch (SQLException ignored) {}
         return row;
     }
 
