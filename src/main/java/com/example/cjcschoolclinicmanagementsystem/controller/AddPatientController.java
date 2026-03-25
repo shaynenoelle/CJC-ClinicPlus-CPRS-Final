@@ -23,7 +23,7 @@ public class AddPatientController {
     @FXML private Label       lblStep;
 
     // Personal
-    @FXML private TextField   txtPatientId, txtStudentID, txtSchoolYear;
+    @FXML private TextField   txtPatientId, txtSchoolYear;
     @FXML private TextField   txtLastName, txtFirstName, txtMiddleInitial;
     @FXML private DatePicker  dateBirth;
     @FXML private TextField   txtAge;
@@ -72,8 +72,10 @@ public class AddPatientController {
         setupCombos();
         setupTypeToggle();
         setupBirthDateListener();
-        generatePatientId();
         loadSchoolYear();
+        // Patient ID is now manually entered — clear field and show hint
+        txtPatientId.clear();
+        lblPatientIdDisplay.setText("Enter Student or Employee ID");
         rbStudent.setSelected(true);
         rbCollege.setSelected(true);
         onTypeChanged();
@@ -130,12 +132,6 @@ public class AddPatientController {
         });
     }
 
-    private void generatePatientId() {
-        String nextId = DatabaseManager.generateNextPatientId();
-        txtPatientId.setText(nextId);
-        lblPatientIdDisplay.setText("Auto ID: " + nextId);
-    }
-
     private void loadSchoolYear() {
         txtSchoolYear.setText(DatabaseManager.getSetting("school_year", getCurrentSchoolYear()));
     }
@@ -179,7 +175,8 @@ public class AddPatientController {
 
         lblFormTitle.setText("Edit Patient Profile");
         txtPatientId.setText(p.getId());
-        lblPatientIdDisplay.setText("Patient ID: " + p.getId());
+        lblPatientIdDisplay.setText("Editing: " + p.getId());
+        txtPatientId.setEditable(false); // ID cannot be changed once saved
 
         String full = p.getName();
         if (full != null && full.contains(",")) {
@@ -196,7 +193,6 @@ public class AddPatientController {
             } else { txtFirstName.setText(rest); }
         } else { txtFirstName.setText(full); }
 
-        txtStudentID.setText(p.getId());
         comboGender.setValue(p.getGender());
         comboBloodType.setValue(p.getBloodType());
 
@@ -284,6 +280,16 @@ public class AddPatientController {
     }
 
     private boolean validateTab1() {
+        // Patient ID required and must be unique (only check on add, not edit)
+        if (!isEditMode) {
+            if (isBlank(txtPatientId)) {
+                showValidationError("Student / Employee ID is required."); return false;
+            }
+            String enteredId = txtPatientId.getText().trim();
+            if (DatabaseManager.patientExists(enteredId)) {
+                showValidationError("ID \"" + enteredId + "\" is already registered. Use a different ID."); return false;
+            }
+        }
         if (isBlank(txtLastName) || isBlank(txtFirstName)) {
             showValidationError("Last Name and First Name are required."); return false;
         }

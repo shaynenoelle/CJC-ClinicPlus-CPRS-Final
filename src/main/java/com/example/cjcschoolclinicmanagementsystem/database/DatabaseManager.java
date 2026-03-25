@@ -854,6 +854,19 @@ public class DatabaseManager {
         } catch (SQLException e) { return false; }
     }
 
+    /** Returns true if a patient with the given ID already exists in the database. */
+    public static boolean patientExists(String patientId) {
+        String sql = "SELECT 1 FROM Patients WHERE patient_id = ? LIMIT 1";
+        try (Connection conn = connect();
+             PreparedStatement p = conn.prepareStatement(sql)) {
+            p.setString(1, patientId);
+            return p.executeQuery().next();
+        } catch (SQLException e) {
+            System.err.println("PatientExists Error: " + e.getMessage());
+            return false;
+        }
+    }
+
     // ── PRESET LISTS ──────────────────────────────────────────────
     public static void ensurePresetsTable() {
         String sql = "CREATE TABLE IF NOT EXISTS Presets (" +
