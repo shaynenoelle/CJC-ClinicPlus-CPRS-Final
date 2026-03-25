@@ -128,7 +128,7 @@
                             <VBox spacing="4" HBox.hgrow="ALWAYS">
                                 <Label text="Course (type or select)" style="-fx-font-size: 11; -fx-text-fill: #555;" />
                                 <ComboBox fx:id="comboCourse" prefWidth="220" editable="true"
-                                          promptText="e.g. BSCS, BSIT, BLIS"
+                                          promptText="e.g. BSCS, BSN, Grade 10"
                                           style="-fx-border-color: #ccc; -fx-border-radius: 4;" />
                             </VBox>
                         </HBox>
@@ -256,18 +256,61 @@
 
                     <Separator />
 
-                    <VBox spacing="4">
-                        <Label text="Allergies (if any)" style="-fx-font-size: 11; -fx-text-fill: #555;" />
-                        <TextArea fx:id="txtAllergies" prefHeight="70" wrapText="true"
-                                  promptText="e.g. Amoxicillin, Penicillin, Peanuts — leave blank if none"
-                                  style="-fx-border-color: #ccc; -fx-border-radius: 4; -fx-background-radius: 4; -fx-padding: 7;" />
-                    </VBox>
+                    <!-- Health History — matches physical CJC Student Medical Health Record form -->
+                    <VBox spacing="8"
+                          style="-fx-background-color: #fafafa; -fx-border-color: #e0e0e0; -fx-border-radius: 5; -fx-padding: 14;">
+                        <Label text="HEALTH HISTORY — Please check any that apply:"
+                               style="-fx-font-size: 12; -fx-font-weight: bold; -fx-text-fill: #333;"/>
+                        <Label text="List any health problems that might affect performance in school."
+                               style="-fx-font-size: 11; -fx-text-fill: #777; -fx-font-style: italic;"/>
+                        <Separator/>
 
-                    <VBox spacing="4">
-                        <Label text="Pre-existing Conditions (if any)" style="-fx-font-size: 11; -fx-text-fill: #555;" />
-                        <TextArea fx:id="txtConditions" prefHeight="70" wrapText="true"
-                                  promptText="e.g. Asthma, Hypertension, Diabetes — leave blank if none"
-                                  style="-fx-border-color: #ccc; -fx-border-radius: 4; -fx-background-radius: 4; -fx-padding: 7;" />
+                        <!-- Row 1 -->
+                        <HBox spacing="20" alignment="CENTER_LEFT">
+                            <CheckBox fx:id="chkAsthma"       text="Asthma"            style="-fx-font-size: 12;"/>
+                            <CheckBox fx:id="chkHighBP"       text="High Blood Pressure" style="-fx-font-size: 12;"/>
+                            <CheckBox fx:id="chkTuberculosis" text="Tuberculosis"       style="-fx-font-size: 12;"/>
+                            <CheckBox fx:id="chkRheumatic"    text="Rheumatic Heart Disease" style="-fx-font-size: 12;"/>
+                        </HBox>
+
+                        <!-- Row 2 -->
+                        <HBox spacing="20" alignment="CENTER_LEFT">
+                            <CheckBox fx:id="chkThyroid"      text="Thyroid Disease"   style="-fx-font-size: 12;"/>
+                            <CheckBox fx:id="chkEpilepsy"     text="Epilepsy/Seizures" style="-fx-font-size: 12;"/>
+                            <CheckBox fx:id="chkFainting"     text="History of Fainting" style="-fx-font-size: 12;"/>
+                        </HBox>
+
+                        <!-- Row 3 — Heart Disease and Lung Disease each with a detail field -->
+                        <HBox spacing="10" alignment="CENTER_LEFT">
+                            <CheckBox fx:id="chkHeartDisease" text="Heart Disease:" style="-fx-font-size: 12;"/>
+                            <TextField fx:id="txtHeartDiseaseDetail"
+                                       promptText="specify…"
+                                       prefWidth="180"
+                                       style="-fx-border-color: #ccc; -fx-border-radius: 4; -fx-background-radius: 4; -fx-padding: 5;"/>
+                            <CheckBox fx:id="chkLungDisease" text="Lung Disease:" style="-fx-font-size: 12;"/>
+                            <TextField fx:id="txtLungDiseaseDetail"
+                                       promptText="specify…"
+                                       prefWidth="180"
+                                       style="-fx-border-color: #ccc; -fx-border-radius: 4; -fx-background-radius: 4; -fx-padding: 5;"/>
+                        </HBox>
+
+                        <!-- Allergies row — checkbox + text field -->
+                        <HBox spacing="10" alignment="CENTER_LEFT">
+                            <CheckBox fx:id="chkAllergies" text="Allergies (Food/Drug):" style="-fx-font-size: 12;"/>
+                            <TextField fx:id="txtAllergyDetail"
+                                       promptText="e.g. Amoxicillin, Peanuts"
+                                       prefWidth="280"
+                                       style="-fx-border-color: #ccc; -fx-border-radius: 4; -fx-background-radius: 4; -fx-padding: 5;"/>
+                        </HBox>
+
+                        <!-- Others row — checkbox + text field -->
+                        <HBox spacing="10" alignment="CENTER_LEFT">
+                            <CheckBox fx:id="chkOthers" text="Others:" style="-fx-font-size: 12;"/>
+                            <TextField fx:id="txtOthersDetail"
+                                       promptText="Please specify…"
+                                       prefWidth="320"
+                                       style="-fx-border-color: #ccc; -fx-border-radius: 4; -fx-background-radius: 4; -fx-padding: 5;"/>
+                        </HBox>
                     </VBox>
 
                     <VBox spacing="4">

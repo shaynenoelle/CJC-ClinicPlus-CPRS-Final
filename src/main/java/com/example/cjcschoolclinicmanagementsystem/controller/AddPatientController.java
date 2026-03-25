@@ -42,7 +42,14 @@ public class AddPatientController {
 
     // Medical
     @FXML private TextField   txtHeight, txtWeight;
-    @FXML private TextArea    txtAllergies, txtConditions, txtMedicalRemarks;
+    @FXML private TextArea    txtMedicalRemarks;
+
+    // Health History checkboxes — matches physical CJC health form
+    @FXML private CheckBox chkAsthma, chkThyroid, chkHeartDisease, chkHighBP;
+    @FXML private CheckBox chkEpilepsy, chkTuberculosis, chkFainting, chkLungDisease;
+    @FXML private CheckBox chkRheumatic, chkAllergies, chkOthers;
+    @FXML private TextField txtAllergyDetail, txtOthersDetail;
+    @FXML private TextField txtHeartDiseaseDetail, txtLungDiseaseDetail;
     @FXML private VBox        paneStatus;
     @FXML private RadioButton rbActive, rbArchived;
     @FXML private ComboBox<String> comboArchiveReason;
@@ -223,8 +230,8 @@ public class AddPatientController {
         txtEmergencyName.setText(p.getEmergencyName());
         txtRelationship.setText(p.getRelationship());
         txtEmergencyContact.setText(p.getEmergencyContact());
-        txtAllergies.setText(p.getAllergies());
-        txtConditions.setText(p.getConditions());
+        // Restore checkboxes from saved comma-separated strings
+        restoreHealthHistory(p.getAllergies(), p.getConditions());
         txtHeight.setText(p.getHeight());
         txtWeight.setText(p.getWeight());
         txtMedicalRemarks.setText(p.getMedicalRemarks());
@@ -346,8 +353,9 @@ public class AddPatientController {
         String emergencyName    = txtEmergencyName.getText().trim();
         String relationship     = txtRelationship.getText().trim();
         String emergencyContact = txtEmergencyContact.getText().trim();
-        String allergies        = txtAllergies.getText().trim();
-        String conditions       = txtConditions.getText().trim();
+        // Serialize checked health history items into the existing allergies/conditions columns
+        String allergies  = buildHealthHistoryAllergies();
+        String conditions = buildHealthHistoryConditions();
         String height           = txtHeight.getText().trim();
         String weight           = txtWeight.getText().trim();
         String medicalRemarks   = txtMedicalRemarks.getText().trim();
@@ -396,6 +404,107 @@ public class AddPatientController {
     }
 
     @FXML private void handleCancel() { closeForm(); }
+
+    // ── Health History helpers ────────────────────────────────────
+
+    /**
+     * Builds the "allergies" string from checkboxes that belong to the
+     * allergies / food-drug category on the physical form.
+     * Saved into the existing `allergies` DB column.
+     */
+    private String buildHealthHistoryAllergies() {
+        java.util.List<String> items = new java.util.ArrayList<>();
+        if (chkAllergies.isSelected()) {
+            String detail = txtAllergyDetail.getText().trim();
+            items.add("Allergies" + (detail.isEmpty() ? "" : ": " + detail));
+        }
+        return String.join(", ", items);
+    }
+
+    /**
+     * Builds the "conditions" string from all condition checkboxes.
+     * Saved into the existing `conditions` DB column.
+     */
+    private String buildHealthHistoryConditions() {
+        java.util.List<String> items = new java.util.ArrayList<>();
+        if (chkAsthma.isSelected())       items.add("Asthma");
+        if (chkThyroid.isSelected())      items.add("Thyroid Disease");
+        if (chkHeartDisease.isSelected()) {
+            String d = txtHeartDiseaseDetail.getText().trim();
+            items.add("Heart Disease" + (d.isEmpty() ? "" : ": " + d));
+        }
+        if (chkHighBP.isSelected())       items.add("High Blood Pressure");
+        if (chkEpilepsy.isSelected())     items.add("Epilepsy/Seizures");
+        if (chkTuberculosis.isSelected()) items.add("Tuberculosis");
+        if (chkFainting.isSelected())     items.add("History of Fainting");
+        if (chkLungDisease.isSelected()) {
+            String d = txtLungDiseaseDetail.getText().trim();
+            items.add("Lung Disease" + (d.isEmpty() ? "" : ": " + d));
+        }
+        if (chkRheumatic.isSelected())    items.add("Rheumatic Heart Disease");
+        if (chkOthers.isSelected()) {
+            String detail = txtOthersDetail.getText().trim();
+            items.add("Others" + (detail.isEmpty() ? "" : ": " + detail));
+        }
+        return String.join(", ", items);
+    }
+
+    /**
+     * Restores checkbox states from the saved comma-separated strings
+     * when opening a patient record for editing.
+     */
+    private void restoreHealthHistory(String allergiesStr, String conditionsStr) {
+        // Reset all first
+        chkAsthma.setSelected(false);       chkThyroid.setSelected(false);
+        chkHeartDisease.setSelected(false); chkHighBP.setSelected(false);
+        chkEpilepsy.setSelected(false);     chkTuberculosis.setSelected(false);
+        chkFainting.setSelected(false);     chkLungDisease.setSelected(false);
+        chkRheumatic.setSelected(false);    chkAllergies.setSelected(false);
+        chkOthers.setSelected(false);
+        txtAllergyDetail.clear();           txtOthersDetail.clear();
+        txtHeartDiseaseDetail.clear();      txtLungDiseaseDetail.clear();
+
+        // Restore conditions
+        if (conditionsStr != null && !conditionsStr.isBlank()) {
+            for (String item : conditionsStr.split(",")) {
+                String s = item.trim();
+                if (s.startsWith("Asthma"))               chkAsthma.setSelected(true);
+                else if (s.startsWith("Thyroid"))         chkThyroid.setSelected(true);
+                else if (s.startsWith("Heart Disease")) {
+                    chkHeartDisease.setSelected(true);
+                    int colon = s.indexOf(':');
+                    if (colon >= 0) txtHeartDiseaseDetail.setText(s.substring(colon + 1).trim());
+                }
+                else if (s.startsWith("High Blood"))      chkHighBP.setSelected(true);
+                else if (s.startsWith("Epilepsy"))        chkEpilepsy.setSelected(true);
+                else if (s.startsWith("Tuberculosis"))    chkTuberculosis.setSelected(true);
+                else if (s.startsWith("History of"))      chkFainting.setSelected(true);
+                else if (s.startsWith("Lung Disease")) {
+                    chkLungDisease.setSelected(true);
+                    int colon = s.indexOf(':');
+                    if (colon >= 0) txtLungDiseaseDetail.setText(s.substring(colon + 1).trim());
+                }
+                else if (s.startsWith("Rheumatic"))       chkRheumatic.setSelected(true);
+                else if (s.startsWith("Others")) {
+                    chkOthers.setSelected(true);
+                    int colon = s.indexOf(':');
+                    if (colon >= 0) txtOthersDetail.setText(s.substring(colon + 1).trim());
+                }
+            }
+        }
+
+        // Restore allergies
+        if (allergiesStr != null && !allergiesStr.isBlank()) {
+            for (String item : allergiesStr.split(",")) {
+                String s = item.trim();
+                if (s.startsWith("Allergies")) {
+                    chkAllergies.setSelected(true);
+                    int colon = s.indexOf(':');
+                    if (colon >= 0) txtAllergyDetail.setText(s.substring(colon + 1).trim());
+                }
+            }
+        }
+    }
 
     private void closeForm() {
         ((Stage) txtLastName.getScene().getWindow()).close();
