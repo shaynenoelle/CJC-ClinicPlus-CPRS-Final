@@ -566,9 +566,10 @@ public class PatientRegistryController {
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
 
         // ── Data columns ──────────────────────────────────────────
-        String[] cols   = {"visit_date","time_in","time_out","purpose","chief_complaint","diagnosis","treatment","remarks"};
-        String[] hdrs   = {"Date","Time In","Time Out","Purpose","Complaint","Diagnosis","Treatment","Remarks"};
-        double[] widths = {0.09, 0.07, 0.07, 0.09, 0.13, 0.13, 0.13, 0.11};
+        // chief_complaint holds the merged Cues string; diagnosis mirrors it (report-layer only)
+        String[] cols   = {"visit_date","time_in","time_out","purpose","chief_complaint","treatment","remarks"};
+        String[] hdrs   = {"Date","Time In","Time Out","Purpose","Cues","Treatment","Remarks"};
+        double[] widths = {0.09, 0.07, 0.07, 0.09, 0.20, 0.15, 0.13};
         for (int i = 0; i < cols.length; i++) {
             final String key = cols[i];
             TableColumn<Map<String,String>, String> tc = new TableColumn<>(hdrs[i]);
@@ -627,7 +628,7 @@ public class PatientRegistryController {
                     alert.setTitle("Delete Visit");
                     alert.setHeaderText("Delete this visit record?");
                     alert.setContentText("Date: " + row.getOrDefault("visit_date", "") +
-                            "\nComplaint: " + row.getOrDefault("chief_complaint", "—"));
+                            "\nCues: " + row.getOrDefault("chief_complaint", "—"));
                     alert.showAndWait().ifPresent(resp -> {
                         if (resp == ButtonType.OK && row.containsKey("visit_id")) {
                             DatabaseManager.deleteVisit(Integer.parseInt(row.get("visit_id")));
