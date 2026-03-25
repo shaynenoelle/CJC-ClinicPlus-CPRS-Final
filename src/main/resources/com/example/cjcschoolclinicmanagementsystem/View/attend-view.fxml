@@ -46,17 +46,17 @@
                                promptText="HH:mm"
                                prefWidth="80" prefHeight="30"
                                style="-fx-background-radius: 5;
-                                     -fx-border-color: #ddd;
-                                     -fx-border-radius: 5;
-                                     -fx-padding: 4 8 4 8;
-                                     -fx-font-size: 12;"/>
+                              -fx-border-color: #ddd;
+                              -fx-border-radius: 5;
+                              -fx-padding: 4 8 4 8;
+                              -fx-font-size: 12;"/>
                     <Button text="⏱ Now"
                             onAction="#setTimeIn"
                             style="-fx-background-color: #e8e8e8;
-                                  -fx-text-fill: #333;
-                                  -fx-background-radius: 5;
-                                  -fx-cursor: hand;
-                                  -fx-font-size: 11;"/>
+                           -fx-text-fill: #333;
+                           -fx-background-radius: 5;
+                           -fx-cursor: hand;
+                           -fx-font-size: 11;"/>
                 </HBox>
             </VBox>
             <VBox alignment="CENTER_RIGHT" spacing="2">
@@ -67,17 +67,17 @@
                                promptText="HH:mm"
                                prefWidth="80" prefHeight="30"
                                style="-fx-background-radius: 5;
-                                     -fx-border-color: #ddd;
-                                     -fx-border-radius: 5;
-                                     -fx-padding: 4 8 4 8;
-                                     -fx-font-size: 12;"/>
+                              -fx-border-color: #ddd;
+                              -fx-border-radius: 5;
+                              -fx-padding: 4 8 4 8;
+                              -fx-font-size: 12;"/>
                     <Button text="⏱ Now"
                             onAction="#setTimeOut"
                             style="-fx-background-color: #e8e8e8;
-                                  -fx-text-fill: #333;
-                                  -fx-background-radius: 5;
-                                  -fx-cursor: hand;
-                                  -fx-font-size: 11;"/>
+                           -fx-text-fill: #333;
+                           -fx-background-radius: 5;
+                           -fx-cursor: hand;
+                           -fx-font-size: 11;"/>
                 </HBox>
             </VBox>
         </HBox>
@@ -99,12 +99,9 @@
 
                 <GridPane hgap="16" vgap="12">
                     <!-- Temperature -->
-                    <HBox spacing="2" alignment="CENTER_LEFT" GridPane.rowIndex="0" GridPane.columnIndex="0">
-                        <Label text="Temperature (°C)"
-                               style="-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #444;"/>
-                        <Label text=" *"
-                               style="-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #e74c3c;"/>
-                    </HBox>
+                    <Label text="Temperature (&#xB0;C)"
+                           GridPane.rowIndex="0" GridPane.columnIndex="0"
+                           style="-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #444;"/>
                     <TextField fx:id="txtTemperature"
                                promptText="e.g. 36.5"
                                prefWidth="180" prefHeight="38"
@@ -118,12 +115,9 @@
                            style="-fx-text-fill: #e74c3c; -fx-font-size: 11;"/>
 
                     <!-- Blood Pressure -->
-                    <HBox spacing="2" alignment="CENTER_LEFT" GridPane.rowIndex="1" GridPane.columnIndex="0">
-                        <Label text="Blood Pressure (mmHg)"
-                               style="-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #444;"/>
-                        <Label text=" *"
-                               style="-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #e74c3c;"/>
-                    </HBox>
+                    <Label text="Blood Pressure (mmHg)"
+                           GridPane.rowIndex="1" GridPane.columnIndex="0"
+                           style="-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #444;"/>
                     <HBox spacing="6" alignment="CENTER_LEFT"
                           GridPane.rowIndex="1" GridPane.columnIndex="1">
                         <TextField fx:id="txtBpSystolic"
@@ -171,6 +165,20 @@
                     <Label fx:id="lblO2Warning" text=""
                            GridPane.rowIndex="3" GridPane.columnIndex="2"
                            style="-fx-text-fill: #e74c3c; -fx-font-size: 11;"/>
+
+                    <!-- Respiratory Rate -->
+                    <Label text="Resp. Rate (breaths/min)" GridPane.rowIndex="4" GridPane.columnIndex="0"
+                           style="-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #444;"/>
+                    <TextField fx:id="txtRespiratoryRate"
+                               promptText="e.g. 16"
+                               prefWidth="180" prefHeight="38"
+                               onKeyReleased="#validateVitals"
+                               GridPane.rowIndex="4" GridPane.columnIndex="1"
+                               style="-fx-background-radius: 5; -fx-border-color: #ddd;
+                                      -fx-border-radius: 5; -fx-padding: 8; -fx-font-size: 13;"/>
+                    <Label fx:id="lblRespWarning" text=""
+                           GridPane.rowIndex="4" GridPane.columnIndex="2"
+                           style="-fx-text-fill: #e74c3c; -fx-font-size: 11;"/>
                 </GridPane>
             </VBox>
         </Tab>
@@ -180,55 +188,34 @@
             <VBox spacing="12">
                 <padding><Insets top="16" bottom="8" left="4" right="4"/></padding>
 
-                <!-- ── CUES ──────────────────────────────────────────────── -->
-                <HBox spacing="4" alignment="CENTER_LEFT">
-                    <Label text="Cues"
-                           style="-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #444;"/>
-                    <Label text=" *"
-                           style="-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #e74c3c;"/>
-                    <Label text="(symptoms, complaints, observations)"
-                           style="-fx-font-size: 11; -fx-text-fill: #999; -fx-padding: 0 0 0 4;"/>
-                </HBox>
+                <Label text="Chief Complaint *"
+                       style="-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #444;"/>
+                <!-- Preset dropdown for complaint — editable so nurse can also type freely -->
+                <ComboBox fx:id="comboComplaint" editable="true" maxWidth="1.7976931348623157E308"
+                          promptText="Select preset or type complaint…"
+                          style="-fx-border-color: #ddd; -fx-border-radius: 5; -fx-font-size: 13;"/>
+                <!-- shown only when "Others (specify below)" is chosen -->
+                <TextArea fx:id="txtComplaint"
+                          promptText="Describe complaint in detail…"
+                          prefHeight="60" wrapText="true" managed="false" visible="false"
+                          onKeyPressed="#onComplaintKeyPressed"
+                          style="-fx-background-radius: 5; -fx-border-color: #ddd;
+                                 -fx-border-radius: 5; -fx-font-size: 13;"/>
 
-                <!-- Dropdown + free-type input row -->
-                <HBox spacing="8" alignment="CENTER_LEFT">
-                    <ComboBox fx:id="comboCues"
-                              editable="true"
-                              HBox.hgrow="ALWAYS"
-                              maxWidth="1.7976931348623157E308"
-                              promptText="Select preset or type a cue…"
-                              onKeyPressed="#onCuesKeyPressed"
-                              style="-fx-border-color: #ddd; -fx-border-radius: 5; -fx-font-size: 13;"/>
-                    <Button fx:id="btnAddCue"
-                            text="+ Add"
-                            onAction="#onAddCue"
-                            prefHeight="36"
-                            style="-fx-background-color: #8B0000;
-                                  -fx-text-fill: white;
-                                  -fx-background-radius: 6;
-                                  -fx-cursor: hand;
-                                  -fx-font-size: 12;
-                                  -fx-font-weight: bold;
-                                  -fx-padding: 6 14 6 14;"/>
-                </HBox>
+                <Label text="Diagnosis"
+                       style="-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #444;"/>
+                <!-- Preset dropdown for diagnosis — editable so nurse can also type freely -->
+                <ComboBox fx:id="comboDiagnosis" editable="true" maxWidth="1.7976931348623157E308"
+                          promptText="Select preset or type diagnosis…"
+                          style="-fx-border-color: #ddd; -fx-border-radius: 5; -fx-font-size: 13;"/>
+                <!-- shown only when "Others (specify below)" is chosen -->
+                <TextArea fx:id="txtDiagnosis"
+                          promptText="Describe diagnosis in detail…"
+                          prefHeight="60" wrapText="true" managed="false" visible="false"
+                          onKeyPressed="#onDiagnosisKeyPressed"
+                          style="-fx-background-radius: 5; -fx-border-color: #ddd;
+                                 -fx-border-radius: 5; -fx-font-size: 13;"/>
 
-                <!-- Chip display area — chips appear here after adding -->
-                <FlowPane fx:id="cuesFlowPane"
-                          hgap="6" vgap="6"
-                          prefWrapLength="500"
-                          minHeight="36"
-                          style="-fx-background-color: white;
-                                 -fx-border-color: #e0e0e0;
-                                 -fx-border-radius: 6;
-                                 -fx-background-radius: 6;
-                                 -fx-padding: 8;"/>
-
-                <Label text="(Press Enter or click + Add to add a cue. Click × on a chip to remove it.)"
-                       style="-fx-font-size: 10; -fx-text-fill: #aaa; -fx-font-style: italic;"/>
-
-                <Separator/>
-
-                <!-- Treatment — kept separate for future medicine inventory integration -->
                 <Label text="Treatment Given"
                        style="-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #444;"/>
                 <TextArea fx:id="txtTreatment"
@@ -249,7 +236,7 @@
 
                 <Separator/>
 
-                <!-- Previous visits reference table -->
+                <!-- All Previous Visits — scrollable table for reference -->
                 <Label text="Patient's Visit History"
                        style="-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #444;"/>
                 <TableView fx:id="tblPreviousVisits" prefHeight="160"
@@ -260,9 +247,10 @@
                     </columnResizePolicy>
                     <columns>
                         <TableColumn fx:id="colPrevDate"      text="Date"      prefWidth="90"/>
-                        <TableColumn fx:id="colPrevCues"      text="Cues"      prefWidth="160"/>
-                        <TableColumn fx:id="colPrevTreatment" text="Treatment" prefWidth="130"/>
-                        <TableColumn fx:id="colPrevRemarks"   text="Remarks"   prefWidth="130"/>
+                        <TableColumn fx:id="colPrevComplaint" text="Complaint" prefWidth="120"/>
+                        <TableColumn fx:id="colPrevDiagnosis" text="Diagnosis" prefWidth="120"/>
+                        <TableColumn fx:id="colPrevTreatment" text="Treatment" prefWidth="120"/>
+                        <TableColumn fx:id="colPrevRemarks"   text="Remarks"   prefWidth="120"/>
                         <TableColumn fx:id="colPrevVitals"    text="Vitals"    prefWidth="150"/>
                     </columns>
                     <placeholder>
@@ -276,18 +264,19 @@
 
     <Separator/>
 
-    <!-- FOOTER BUTTONS -->
+    <!-- BUTTONS — dynamic: Tab 1 shows Next, Tab 2 shows Back + Save Record -->
     <HBox spacing="12" alignment="CENTER_RIGHT">
         <Label fx:id="lblSaveStatus" text=""
                style="-fx-font-size: 11;" HBox.hgrow="ALWAYS"/>
         <Label fx:id="lblStep" text="Step 1 of 2"
-               style="-fx-text-fill: #888; -fx-font-size: 11;"/>
+               style="-fx-text-fill: #888; -fx-font-size: 11;" />
         <Button text="Cancel" prefWidth="100" prefHeight="38"
                 onAction="#onCancel"
                 style="-fx-background-color: #e0e0e0;
                        -fx-text-fill: #333;
                        -fx-background-radius: 6;
                        -fx-cursor: hand;"/>
+        <!-- Back — hidden on Tab 1 -->
         <Button fx:id="btnBack" text="◀  Back" prefWidth="100" prefHeight="38"
                 managed="false" visible="false"
                 onAction="#onBack"
@@ -295,6 +284,7 @@
                        -fx-text-fill: white;
                        -fx-background-radius: 6;
                        -fx-cursor: hand;"/>
+        <!-- Next — shown on Tab 1 -->
         <Button fx:id="btnNext" text="Next  ▶" prefWidth="130" prefHeight="38"
                 onAction="#onNext"
                 style="-fx-background-color: #8B0000;
@@ -302,6 +292,7 @@
                        -fx-font-weight: bold;
                        -fx-background-radius: 6;
                        -fx-cursor: hand;"/>
+        <!-- Save — shown on Tab 2 (last tab) -->
         <Button fx:id="btnSave" text="Save Record" prefWidth="130" prefHeight="38"
                 managed="false" visible="false"
                 onAction="#onSaveRecord"
