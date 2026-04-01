@@ -49,6 +49,12 @@ public class DashboardController {
     @FXML private VBox  vboxQueueRows;
     @FXML private Label lblQueueEmpty;
 
+    // ── Pending re-checks panel (injected below queue) ────────────
+    @FXML private VBox  vboxRecheckRows;
+    @FXML private Label lblRecheckEmpty;
+    @FXML private Label lblRecheckHeader;
+    @FXML private Label lblPendingRechecks;  // stat card — count of pending re-checks today
+
     // ── Charts ────────────────────────────────────────────────────
     @FXML private VBox                       vboxCollegeBreakdown;
     @FXML private BarChart<String, Number>   chartIllnesses;
@@ -223,6 +229,8 @@ public class DashboardController {
 
         // Live queue panel
         loadQueuePanel();
+        // Pending re-checks panel (below queue)
+        loadRecheckPanel();
     }
 
     // ── Live queue panel ──────────────────────────────────────────
@@ -288,6 +296,112 @@ public class DashboardController {
 
 
     // ── ROW 2: Illness charts ─────────────────────────────────────
+    /**
+     * Shows patients who have a pending re-check today.
+     * Uses the same DB method (getPendingFollowUpsToday) that LogbookController
+     * uses for its badge cache — no new query needed.
+     *
+     * Rows are color-coded:
+     *   Red   — scheduled time has already passed (overdue)
+     *   Orange — due within 10 minutes
+     *   Gray  — scheduled later today
+     *
+     * This panel is intentionally separate from the waiting queue because
+     * re-check patients are already attended — they are being monitored,
+     * not waiting in line.
+     */
+    private void loadRecheckPanel() {
+        // Guard: FXML nodes are optional — dashboard-view.fxml must declare them
+        // before this method does anything visible. If they are absent (e.g. during
+        // a staged rollout), the method exits silently without crashing.
+        if (vboxRecheckRows == null) return;
+
+        vboxRecheckRows.getChildren().clear();
+
+        java.util.List<java.util.Map<String, String>> followUps =
+                DatabaseManager.getPendingFollowUpsToday();
+
+        // ── Update the stat card immediately — even if the panel VBox is absent ──
+        if (lblPendingRechecks != null)
+            lblPendingRechecks.setText(String.valueOf(followUps.size()));
+
+        boolean hasRows = !followUps.isEmpty();
+
+        if (lblRecheckEmpty != null) {
+            lblRecheckEmpty.setVisible(!hasRows);
+            lblRecheckEmpty.setManaged(!hasRows);
+        }
+
+        // Update header count badge
+        if (lblRecheckHeader != null && hasRows) {
+            lblRecheckHeader.setText("🔄  Pending Re-checks  (" + followUps.size() + ")");
+        }
+
+        if (!hasRows) return;
+
+        java.time.LocalTime now = java.time.LocalTime.now();
+        java.time.format.DateTimeFormatter fmt =
+                java.time.format.DateTimeFormatter.ofPattern("HH:mm");
+
+        for (java.util.Map<String, String> fu : followUps) {
+            String name      = fu.getOrDefault("full_name",      "Unknown");
+            String sched     = fu.getOrDefault("scheduled_time", "—");
+            String notes     = fu.getOrDefault("nurse_notes",    "");
+
+            // Calculate how many minutes remain (negative = overdue)
+            int minsUntil = Integer.MAX_VALUE;
+            try {
+                java.time.LocalTime target = java.time.LocalTime.parse(sched, fmt);
+                minsUntil = (int) java.time.Duration.between(now, target).toMinutes();
+            } catch (Exception ignored) {}
+
+            // Choose row color and status text based on urgency
+            String rowBg;
+            String statusText;
+            String statusStyle;
+
+            if (minsUntil <= 0) {
+                rowBg       = "#fff0f0";
+                statusText  = "🔴 OVERDUE  " + sched;
+                statusStyle = "-fx-font-size: 11; -fx-text-fill: #c0392b; -fx-font-weight: bold;";
+            } else if (minsUntil <= 10) {
+                rowBg       = "#fff8f0";
+                statusText  = "🔄 Due in " + minsUntil + " min  (" + sched + ")";
+                statusStyle = "-fx-font-size: 11; -fx-text-fill: #e67e22; -fx-font-weight: bold;";
+            } else {
+                rowBg       = "#fafafa";
+                statusText  = "🕐 Scheduled: " + sched;
+                statusStyle = "-fx-font-size: 11; -fx-text-fill: #555;";
+            }
+
+            javafx.scene.layout.HBox hbox = new javafx.scene.layout.HBox(10);
+            hbox.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+            hbox.setStyle(
+                    "-fx-background-color: " + rowBg + "; " +
+                            "-fx-border-color: #eeeeee; " +
+                            "-fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 8 12;");
+
+            Label lblName = new Label("👤 " + name);
+            lblName.setStyle("-fx-font-weight: bold; -fx-font-size: 12; -fx-text-fill: #333;");
+            lblName.setMinWidth(200);
+
+            Label lblStatus = new Label(statusText);
+            lblStatus.setStyle(statusStyle);
+            lblStatus.setMinWidth(180);
+
+            hbox.getChildren().addAll(lblName, lblStatus);
+
+            // Nurse note (if any) — shown in muted text
+            if (!notes.isBlank()) {
+                Label lblNote = new Label("📝 " + notes);
+                lblNote.setStyle("-fx-font-size: 10; -fx-text-fill: #888; -fx-wrap-text: true;");
+                lblNote.setMaxWidth(280);
+                hbox.getChildren().add(lblNote);
+            }
+
+            vboxRecheckRows.getChildren().add(hbox);
+        }
+    }
     private void loadIllnessChart(String period, String label) {
         chartIllnesses.getData().clear();
         lblIllnessSubtitle.setText("Most frequent diagnoses — " + label);
@@ -395,7 +509,7 @@ public class DashboardController {
     }
 
     // ── FXML event handlers ───────────────────────────────────────
-    @FXML private void refreshDashboard() { loadDashboard(); }
+    @FXML private void refreshDashboard() { loadDashboard(); loadRecheckPanel(); }
 
     /** Called when the unified period dropdown changes — reloads stat cards AND charts. */
     @FXML

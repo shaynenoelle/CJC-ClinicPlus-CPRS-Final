@@ -1,14 +1,21 @@
 module com.example.cjcschoolclinicmanagementsystem {
     requires javafx.controls;
     requires javafx.fxml;
-    requires java.sql; // Permission for SQLite JDBC
-    requires java.desktop;
+    requires java.sql;
+    requires org.xerial.sqlitejdbc;
+    requires jbcrypt;
 
-    // Opens packages so JavaFX can access your classes at runtime
-    opens com.example.cjcschoolclinicmanagementsystem.controller to javafx.fxml, javafx.graphics;
-    opens com.example.cjcschoolclinicmanagementsystem to javafx.fxml, javafx.graphics;
-    opens com.example.cjcschoolclinicmanagementsystem.model to javafx.fxml, javafx.base;
+    // ── Apache POI (Excel import) ─────────────────────────────────
+    requires org.apache.poi.poi;
+    requires org.apache.poi.ooxml;
+    requires org.apache.commons.compress;   // POI-OOXML depends on this
+
+    opens com.example.cjcschoolclinicmanagementsystem to javafx.fxml;
+    opens com.example.cjcschoolclinicmanagementsystem.controller to javafx.fxml;
+    opens com.example.cjcschoolclinicmanagementsystem.model to javafx.base;
 
     exports com.example.cjcschoolclinicmanagementsystem;
     exports com.example.cjcschoolclinicmanagementsystem.controller;
+    exports com.example.cjcschoolclinicmanagementsystem.model;
+    exports com.example.cjcschoolclinicmanagementsystem.util;
 }

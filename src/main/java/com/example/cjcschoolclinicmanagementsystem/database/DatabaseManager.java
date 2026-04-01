@@ -4,6 +4,7 @@ import com.example.cjcschoolclinicmanagementsystem.model.Patient;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 public class DatabaseManager {
 
@@ -24,6 +25,7 @@ public class DatabaseManager {
                 { "Patients", "position TEXT DEFAULT ''" },
                 { "Patients", "school_year TEXT DEFAULT ''" },
                 { "Visits",   "attended_by TEXT DEFAULT ''" },
+                { "Visits",   "respiratory_rate TEXT DEFAULT ''" },
         };
         try (Connection conn = connect(); Statement stmt = conn.createStatement()) {
             for (String[] pair : alterStatements) {
@@ -292,7 +294,8 @@ public class DatabaseManager {
     public static List<java.util.Map<String, String>> getVisitsForPatient(String patientId) {
         List<java.util.Map<String, String>> list = new ArrayList<>();
         String sql = "SELECT visit_id, patient_id, visit_date, time_in, time_out, purpose, chief_complaint, " +
-                "diagnosis, treatment, remarks, temperature, blood_pressure, heart_rate, oxygen_sat, attended_by " +
+                "diagnosis, treatment, remarks, temperature, blood_pressure, heart_rate, oxygen_sat, " +
+                "respiratory_rate, attended_by " +
                 "FROM Visits WHERE patient_id = ? ORDER BY visit_date DESC, time_in DESC";
         try (Connection conn = connect(); PreparedStatement p = conn.prepareStatement(sql)) {
             p.setString(1, patientId);
@@ -313,6 +316,7 @@ public class DatabaseManager {
                 row.put("blood_pressure",  nvl(rs.getString("blood_pressure")));
                 row.put("heart_rate",      nvl(rs.getString("heart_rate")));
                 row.put("oxygen_sat",      nvl(rs.getString("oxygen_sat")));
+                row.put("respiratory_rate", nvl(rs.getString("respiratory_rate")));
                 row.put("attended_by",     nvl(rs.getString("attended_by")));
                 list.add(row);
             }
@@ -400,18 +404,19 @@ public class DatabaseManager {
     }
 
     public static boolean saveVisitRecord(int visitId, String temperature, String bloodPressure,
-                                          String heartRate, String oxygenSat, String complaint,
-                                          String diagnosis, String treatment, String remarks,
-                                          String attendedBy) {
+                                          String heartRate, String oxygenSat, String respiratoryRate,
+                                          String complaint, String diagnosis, String treatment,
+                                          String remarks, String attendedBy) {
         String sql = "UPDATE Visits SET temperature=?, blood_pressure=?, heart_rate=?, " +
-                "oxygen_sat=?, chief_complaint=?, diagnosis=?, treatment=?, remarks=?, " +
-                "attended_by=? WHERE visit_id=?";
+                "oxygen_sat=?, respiratory_rate=?, chief_complaint=?, diagnosis=?, " +
+                "treatment=?, remarks=?, attended_by=? WHERE visit_id=?";
         try (Connection conn = connect(); PreparedStatement p = conn.prepareStatement(sql)) {
-            p.setString(1, temperature); p.setString(2, bloodPressure);
-            p.setString(3, heartRate);   p.setString(4, oxygenSat);
-            p.setString(5, complaint);   p.setString(6, diagnosis);
-            p.setString(7, treatment);   p.setString(8, remarks);
-            p.setString(9, attendedBy);  p.setInt(10, visitId);
+            p.setString(1, temperature);    p.setString(2, bloodPressure);
+            p.setString(3, heartRate);      p.setString(4, oxygenSat);
+            p.setString(5, respiratoryRate);p.setString(6, complaint);
+            p.setString(7, diagnosis);      p.setString(8, treatment);
+            p.setString(9, remarks);        p.setString(10, attendedBy);
+            p.setInt(11, visitId);
             p.executeUpdate(); return true;
         } catch (SQLException e) { System.err.println("SaveVisit Error: " + e.getMessage()); return false; }
     }
@@ -427,7 +432,9 @@ public class DatabaseManager {
         String sql = "SELECT v.visit_id, v.patient_id, p.full_name, v.visit_date, " +
                 "v.time_in, v.time_out, v.purpose, v.chief_complaint, " +
                 "v.diagnosis, v.treatment, v.remarks, v.temperature, " +
-                "v.blood_pressure, v.heart_rate, v.oxygen_sat, p.course_dept, v.attended_by " +
+                "v.blood_pressure, v.heart_rate, v.oxygen_sat, p.course_dept, v.attended_by, " +
+                "(SELECT COUNT(*) FROM FollowUps f " +
+                " WHERE f.visit_id = v.visit_id AND f.status = 'done') AS done_recheck_count " +
                 "FROM Visits v JOIN Patients p ON v.patient_id = p.patient_id " +
                 dateFilter + " ORDER BY v.visit_date DESC, v.time_in DESC";
         try (Connection conn = connect(); Statement stmt = conn.createStatement();
@@ -442,7 +449,9 @@ public class DatabaseManager {
         String sql = "SELECT v.visit_id, v.patient_id, p.full_name, v.visit_date, " +
                 "v.time_in, v.time_out, v.purpose, v.chief_complaint, " +
                 "v.diagnosis, v.treatment, v.remarks, v.temperature, " +
-                "v.blood_pressure, v.heart_rate, v.oxygen_sat, p.course_dept, v.attended_by " +
+                "v.blood_pressure, v.heart_rate, v.oxygen_sat, p.course_dept, v.attended_by, " +
+                "(SELECT COUNT(*) FROM FollowUps f " +
+                " WHERE f.visit_id = v.visit_id AND f.status = 'done') AS done_recheck_count " +
                 "FROM Visits v JOIN Patients p ON v.patient_id = p.patient_id " +
                 "WHERE v.visit_date BETWEEN ? AND ? ORDER BY v.visit_date DESC, v.time_in DESC";
         try (Connection conn = connect(); PreparedStatement p = conn.prepareStatement(sql)) {
@@ -477,8 +486,10 @@ public class DatabaseManager {
         row.put("blood_pressure",  nvl(rs.getString("blood_pressure")));
         row.put("heart_rate",      nvl(rs.getString("heart_rate")));
         row.put("oxygen_sat",      nvl(rs.getString("oxygen_sat")));
-        try { row.put("course_dept",  nvl(rs.getString("course_dept")));  } catch (SQLException ignored) {}
-        try { row.put("attended_by",  nvl(rs.getString("attended_by")));  } catch (SQLException ignored) {}
+        try { row.put("course_dept",       nvl(rs.getString("course_dept")));       } catch (SQLException ignored) {}
+        try { row.put("respiratory_rate",  nvl(rs.getString("respiratory_rate")));  } catch (SQLException ignored) {}
+        try { row.put("attended_by",       nvl(rs.getString("attended_by")));       } catch (SQLException ignored) {}
+        try { row.put("done_recheck_count",nvl(rs.getString("done_recheck_count")));} catch (SQLException ignored) {}
         return row;
     }
 
@@ -892,6 +903,169 @@ public class DatabaseManager {
         }
     }
 
+    // ── FOLLOW-UPS ────────────────────────────────────────────────────────────
+    public static void ensureFollowUpsTable() {
+        // CREATE with the new column included (safe for fresh installs)
+        String create = "CREATE TABLE IF NOT EXISTS FollowUps (" +
+                "followup_id      INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                "visit_id         INTEGER NOT NULL, " +
+                "scheduled_time   TEXT NOT NULL, " +
+                "actual_time      TEXT DEFAULT '', " +
+                "nurse_notes      TEXT DEFAULT '', " +
+                "vitals_snapshot  TEXT DEFAULT '', " +
+                "recheck_remarks  TEXT DEFAULT '', " +   // ← NEW
+                "attended_by      TEXT DEFAULT '', " +
+                "status           TEXT DEFAULT 'pending'" +
+                ")";
+        try (Connection conn = connect(); Statement stmt = conn.createStatement()) {
+            stmt.execute(create);
+            // Safe migration for databases where FollowUps already exists without the column
+            try {
+                stmt.execute("ALTER TABLE FollowUps ADD COLUMN recheck_remarks TEXT DEFAULT ''");
+            } catch (SQLException e) {
+                // Column already exists — ignore
+                if (!e.getMessage().toLowerCase().contains("duplicate column")) {
+                    System.err.println("ensureFollowUpsTable migration: " + e.getMessage());
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("ensureFollowUpsTable Error: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Schedules a new re-check for an existing visit.
+     *
+     * @param visitId       the parent visit's ID
+     * @param scheduledTime "HH:mm" string — when the nurse wants to re-check
+     * @param notes         optional reason / instruction (e.g. "temp still 38.5")
+     * @return true on success
+     */
+    public static boolean scheduleFollowUp(int visitId, String scheduledTime, String notes) {
+        ensureFollowUpsTable();
+        String sql = "INSERT INTO FollowUps(visit_id, scheduled_time, nurse_notes, status) " +
+                "VALUES(?, ?, ?, 'pending')";
+        try (Connection conn = connect(); PreparedStatement p = conn.prepareStatement(sql)) {
+            p.setInt(1, visitId);
+            p.setString(2, scheduledTime);
+            p.setString(3, notes == null ? "" : notes.trim());
+            p.executeUpdate();
+            return true;
+        } catch (SQLException e) {
+            System.err.println("scheduleFollowUp Error: " + e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Returns all follow-ups for a given visit, ordered by scheduled_time ASC
+     * so the nurse sees them chronologically
+     */
+    public static List<java.util.Map<String, String>> getFollowUpsForVisit(int visitId) {
+        ensureFollowUpsTable();
+        List<java.util.Map<String, String>> list = new ArrayList<>();
+        String sql = "SELECT followup_id, visit_id, scheduled_time, actual_time, " +
+                "nurse_notes, vitals_snapshot, recheck_remarks, attended_by, status " +
+                "FROM FollowUps WHERE visit_id = ? ORDER BY scheduled_time ASC";
+        try (Connection conn = connect(); PreparedStatement p = conn.prepareStatement(sql)) {
+            p.setInt(1, visitId);
+            ResultSet rs = p.executeQuery();
+            while (rs.next()) {
+                java.util.Map<String, String> row = new java.util.LinkedHashMap<>();
+                row.put("followup_id",      nvl(rs.getString("followup_id")));
+                row.put("visit_id",         nvl(rs.getString("visit_id")));
+                row.put("scheduled_time",   nvl(rs.getString("scheduled_time")));
+                row.put("actual_time",      nvl(rs.getString("actual_time")));
+                row.put("nurse_notes",      nvl(rs.getString("nurse_notes")));
+                row.put("vitals_snapshot",  nvl(rs.getString("vitals_snapshot")));
+                row.put("recheck_remarks",  nvl(rs.getString("recheck_remarks")));  // ← NEW
+                row.put("attended_by",      nvl(rs.getString("attended_by")));
+                row.put("status",           nvl(rs.getString("status")));
+                list.add(row);
+            }
+        } catch (SQLException e) {
+            System.err.println("getFollowUpsForVisit Error: " + e.getMessage());
+        }
+        return list;
+    }
+
+    /**
+     * Returns all PENDING follow-ups for today across all visits.
+     * Used by the Logbook to show "Re-check at HH:mm" badges.
+     *
+     * Extra keys: full_name, patient_id  (joined from Visits → Patients)
+     */
+    public static List<java.util.Map<String, String>> getPendingFollowUpsToday() {
+        ensureFollowUpsTable();
+        List<java.util.Map<String, String>> list = new ArrayList<>();
+        String sql = "SELECT f.followup_id, f.visit_id, f.scheduled_time, f.nurse_notes, " +
+                "p.full_name, p.patient_id " +
+                "FROM FollowUps f " +
+                "JOIN Visits v ON f.visit_id = v.visit_id " +
+                "JOIN Patients p ON v.patient_id = p.patient_id " +
+                "WHERE f.status = 'pending' AND v.visit_date = DATE('now') " +
+                "ORDER BY f.scheduled_time ASC";
+        try (Connection conn = connect(); Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            while (rs.next()) {
+                java.util.Map<String, String> row = new java.util.LinkedHashMap<>();
+                row.put("followup_id",    nvl(rs.getString("followup_id")));
+                row.put("visit_id",       nvl(rs.getString("visit_id")));
+                row.put("scheduled_time", nvl(rs.getString("scheduled_time")));
+                row.put("nurse_notes",    nvl(rs.getString("nurse_notes")));
+                row.put("full_name",      nvl(rs.getString("full_name")));
+                row.put("patient_id",     nvl(rs.getString("patient_id")));
+                list.add(row);
+            }
+        } catch (SQLException e) {
+            System.err.println("getPendingFollowUpsToday Error: " + e.getMessage());
+        }
+        return list;
+    }
+
+    /**
+     * Marks a follow-up as done and records actual time, vitals snapshot,
+     * nurse remarks, and who attended.
+     */
+    public static boolean completeFollowUp(int followUpId, String actualTime,
+                                           String vitalsSnapshot, String remarks,
+                                           String attendedBy) {
+        ensureFollowUpsTable();
+        String sql = "UPDATE FollowUps SET status='done', actual_time=?, " +
+                "vitals_snapshot=?, recheck_remarks=?, attended_by=? " +
+                "WHERE followup_id=?";
+        try (Connection conn = connect(); PreparedStatement p = conn.prepareStatement(sql)) {
+            p.setString(1, actualTime     == null ? "" : actualTime.trim());
+            p.setString(2, vitalsSnapshot == null ? "" : vitalsSnapshot.trim());
+            p.setString(3, remarks        == null ? "" : remarks.trim());
+            p.setString(4, attendedBy     == null ? "" : attendedBy.trim());
+            p.setInt(5, followUpId);
+            p.executeUpdate();
+            return true;
+        } catch (SQLException e) {
+            System.err.println("completeFollowUp Error: " + e.getMessage());
+            return false;
+        }
+    }
+
+
+    /**
+     * Deletes a single follow-up row.
+     * Used by the nurse if they accidentally added one.
+     */
+    public static boolean deleteFollowUp(int followUpId) {
+        ensureFollowUpsTable();
+        String sql = "DELETE FROM FollowUps WHERE followup_id = ?";
+        try (Connection conn = connect(); PreparedStatement p = conn.prepareStatement(sql)) {
+            p.setInt(1, followUpId);
+            p.executeUpdate();
+            return true;
+        } catch (SQLException e) {
+            System.err.println("deleteFollowUp Error: " + e.getMessage());
+            return false;
+        }
+    }
+
     // ── PRESET LISTS ──────────────────────────────────────────────
     public static void ensurePresetsTable() {
         String sql = "CREATE TABLE IF NOT EXISTS Presets (" +
@@ -933,4 +1107,98 @@ public class DatabaseManager {
 
     public static String getSchoolYear() { return getSetting("school_year", "2025-2026"); }
     public static void saveSchoolYear(String value) { saveSetting("school_year", value.trim()); }
+
+    /**
+     * Returns the set of all existing patient_id values in the database.
+     * Used by the Excel importer to detect duplicates before inserting.
+     */
+    public static Set<String> getAllPatientIds() {
+        Set<String> ids = new java.util.HashSet<>();
+        String sql = "SELECT patient_id FROM Patients";
+        try (Connection conn = connect();
+             Statement stmt = conn.createStatement();
+             ResultSet rs   = stmt.executeQuery(sql)) {
+            while (rs.next()) ids.add(rs.getString("patient_id"));
+        } catch (SQLException e) {
+            System.err.println("getAllPatientIds Error: " + e.getMessage());
+        }
+        return ids;
+    }
+
+    /**
+     * Bulk-inserts a list of Patient objects inside a single transaction.
+     * Patients whose patient_id already exists are silently skipped (INSERT OR IGNORE).
+     *
+     * @param patients List of Patient objects parsed from the Excel file.
+     * @return         The number of rows actually inserted.
+     */
+    public static int importPatientsBulk(List<com.example.cjcschoolclinicmanagementsystem.model.Patient> patients) {
+        if (patients == null || patients.isEmpty()) return 0;
+
+        ensureColumns();
+
+        // INSERT OR IGNORE so a race-condition duplicate never causes an exception
+        String sql = "INSERT OR IGNORE INTO Patients(" +
+                "patient_id, full_name, age, course_dept, year_level, gender, college, " +
+                "contact_number, email, birthdate, type, emergency_name, relationship, " +
+                "emergency_contact, allergies, conditions, blood_type, height, weight, " +
+                "medical_remarks, address, father_name, father_contact, " +
+                "mother_name, mother_contact, position, school_year" +
+                ") VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+
+        int inserted = 0;
+
+        try (Connection conn = connect()) {
+            conn.setAutoCommit(false);  // wrap everything in one transaction for speed
+
+            try (PreparedStatement p = conn.prepareStatement(sql)) {
+                for (com.example.cjcschoolclinicmanagementsystem.model.Patient pt : patients) {
+                    p.setString(1,  pt.getId());
+                    p.setString(2,  pt.getName());
+                    p.setString(3,  pt.getAge());
+                    p.setString(4,  pt.getCourse());       // course_dept
+                    p.setString(5,  pt.getYear());         // year_level
+                    p.setString(6,  pt.getGender());
+                    p.setString(7,  pt.getCollege());      // course/program name
+                    p.setString(8,  pt.getContact());
+                    p.setString(9,  pt.getEmail());
+                    p.setString(10, pt.getBirthdate());
+                    p.setString(11, pt.getType().isEmpty() ? "Student" : pt.getType());
+                    p.setString(12, pt.getEmergencyName());
+                    p.setString(13, pt.getRelationship());
+                    p.setString(14, pt.getEmergencyContact());
+                    p.setString(15, pt.getAllergies());
+                    p.setString(16, pt.getConditions());
+                    p.setString(17, pt.getBloodType());
+                    p.setString(18, pt.getHeight());
+                    p.setString(19, pt.getWeight());
+                    p.setString(20, pt.getMedicalRemarks());
+                    p.setString(21, pt.getAddress());
+                    p.setString(22, pt.getFatherName());
+                    p.setString(23, pt.getFatherContact());
+                    p.setString(24, pt.getMotherName());
+                    p.setString(25, pt.getMotherContact());
+                    p.setString(26, pt.getPosition());
+                    p.setString(27, pt.getSchoolYear());
+                    p.addBatch();
+                }
+
+                int[] results = p.executeBatch();
+                conn.commit();
+
+                for (int r : results) {
+                    if (r > 0 || r == PreparedStatement.SUCCESS_NO_INFO) inserted++;
+                }
+
+            } catch (SQLException e) {
+                conn.rollback();
+                System.err.println("importPatientsBulk Error: " + e.getMessage());
+            }
+
+        } catch (SQLException e) {
+            System.err.println("importPatientsBulk Connection Error: " + e.getMessage());
+        }
+
+        return inserted;
+    }
 }

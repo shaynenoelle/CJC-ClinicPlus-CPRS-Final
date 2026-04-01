@@ -228,12 +228,12 @@
                 </columnResizePolicy>
                 <columns>
                     <TableColumn fx:id="colId"          text="Patient ID"   prefWidth="100"/>
-                    <TableColumn fx:id="colName"        text="Name"         prefWidth="180"/>
+                    <TableColumn fx:id="colName"        text="Name"         prefWidth="200"/>
                     <TableColumn fx:id="colTimeIn"      text="Time In"      prefWidth="72"/>
                     <TableColumn fx:id="colPurpose"     text="Purpose"      prefWidth="110"/>
                     <TableColumn fx:id="colTimeOut"     text="Time Out"     prefWidth="72"/>
-                    <TableColumn fx:id="colAttendedBy"  text="Attended By"  prefWidth="110"/>
-                    <TableColumn fx:id="colAction"      text="Action"       prefWidth="120"/>
+                    <TableColumn fx:id="colAttendedBy"  text="Attended By"  prefWidth="130"/>
+                    <TableColumn fx:id="colAction"      text="Action"       prefWidth="170"/>
                 </columns>
             </TableView>
 

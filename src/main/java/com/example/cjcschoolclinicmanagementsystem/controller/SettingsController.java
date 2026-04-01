@@ -1,18 +1,27 @@
 package com.example.cjcschoolclinicmanagementsystem.controller;
 
-import javafx.fxml.FXML;
-import javafx.scene.control.*;
-import javafx.scene.layout.GridPane;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.fxml.FXML;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.Scene;
+import javafx.scene.control.*;
+import javafx.scene.layout.*;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 import com.example.cjcschoolclinicmanagementsystem.database.DatabaseManager;
+import com.example.cjcschoolclinicmanagementsystem.model.Patient;
+import com.example.cjcschoolclinicmanagementsystem.util.ExcelImporter;
+
 import java.io.File;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Set;
 
 public class SettingsController {
 
@@ -97,13 +106,8 @@ public class SettingsController {
     // ════════════════════ ACADEMIC SETUP ════════════════════
 
     private void initAcademicTab() {
-        // School year
         txtSchoolYear.setText(DatabaseManager.getSchoolYear());
-
-        // Departments
         refreshList(lstDepartments, CAT_DEPARTMENT);
-
-        // Courses
         refreshList(lstCourses, CAT_COURSE);
     }
 
@@ -118,19 +122,11 @@ public class SettingsController {
         setStatus(lblSchoolYearStatus, "Saved: " + val, true);
     }
 
-    @FXML private void addDepartment() {
-        addPreset(txtNewDept, lstDepartments, CAT_DEPARTMENT, lblDeptStatus);
-    }
-    @FXML private void removeDepartment() {
-        removePreset(lstDepartments, CAT_DEPARTMENT, lblDeptStatus);
-    }
+    @FXML private void addDepartment() { addPreset(txtNewDept, lstDepartments, CAT_DEPARTMENT, lblDeptStatus); }
+    @FXML private void removeDepartment() { removePreset(lstDepartments, CAT_DEPARTMENT, lblDeptStatus); }
 
-    @FXML private void addCourse() {
-        addPreset(txtNewCourse, lstCourses, CAT_COURSE, lblCourseStatus);
-    }
-    @FXML private void removeCourse() {
-        removePreset(lstCourses, CAT_COURSE, lblCourseStatus);
-    }
+    @FXML private void addCourse() { addPreset(txtNewCourse, lstCourses, CAT_COURSE, lblCourseStatus); }
+    @FXML private void removeCourse() { removePreset(lstCourses, CAT_COURSE, lblCourseStatus); }
 
     // ════════════════════ CLINICAL PRESETS ════════════════════
 
@@ -140,26 +136,14 @@ public class SettingsController {
         refreshList(lstMedicines,        CAT_MEDICINE);
     }
 
-    @FXML private void addDiagnosisPreset() {
-        addPreset(txtNewDiagnosis, lstDiagnosisPresets, CAT_DIAGNOSIS, lblDiagnosisStatus);
-    }
-    @FXML private void removeDiagnosisPreset() {
-        removePreset(lstDiagnosisPresets, CAT_DIAGNOSIS, lblDiagnosisStatus);
-    }
+    @FXML private void addDiagnosisPreset() { addPreset(txtNewDiagnosis, lstDiagnosisPresets, CAT_DIAGNOSIS, lblDiagnosisStatus); }
+    @FXML private void removeDiagnosisPreset() { removePreset(lstDiagnosisPresets, CAT_DIAGNOSIS, lblDiagnosisStatus); }
 
-    @FXML private void addComplaintPreset() {
-        addPreset(txtNewComplaint, lstComplaintPresets, CAT_COMPLAINT, lblComplaintStatus);
-    }
-    @FXML private void removeComplaintPreset() {
-        removePreset(lstComplaintPresets, CAT_COMPLAINT, lblComplaintStatus);
-    }
+    @FXML private void addComplaintPreset() { addPreset(txtNewComplaint, lstComplaintPresets, CAT_COMPLAINT, lblComplaintStatus); }
+    @FXML private void removeComplaintPreset() { removePreset(lstComplaintPresets, CAT_COMPLAINT, lblComplaintStatus); }
 
-    @FXML private void addMedicine() {
-        addPreset(txtNewMedicine, lstMedicines, CAT_MEDICINE, lblMedicineStatus);
-    }
-    @FXML private void removeMedicine() {
-        removePreset(lstMedicines, CAT_MEDICINE, lblMedicineStatus);
-    }
+    @FXML private void addMedicine() { addPreset(txtNewMedicine, lstMedicines, CAT_MEDICINE, lblMedicineStatus); }
+    @FXML private void removeMedicine() { removePreset(lstMedicines, CAT_MEDICINE, lblMedicineStatus); }
 
     // ── Shared preset helpers ─────────────────────────────────────
 
@@ -204,7 +188,7 @@ public class SettingsController {
     private void initUserTab() {
         if (colUsername != null) {
             colUsername.setCellValueFactory(d ->
-                    new javafx.beans.property.SimpleStringProperty(d.getValue()));
+                    new SimpleStringProperty(d.getValue()));
         }
         refreshUserTable();
     }
@@ -248,8 +232,8 @@ public class SettingsController {
 
         GridPane grid = new GridPane();
         grid.setHgap(10); grid.setVgap(10);
-        TextField   txtU = new TextField();  txtU.setPromptText("Username");
-        PasswordField txtP = new PasswordField(); txtP.setPromptText("Password (min 6 chars)");
+        TextField     txtU = new TextField();      txtU.setPromptText("Username");
+        PasswordField txtP = new PasswordField();  txtP.setPromptText("Password (min 6 chars)");
         grid.add(new Label("Username:"), 0, 0); grid.add(txtU, 1, 0);
         grid.add(new Label("Password:"), 0, 1); grid.add(txtP, 1, 1);
         dialog.getDialogPane().setContent(grid);
@@ -358,31 +342,256 @@ public class SettingsController {
         }
     }
 
-    // ════════════════════ DATA IMPORT (PLACEHOLDER) ════════════════════
+    // ════════════════════════════════════════════════════════════════
+    //  DATA IMPORT — Excel / XLSX bulk patient import
+    // ════════════════════════════════════════════════════════════════
 
+    /** Opens a FileChooser so the nurse can pick an .xlsx file. */
     @FXML
     private void browseImportFile() {
         FileChooser chooser = new FileChooser();
-        chooser.setTitle("Select Enrollee File");
+        chooser.setTitle("Select Student / Enrollee Excel File");
         chooser.getExtensionFilters().addAll(
-                new FileChooser.ExtensionFilter("Spreadsheet Files", "*.xlsx", "*.csv"),
+                new FileChooser.ExtensionFilter("Excel Files (*.xlsx)", "*.xlsx"),
                 new FileChooser.ExtensionFilter("All Files", "*.*")
         );
-        File selected = chooser.showOpenDialog(new Stage());
+        File selected = chooser.showOpenDialog(getStage());
         if (selected != null) {
             txtImportFilePath.setText(selected.getAbsolutePath());
-            setStatus(lblImportStatus, "File selected. Ready to import.", true);
+            setStatus(lblImportStatus, "File selected. Click 'Import Enrollees' to continue.", true);
         }
     }
 
+    /**
+     * Main import handler:
+     *  1. Parse the Excel file with ExcelImporter.
+     *  2. Show a preview window with a colour-coded table.
+     *  3. On confirmation, bulk-insert new rows and report the summary.
+     */
     @FXML
     private void handleImportEnrollees() {
-        // ── PLACEHOLDER — import logic will be implemented before final submission ──
-        showAlert(Alert.AlertType.INFORMATION,
-                "Coming Soon",
-                "Enrollee import is currently in development and will be available before the final project submission.\n\n" +
-                        "When complete, this will read the registrar's Excel/CSV file and automatically add new patients to the system.");
-        setStatus(lblImportStatus, "Feature coming soon.", false);
+        String path = txtImportFilePath == null ? "" : txtImportFilePath.getText().trim();
+
+        if (path.isEmpty()) {
+            showAlert(Alert.AlertType.WARNING, "No File Selected",
+                    "Please browse for an Excel (.xlsx) file first.");
+            return;
+        }
+
+        File file = new File(path);
+        if (!file.exists() || !file.isFile()) {
+            setStatus(lblImportStatus, "File not found: " + path, false);
+            return;
+        }
+
+        setStatus(lblImportStatus, "Reading file…", true);
+
+        // ── 1. Load existing patient IDs to detect duplicates ────────
+        Set<String> existingIds = DatabaseManager.getAllPatientIds();
+
+        // ── 2. Parse ─────────────────────────────────────────────────
+        ExcelImporter.ImportResult result = ExcelImporter.parse(file, existingIds);
+
+        if (!result.errors().isEmpty() && result.rows().isEmpty()) {
+            // Hard parse failure — show the errors and stop
+            showAlert(Alert.AlertType.ERROR, "Import Failed",
+                    String.join("\n", result.errors()));
+            setStatus(lblImportStatus, "Import failed. See error dialog.", false);
+            return;
+        }
+
+        if (result.rows().isEmpty()) {
+            showAlert(Alert.AlertType.WARNING, "Nothing to Import",
+                    "The file was read but no valid data rows were found.\n" +
+                            "Make sure the first row contains column headers.");
+            setStatus(lblImportStatus, "No data rows found.", false);
+            return;
+        }
+
+        // ── 3. Show preview dialog ───────────────────────────────────
+        boolean confirmed = showImportPreview(result);
+        if (!confirmed) {
+            setStatus(lblImportStatus, "Import cancelled.", false);
+            return;
+        }
+
+        // ── 4. Bulk insert (skip duplicates) ─────────────────────────
+        List<Patient> toImport = result.rows().stream()
+                .filter(r -> !r.isDuplicate())
+                .map(ExcelImporter.PatientRow::patient)
+                .toList();
+
+        int skipped  = (int) result.rows().stream().filter(ExcelImporter.PatientRow::isDuplicate).count();
+        int imported = DatabaseManager.importPatientsBulk(toImport);
+        int errors   = toImport.size() - imported;
+
+        // ── 5. Summary ───────────────────────────────────────────────
+        String summary = String.format(
+                "✅ Import complete!\n\n" +
+                        "  • Imported:  %d patients\n" +
+                        "  • Skipped (already exist): %d\n" +
+                        "  • Errors during insert: %d\n" +
+                        "\nTotal rows in file: %d",
+                imported, skipped, errors, result.rows().size()
+        );
+
+        if (!result.errors().isEmpty()) {
+            summary += "\n\nParse warnings:\n" + String.join("\n", result.errors());
+        }
+
+        showAlert(Alert.AlertType.INFORMATION, "Import Summary", summary);
+        setStatus(lblImportStatus,
+                imported + " imported, " + skipped + " skipped, " + errors + " errors.", imported > 0);
+    }
+
+    /**
+     * Opens a modal preview window showing all parsed rows colour-coded:
+     *   Green  = new patient (will be imported)
+     *   Yellow = duplicate  (will be skipped)
+     *
+     * @return true if the nurse clicked "Import", false if they clicked "Cancel".
+     */
+    private boolean showImportPreview(ExcelImporter.ImportResult result) {
+        // ── Table columns ────────────────────────────────────────────
+        TableView<ExcelImporter.PatientRow> table = new TableView<>();
+        table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+
+        TableColumn<ExcelImporter.PatientRow, String> colStatus = col("Status",  120,
+                r -> r.isDuplicate() ? "⚠ Duplicate" : "✔ New");
+        TableColumn<ExcelImporter.PatientRow, String> colRow    = col("Row #",   55,
+                r -> String.valueOf(r.rowNum()));
+        TableColumn<ExcelImporter.PatientRow, String> colId     = col("ID",      110,
+                r -> r.patient().getId());
+        TableColumn<ExcelImporter.PatientRow, String> colName   = col("Full Name", 200,
+                r -> r.patient().getName());
+        TableColumn<ExcelImporter.PatientRow, String> colCourse = col("Course",  90,
+                r -> r.patient().getCollege());
+        TableColumn<ExcelImporter.PatientRow, String> colDept   = col("Dept",    70,
+                r -> r.patient().getCourse());
+        TableColumn<ExcelImporter.PatientRow, String> colYear   = col("Year",    80,
+                r -> r.patient().getYear());
+        TableColumn<ExcelImporter.PatientRow, String> colType   = col("Type",    80,
+                r -> r.patient().getType());
+        TableColumn<ExcelImporter.PatientRow, String> colGender = col("Gender",  70,
+                r -> r.patient().getGender());
+
+        //noinspection unchecked
+        table.getColumns().addAll(colStatus, colRow, colId, colName, colCourse,
+                colDept, colYear, colType, colGender);
+
+        // Colour rows by status
+        table.setRowFactory(tv -> new TableRow<>() {
+            @Override
+            protected void updateItem(ExcelImporter.PatientRow item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setStyle("");
+                } else if (item.isDuplicate()) {
+                    setStyle("-fx-background-color: #fff9c4;");  // yellow — will be skipped
+                } else {
+                    setStyle("-fx-background-color: #e8f5e9;");  // green  — will be imported
+                }
+            }
+        });
+
+        table.setItems(FXCollections.observableArrayList(result.rows()));
+
+        // ── Legend + counts ──────────────────────────────────────────
+        long newCount  = result.rows().stream().filter(r -> !r.isDuplicate()).count();
+        long skipCount = result.rows().stream().filter(ExcelImporter.PatientRow::isDuplicate).count();
+
+        Label lblLegend = new Label(
+                "  ✔ New (will import): " + newCount + "    " +
+                        "⚠ Duplicate (will skip): " + skipCount + "    " +
+                        "Total rows: " + result.rows().size()
+        );
+        lblLegend.setStyle("-fx-font-size: 12; -fx-font-weight: bold; -fx-padding: 6 0 4 0;");
+
+        // ── Parse-warning area (if any) ──────────────────────────────
+        VBox content;
+        if (!result.errors().isEmpty()) {
+            TextArea txtWarnings = new TextArea(String.join("\n", result.errors()));
+            txtWarnings.setEditable(false);
+            txtWarnings.setPrefHeight(70);
+            txtWarnings.setStyle("-fx-font-size: 11; -fx-text-fill: #b71c1c;");
+            TitledPane warningPane = new TitledPane("Parse Warnings (" + result.errors().size() + ")", txtWarnings);
+            warningPane.setExpanded(false);
+            content = new VBox(6, lblLegend, table, warningPane);
+        } else {
+            content = new VBox(6, lblLegend, table);
+        }
+        content.setPadding(new Insets(10));
+        VBox.setVgrow(table, Priority.ALWAYS);
+
+        // ── Buttons ──────────────────────────────────────────────────
+        Button btnImport = new Button("Import " + newCount + " Patient" + (newCount != 1 ? "s" : ""));
+        btnImport.setStyle("-fx-background-color: #2e7d32; -fx-text-fill: white; " +
+                "-fx-font-weight: bold; -fx-cursor: hand; -fx-padding: 6 18;");
+        Button btnCancel = new Button("Cancel");
+        btnCancel.setStyle("-fx-cursor: hand; -fx-padding: 6 18;");
+
+        if (newCount == 0) btnImport.setDisable(true);
+
+        HBox buttons = new HBox(10, btnCancel, btnImport);
+        buttons.setAlignment(Pos.CENTER_RIGHT);
+        buttons.setPadding(new Insets(8, 0, 0, 0));
+
+        VBox root = new VBox(content, buttons);
+        root.setPadding(new Insets(0, 10, 10, 10));
+        VBox.setVgrow(content, Priority.ALWAYS);
+
+        // ── Stage ────────────────────────────────────────────────────
+        Stage stage = new Stage();
+        stage.setTitle("Import Preview — " + result.rows().size() + " rows found");
+        stage.setScene(new Scene(root, 900, 550));
+        stage.initModality(Modality.APPLICATION_MODAL);
+        stage.setMinWidth(600);
+        stage.setMinHeight(400);
+
+        // Use a flag array to capture the user's choice (lambdas need effectively-final)
+        boolean[] confirmed = {false};
+        btnImport.setOnAction(e -> { confirmed[0] = true;  stage.close(); });
+        btnCancel.setOnAction(e -> { confirmed[0] = false; stage.close(); });
+        stage.setOnCloseRequest(e -> confirmed[0] = false);
+
+        stage.showAndWait();
+        return confirmed[0];
+    }
+
+    /** Helper to build a TableColumn from a PatientRow extractor function. */
+    private TableColumn<ExcelImporter.PatientRow, String> col(
+            String title, double prefWidth,
+            java.util.function.Function<ExcelImporter.PatientRow, String> extractor) {
+        TableColumn<ExcelImporter.PatientRow, String> c = new TableColumn<>(title);
+        c.setPrefWidth(prefWidth);
+        c.setCellValueFactory(data -> new SimpleStringProperty(extractor.apply(data.getValue())));
+        return c;
+    }
+
+    /**
+     * Generates and saves a blank import template (.xlsx) with the correct column headers
+     * and one example row so the nurse/registrar knows how to format the data.
+     */
+    @FXML
+    private void downloadImportTemplate() {
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle("Save Import Template");
+        chooser.setInitialFileName("patient_import_template.xlsx");
+        chooser.getExtensionFilters().add(
+                new FileChooser.ExtensionFilter("Excel Files (*.xlsx)", "*.xlsx"));
+        File dest = chooser.showSaveDialog(getStage());
+
+        if (dest == null) return;
+
+        boolean ok = ExcelImporter.writeTemplate(dest);
+        if (ok) {
+            showAlert(Alert.AlertType.INFORMATION, "Template Saved",
+                    "Template saved to:\n" + dest.getAbsolutePath() +
+                            "\n\nFill in the columns (row 2 onwards) and then import the file.");
+        } else {
+            showAlert(Alert.AlertType.ERROR, "Save Failed",
+                    "Could not write the template file.");
+        }
     }
 
     // ════════════════════ DATA BACKUP ════════════════════
@@ -398,7 +607,6 @@ public class SettingsController {
         if (comboAMPM != null)
             comboAMPM.setItems(FXCollections.observableArrayList("AM", "PM"));
 
-        // Load saved settings
         if (chkAutoBackup != null)
             chkAutoBackup.setSelected(Boolean.parseBoolean(DatabaseManager.getSetting("auto_backup_enabled", "false")));
         if (comboBackupFrequency != null)
@@ -434,14 +642,14 @@ public class SettingsController {
     @FXML private void browseBackupFolder() {
         DirectoryChooser chooser = new DirectoryChooser();
         chooser.setTitle("Select Backup Destination");
-        File selected = chooser.showDialog(new Stage());
+        File selected = chooser.showDialog(getStage());
         if (selected != null) txtBackupPath.setText(selected.getAbsolutePath());
     }
 
     @FXML private void browseAutoBackupFolder() {
         DirectoryChooser chooser = new DirectoryChooser();
         chooser.setTitle("Select Auto Backup Folder");
-        File selected = chooser.showDialog(new Stage());
+        File selected = chooser.showDialog(getStage());
         if (selected != null) txtAutoBackupPath.setText(selected.getAbsolutePath());
     }
 
@@ -524,13 +732,22 @@ public class SettingsController {
     }
 
     @FXML private void saveSettings() {
-        if (themeComboBox    != null) DatabaseManager.saveSetting("theme",                  themeComboBox.getValue());
-        if (fontSizeSlider   != null) DatabaseManager.saveSetting("font_size",              String.format("%.0f", fontSizeSlider.getValue()));
-        if (notificationsCheckBox != null) DatabaseManager.saveSetting("notifications_enabled", String.valueOf(notificationsCheckBox.isSelected()));
+        if (themeComboBox         != null) DatabaseManager.saveSetting("theme",                  themeComboBox.getValue());
+        if (fontSizeSlider        != null) DatabaseManager.saveSetting("font_size",              String.format("%.0f", fontSizeSlider.getValue()));
+        if (notificationsCheckBox != null) DatabaseManager.saveSetting("notifications_enabled",  String.valueOf(notificationsCheckBox.isSelected()));
         showAlert(Alert.AlertType.INFORMATION, "Saved", "Display settings saved successfully!");
     }
 
     // ════════════════════ UTILITIES ════════════════════
+
+    /** Returns the current Stage (works whether called from a button or not). */
+    private Stage getStage() {
+        if (txtImportFilePath != null && txtImportFilePath.getScene() != null)
+            return (Stage) txtImportFilePath.getScene().getWindow();
+        if (txtBackupPath != null && txtBackupPath.getScene() != null)
+            return (Stage) txtBackupPath.getScene().getWindow();
+        return new Stage(); // fallback
+    }
 
     private void setStatus(Label lbl, String msg, boolean success) {
         if (lbl == null) return;

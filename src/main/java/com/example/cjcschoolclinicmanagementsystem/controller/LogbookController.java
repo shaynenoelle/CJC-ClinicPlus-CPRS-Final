@@ -48,7 +48,7 @@ public class LogbookController {
     @FXML private TableColumn<Map<String, String>, String> colTimeIn;
     @FXML private TableColumn<Map<String, String>, String> colPurpose;
     @FXML private TableColumn<Map<String, String>, String> colTimeOut;
-    @FXML private TableColumn<Map<String, String>, String> colAttendedBy;   // ← NEW
+    @FXML private TableColumn<Map<String, String>, String> colAttendedBy;
     @FXML private TableColumn<Map<String, String>, String> colAction;
     @FXML private Label lblVisitorCount;
     @FXML private Label lblLogbookTitle;
@@ -68,10 +68,18 @@ public class LogbookController {
     @FXML private Button btnNext;
     @FXML private Label  lblPage;
 
-    private static final int    PAGE_SIZE   = 25;
+    private static final int PAGE_SIZE = 25;
 
     private int currentPage = 0;
     private List<Map<String, String>> allLogbookData = new ArrayList<>();
+
+    /**
+     * Cache of today's pending follow-ups, keyed by visit_id.
+     * Refreshed every time refreshLogbook() is called.
+     * Structure: List<Map> where each map has: followup_id, visit_id,
+     *            scheduled_time, nurse_notes, full_name, patient_id
+     */
+    private List<Map<String, String>> pendingFollowUps = new ArrayList<>();
 
     private Patient selectedPatient = null;
     private String  currentFilter   = "daily";
@@ -118,15 +126,20 @@ public class LogbookController {
                 new SimpleStringProperty(d.getValue().getOrDefault("purpose", "")));
         colTimeOut.setCellValueFactory(d ->
                 new SimpleStringProperty(d.getValue().getOrDefault("time_out", "—")));
-
-        // ── Attended By column ────────────────────────────────────
         colAttendedBy.setCellValueFactory(d -> {
             String val = d.getValue().getOrDefault("attended_by", "");
             return new SimpleStringProperty(val == null || val.isBlank() ? "—" : val);
         });
 
-        // Single Attend / ✔ Done button — always opens the attend form
-        // Red = not yet attended, Green = record saved (still editable)
+        // ── Context-aware Action button (4 states) ────────────────
+        // Priority order (checked top-to-bottom):
+        //   1. OVERDUE   — attended + a pending re-check is past its scheduled time
+        //   2. RE-CHECK  — attended + a pending re-check is coming up today
+        //   3. Attend    — not yet attended (no chief_complaint and is_done != 1)
+        //   4. Done ✓    — attended, all re-checks done (or none scheduled)
+        //
+        // Clicking any state opens the Attend form so the nurse can act.
+        // Re-check count badge appended to Done label (e.g. "✔ Done (2✓)").
         colAction.setCellFactory(col -> new TableCell<>() {
             final Button btn = new Button();
             {
@@ -138,31 +151,102 @@ public class LogbookController {
             @Override protected void updateItem(String item, boolean empty) {
                 super.updateItem(item, empty);
                 if (empty) { setGraphic(null); return; }
-                Map<String, String> row = getTableView().getItems().get(getIndex());
-                boolean done = isDone(row);
-                if (done) {
-                    btn.setText("✔ Done");
-                    btn.setStyle(
-                            "-fx-background-color: #27ae60; -fx-text-fill: white;" +
-                                    "-fx-background-radius: 4; -fx-cursor: hand; -fx-font-size: 11;" +
-                                    "-fx-font-weight: bold;");
-                    btn.setTooltip(new Tooltip("Attended — click to view or edit record"));
-                } else {
+
+                Map<String, String> row    = getTableView().getItems().get(getIndex());
+                String visitIdStr          = row.getOrDefault("visit_id", "0");
+                int    rowVisitId;
+                try   { rowVisitId = Integer.parseInt(visitIdStr); }
+                catch (NumberFormatException ex) { rowVisitId = 0; }
+
+                final int fid = rowVisitId;
+
+                // All pending follow-ups for this visit (already cached in pendingFollowUps)
+                List<Map<String, String>> pending = pendingFollowUps.stream()
+                        .filter(fu -> fid != 0 &&
+                                fu.getOrDefault("visit_id", "0").equals(String.valueOf(fid)))
+                        .collect(java.util.stream.Collectors.toList());
+
+                // Earliest pending re-check for this visit
+                Map<String, String> earliest = pending.stream()
+                        .min((a, b) -> a.getOrDefault("scheduled_time", "")
+                                .compareTo(b.getOrDefault("scheduled_time", "")))
+                        .orElse(null);
+
+                if (earliest != null) {
+                    // ── States 1 & 2: pending re-check exists ────
+                    String sched        = earliest.getOrDefault("scheduled_time", "");
+                    int    minsUntil    = minutesUntil(sched);
+                    long   pendingCount = pending.size();
+
+                    String countLabel = pendingCount > 1
+                            ? " (" + pendingCount + ")" : "";
+
+                    if (minsUntil <= 0) {
+                        // OVERDUE — at or past scheduled time
+                        // Show exactly when it was due so the nurse knows at a glance
+                        btn.setText("🔴 OVERDUE " + sched + countLabel);
+                        btn.setStyle(
+                                "-fx-background-color: #c0392b; -fx-text-fill: white;" +
+                                        "-fx-background-radius: 4; -fx-cursor: hand; -fx-font-size: 11;" +
+                                        "-fx-font-weight: bold;");
+                        btn.setTooltip(new Tooltip(
+                                "Re-check was due at " + sched + " — click to attend now"));
+                    } else {
+                        // DUE / UPCOMING
+                        String timeLabel = minsUntil <= 10
+                                ? "Due in " + minsUntil + " min"
+                                : "Re-check " + sched;
+                        btn.setText("🔄 " + timeLabel + countLabel);
+                        btn.setStyle(
+                                "-fx-background-color: #e67e22; -fx-text-fill: white;" +
+                                        "-fx-background-radius: 4; -fx-cursor: hand; -fx-font-size: 11;" +
+                                        "-fx-font-weight: bold;");
+                        btn.setTooltip(new Tooltip(
+                                "Re-check scheduled at " + sched + " — click to open"));
+                    }
+
+                } else if (!isDone(row)) {
+                    // ── State 3: not yet attended ─────────────────
                     btn.setText("Attend");
                     btn.setStyle(
                             "-fx-background-color: #8B0000; -fx-text-fill: white;" +
                                     "-fx-background-radius: 4; -fx-cursor: hand; -fx-font-size: 11;");
                     btn.setTooltip(new Tooltip("Click to record this patient's visit"));
+
+                } else {
+                    // ── State 4: attended, all re-checks done ─────
+                    // Count completed re-checks from the visit row if available,
+                    // or leave blank when none were ever scheduled.
+                    String doneExtra = row.containsKey("done_recheck_count") &&
+                            !row.getOrDefault("done_recheck_count","0").equals("0")
+                            ? " (" + row.get("done_recheck_count") + "✓)" : "";
+                    btn.setText("✔ Done" + doneExtra);
+                    btn.setStyle(
+                            "-fx-background-color: #27ae60; -fx-text-fill: white;" +
+                                    "-fx-background-radius: 4; -fx-cursor: hand; -fx-font-size: 11;" +
+                                    "-fx-font-weight: bold;");
+                    btn.setTooltip(new Tooltip("Attended — click to view or edit record"));
                 }
+
                 setGraphic(btn);
             }
         });
     }
 
     /**
-     * A visit is "done" when the nurse has saved a full attend record
-     * (diagnosis/complaint filled) OR manually flagged it via is_done.
+     * Returns how many minutes from now until the given "HH:mm" time today.
+     * Negative means the time has already passed.
      */
+    private int minutesUntil(String hhMm) {
+        try {
+            LocalTime target = LocalTime.parse(hhMm, DateTimeFormatter.ofPattern("HH:mm"));
+            LocalTime now    = LocalTime.now();
+            return (int) java.time.Duration.between(now, target).toMinutes();
+        } catch (Exception ex) {
+            return Integer.MAX_VALUE;
+        }
+    }
+
     private boolean isDone(Map<String, String> row) {
         String complaint = row.getOrDefault("chief_complaint", "");
         String isDone    = row.getOrDefault("is_done", "0");
@@ -247,16 +331,16 @@ public class LogbookController {
             stage.setTitle("Attend — " + visitRow.get("full_name"));
             javafx.geometry.Rectangle2D screen =
                     javafx.stage.Screen.getPrimary().getVisualBounds();
-            double w = Math.min(780, screen.getWidth()  * 0.72);
-            double h = Math.min(660, screen.getHeight() * 0.85);
+            double w = Math.min(820, screen.getWidth()  * 0.75);
+            double h = Math.min(700, screen.getHeight() * 0.88);
             stage.setScene(new Scene(root, w, h));
-            stage.setMinWidth(600);
-            stage.setMinHeight(500);
+            stage.setMinWidth(640);
+            stage.setMinHeight(540);
             stage.setResizable(true);
             stage.initModality(Modality.APPLICATION_MODAL);
             stage.showAndWait();
 
-            // After closing the form, refresh so the button colour updates immediately
+            // After closing the form, refresh so the badge + button update immediately
             refreshLogbook();
         } catch (Exception e) {
             System.err.println("Attend form error: " + e.getMessage());
@@ -300,7 +384,7 @@ public class LogbookController {
         LocalDate to   = dpTo.getValue();
         if (from == null || to == null) return;
         allLogbookData = DatabaseManager.getVisitsByDateRange(from.toString(), to.toString());
-        lblLogbookTitle.setText("Visitors: " + from + " \u2192 " + to);
+        lblLogbookTitle.setText("Visitors: " + from + " → " + to);
         updateFilterButtons(null);
         currentPage = 0;
         updatePagination();
@@ -321,7 +405,12 @@ public class LogbookController {
     // ── Refresh + Pagination ──────────────────────────────────────
     @FXML
     public void refreshLogbook() {
-        allLogbookData = DatabaseManager.getAllVisits(currentFilter);
+        allLogbookData  = DatabaseManager.getAllVisits(currentFilter);
+
+        // Refresh the pending follow-ups cache so badges are up-to-date
+        // (only today's visits are in scope — no performance concern)
+        pendingFollowUps = DatabaseManager.getPendingFollowUpsToday();
+
         currentPage = 0;
         updatePagination();
     }
@@ -337,7 +426,7 @@ public class LogbookController {
         ObservableList<Map<String, String>> page =
                 FXCollections.observableArrayList(allLogbookData.subList(from, to));
         tblLogbook.setItems(page);
-        tblLogbook.refresh();
+        tblLogbook.refresh();   // force cell re-render so badge colours update
 
         if (lblPage != null)
             lblPage.setText("Page " + (currentPage + 1) + " of " + totalPages);

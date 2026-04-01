@@ -162,6 +162,19 @@
                         <Label text="Today: waiting for care"
                                style="-fx-font-size: 9; -fx-text-fill: #bf360c;"/>
                     </VBox>
+                    <!-- Pending Re-checks — always fixed to today -->
+                    <VBox alignment="CENTER" spacing="4" HBox.hgrow="ALWAYS"
+                          style="-fx-background-color: #fff0f0; -fx-background-radius: 10;
+                                 -fx-border-color: #ffcdd2; -fx-border-radius: 10;
+                                 -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.06),8,0,0,2);">
+                        <padding><Insets top="14" bottom="14" left="12" right="12"/></padding>
+                        <Label text="🔄  PENDING RE-CHECKS"
+                               style="-fx-font-size: 10; -fx-text-fill: #c0392b; -fx-font-weight: bold;"/>
+                        <Label fx:id="lblPendingRechecks" text="0"
+                               style="-fx-font-size: 28; -fx-font-weight: bold; -fx-text-fill: #c0392b;"/>
+                        <Label text="Today: follow-ups due"
+                               style="-fx-font-size: 9; -fx-text-fill: #c0392b;"/>
+                    </VBox>
                 </HBox>
 
                 <!-- ═══ LIVE QUEUE PANEL — always shows today's waiting patients ═══ -->
@@ -184,6 +197,24 @@
                     <VBox fx:id="vboxQueueRows" spacing="6"/>
                     <Label fx:id="lblQueueEmpty" text="No patients currently waiting."
                            style="-fx-font-size: 11; -fx-text-fill: #bbb; -fx-font-style: italic; -fx-padding: 4 0 0 0;"/>
+                    <!-- ═══ PENDING RE-CHECKS PANEL ═══ -->
+                    <VBox spacing="0"
+                          style="-fx-background-color: white; -fx-background-radius: 10;
+                         -fx-border-color: #e0e0e0; -fx-border-radius: 10;
+                         -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.06),8,0,0,2);">
+                        <padding><Insets top="12" bottom="12" left="14" right="14"/></padding>
+                        <HBox alignment="CENTER_LEFT" spacing="10">
+                            <Label fx:id="lblRecheckHeader" text="🔄  Pending Re-checks"
+                                   style="-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #333;"
+                                   HBox.hgrow="ALWAYS"/>
+                            <Label text="Patients due for follow-up today"
+                                   style="-fx-font-size: 10; -fx-text-fill: #999;"/>
+                        </HBox>
+                        <Separator><VBox.margin><Insets top="8" bottom="8"/></VBox.margin></Separator>
+                        <VBox fx:id="vboxRecheckRows" spacing="6"/>
+                        <Label fx:id="lblRecheckEmpty" text="No re-checks pending."
+                               style="-fx-font-size: 11; -fx-text-fill: #bbb; -fx-font-style: italic; -fx-padding: 4 0 0 0;"/>
+                    </VBox>
                 </VBox>
 
                 <!-- ═══ ROW 2: Illness Charts ═══ -->

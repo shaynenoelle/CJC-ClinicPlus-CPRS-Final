@@ -66,20 +66,20 @@ public class PatientRegistryController {
     private void bindColumnWidths() {
         javafx.beans.binding.DoubleBinding w = patientTable.widthProperty()
                 .subtract(20); // subtract scrollbar width
-        colID         .prefWidthProperty().bind(w.multiply(0.085));
-        colLastName   .prefWidthProperty().bind(w.multiply(0.085));
-        colFirstName  .prefWidthProperty().bind(w.multiply(0.080));
-        colMI         .prefWidthProperty().bind(w.multiply(0.033));
+        colID         .prefWidthProperty().bind(w.multiply(0.080));
+        colLastName   .prefWidthProperty().bind(w.multiply(0.080));
+        colFirstName  .prefWidthProperty().bind(w.multiply(0.070));
+        colMI         .prefWidthProperty().bind(w.multiply(0.030));
         colGender     .prefWidthProperty().bind(w.multiply(0.050));
-        colBirthdate  .prefWidthProperty().bind(w.multiply(0.068));
-        colYear       .prefWidthProperty().bind(w.multiply(0.052));
-        colCourse     .prefWidthProperty().bind(w.multiply(0.075));
-        colDept       .prefWidthProperty().bind(w.multiply(0.068));
-        colType       .prefWidthProperty().bind(w.multiply(0.055));
-        colContact    .prefWidthProperty().bind(w.multiply(0.082));
-        colMedHistory .prefWidthProperty().bind(w.multiply(0.125));
-        colStatus     .prefWidthProperty().bind(w.multiply(0.055));
-        colAction     .prefWidthProperty().bind(w.multiply(0.187));
+        colBirthdate  .prefWidthProperty().bind(w.multiply(0.060));
+        colYear       .prefWidthProperty().bind(w.multiply(0.050));
+        colCourse     .prefWidthProperty().bind(w.multiply(0.070));
+        colDept       .prefWidthProperty().bind(w.multiply(0.060));
+        colType       .prefWidthProperty().bind(w.multiply(0.050));
+        colContact    .prefWidthProperty().bind(w.multiply(0.070));
+        colMedHistory .prefWidthProperty().bind(w.multiply(0.110));
+        colStatus     .prefWidthProperty().bind(w.multiply(0.050));
+        colAction     .prefWidthProperty().bind(w.multiply(0.170));
     }
 
     // ── Column setup ──────────────────────────────────────────────
@@ -714,4 +714,3 @@ public class PatientRegistryController {
         a.showAndWait();
     }
 }
-
