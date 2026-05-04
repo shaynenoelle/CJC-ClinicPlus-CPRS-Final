@@ -106,6 +106,7 @@
                        promptText="Enter your username"
                        maxWidth="Infinity"
                        prefHeight="44"
+                       onKeyPressed="#onKeyPressed"
                        style="-fx-background-radius: 6; -fx-border-color: #e0e0e0;
                               -fx-border-radius: 6; -fx-padding: 10 12 10 12; -fx-font-size: 13;"/>
 
@@ -116,12 +117,14 @@
                 <PasswordField fx:id="txtPassword"
                                promptText="Enter your password"
                                prefHeight="44" maxWidth="Infinity"
+                               onKeyPressed="#onKeyPressed"
                                style="-fx-background-radius: 6; -fx-border-color: #e0e0e0;
                                       -fx-border-radius: 6; -fx-padding: 10 46 10 12; -fx-font-size: 13;"/>
                 <TextField fx:id="txtPasswordVisible"
                            promptText="Enter your password"
                            prefHeight="44" maxWidth="Infinity"
                            visible="false" managed="false"
+                           onKeyPressed="#onKeyPressed"
                            style="-fx-background-radius: 6; -fx-border-color: #e0e0e0;
                                   -fx-border-radius: 6; -fx-padding: 10 46 10 12; -fx-font-size: 13;"/>
                 <!-- Eye icon -->
@@ -159,7 +162,8 @@
                    style="-fx-font-size: 12;"/>
         </VBox>
 
-        <Label text="© 2026 Cor Jesu College Clinic"
+        <Label text="© 2026 CJC-Clinic+. All rights reserved."
+               alignment="CENTER" textAlignment="CENTER"
                textFill="#999999">
             <font><Font size="11"/></font>
         </Label>
