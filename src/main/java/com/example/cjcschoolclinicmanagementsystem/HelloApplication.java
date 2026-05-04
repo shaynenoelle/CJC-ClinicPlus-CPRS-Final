@@ -3,6 +3,7 @@ package com.example.cjcschoolclinicmanagementsystem;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
+import javafx.scene.image.Image;
 import javafx.stage.Stage;
 import java.io.IOException;
 
@@ -22,6 +23,17 @@ public class HelloApplication extends Application {
         stage.setMinHeight(600);
         stage.setTitle("CJC School Clinic - Login");
         stage.setScene(scene);
+
+        // Set the app icon
+        try {
+            var iconStream = HelloApplication.class.getResourceAsStream("Images/cliniclogov2.jpeg");
+            if (iconStream != null) {
+                Image icon = new Image(iconStream);
+                stage.getIcons().add(icon);
+            }
+        } catch (Exception e) {
+            System.err.println("Warning: Could not load app icon: " + e.getMessage());
+        }
 
         // Maximize to fill screen on start
         stage.setMaximized(true);
