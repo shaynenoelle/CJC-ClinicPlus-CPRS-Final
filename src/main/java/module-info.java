@@ -8,7 +8,8 @@ module com.example.cjcschoolclinicmanagementsystem {
     // ── Apache POI (Excel import) ─────────────────────────────────
     requires org.apache.poi.poi;
     requires org.apache.poi.ooxml;
-    requires org.apache.commons.compress;   // POI-OOXML depends on this
+    requires org.apache.commons.compress;
+    requires java.prefs;   // POI-OOXML depends on this
 
     opens com.example.cjcschoolclinicmanagementsystem to javafx.fxml;
     opens com.example.cjcschoolclinicmanagementsystem.controller to javafx.fxml;

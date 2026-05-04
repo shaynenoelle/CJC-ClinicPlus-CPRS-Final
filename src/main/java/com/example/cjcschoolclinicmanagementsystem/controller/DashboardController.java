@@ -1,6 +1,7 @@
 package com.example.cjcschoolclinicmanagementsystem.controller;
 
 import com.example.cjcschoolclinicmanagementsystem.database.DatabaseManager;
+import com.example.cjcschoolclinicmanagementsystem.util.PreferencesManager;
 import javafx.beans.binding.Bindings;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
@@ -581,6 +582,9 @@ public class DashboardController {
     }
 
     @FXML private void handleLogout() {
+        // Clear saved credentials on logout
+        PreferencesManager.clearCredentials();
+
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(
                     "/com/example/cjcschoolclinicmanagementsystem/View/login-view.fxml"));
