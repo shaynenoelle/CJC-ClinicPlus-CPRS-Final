@@ -148,6 +148,15 @@ public class LoginController {
         // Use Platform.runLater to guarantee maximize happens after scene is attached
         javafx.application.Platform.runLater(() -> {
             stage.setMaximized(true);
+
+            // Create fast, smooth fade-in animation for the dashboard
+            root.setOpacity(0.0);
+            FadeTransition fadeIn = new FadeTransition(Duration.millis(250), root);
+            fadeIn.setFromValue(0.0);
+            fadeIn.setToValue(1.0);
+            fadeIn.setCycleCount(1);
+            fadeIn.setAutoReverse(false);
+            fadeIn.play();
         });
 
         stage.show();
