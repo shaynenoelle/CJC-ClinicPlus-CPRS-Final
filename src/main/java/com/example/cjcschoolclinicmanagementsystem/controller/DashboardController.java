@@ -614,6 +614,16 @@ public class DashboardController {
     }
 
     @FXML private void handleLogout() {
+        // Confirm before signing out
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        confirm.setTitle("Sign Out");
+        confirm.setHeaderText("Are you sure you want to sign out?");
+        confirm.setContentText("Any unsaved changes will be lost.");
+        confirm.getButtonTypes().setAll(ButtonType.YES, ButtonType.NO);
+
+        java.util.Optional<ButtonType> result = confirm.showAndWait();
+        if (result.isEmpty() || result.get() != ButtonType.YES) return;
+
         // Clear saved credentials on logout
         PreferencesManager.clearCredentials();
 

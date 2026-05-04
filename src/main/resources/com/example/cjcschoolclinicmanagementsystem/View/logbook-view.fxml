@@ -12,8 +12,7 @@
       fx:controller="com.example.cjcschoolclinicmanagementsystem.controller.LogbookController">
 
     <!-- HEADER -->
-    <HBox style="-fx-background-color: white;
-                 -fx-border-color: #e0e0e0;
+    <HBox style="-fx-border-color: #e0e0e0;
                  -fx-border-width: 0 0 1 0;"
           alignment="CENTER_LEFT">
         <padding><Insets top="16" bottom="16" left="24" right="24"/></padding>
