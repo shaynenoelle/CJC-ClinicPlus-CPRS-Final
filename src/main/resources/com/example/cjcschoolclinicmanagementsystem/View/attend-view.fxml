@@ -165,7 +165,7 @@
                            style="-fx-text-fill: #e74c3c; -fx-font-size: 11;"/>
 
                     <!-- Respiratory Rate -->
-                    <Label text="Respiratory Rate (/min)" GridPane.rowIndex="4" GridPane.columnIndex="0"
+                    <Label text="Respiratory Rate (CPM)" GridPane.rowIndex="4" GridPane.columnIndex="0"
                            style="-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #444;"/>
                     <TextField fx:id="txtRespiratoryRate"
                                promptText="e.g. 16"
