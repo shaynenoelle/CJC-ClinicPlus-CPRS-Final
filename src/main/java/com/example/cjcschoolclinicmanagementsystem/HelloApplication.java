@@ -21,12 +21,12 @@ public class HelloApplication extends Application {
 
         stage.setMinWidth(900);
         stage.setMinHeight(600);
-        stage.setTitle("CJC School Clinic - Login");
+        stage.setTitle("CJC-Clinic+");
         stage.setScene(scene);
 
         // Set the app icon
         try {
-            var iconStream = HelloApplication.class.getResourceAsStream("Images/cliniclogov2.jpeg");
+            var iconStream = HelloApplication.class.getResourceAsStream("Images/cliniclogov3.png");
             if (iconStream != null) {
                 Image icon = new Image(iconStream);
                 stage.getIcons().add(icon);

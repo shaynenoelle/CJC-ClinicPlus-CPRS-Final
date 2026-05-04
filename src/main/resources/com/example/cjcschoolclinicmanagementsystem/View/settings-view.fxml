@@ -203,7 +203,7 @@
                         <Label text="System Users"
                                style="-fx-font-size: 15; -fx-font-weight: bold; -fx-text-fill: #8B0000;"/>
                         <Separator/>
-                        <Label text="Accounts that can log in to GoldenCare CPRS."
+                        <Label text="Accounts that can log in to CJC-Clinic+(CPRS)."
                                style="-fx-text-fill: #555;"/>
                         <HBox spacing="10">
                             <Button text="➕ Add User" onAction="#handleAddUser"
@@ -420,7 +420,7 @@
                           style="-fx-background-color: white; -fx-border-color: #E0E0E0;
                                  -fx-border-radius: 8; -fx-background-radius: 8;
                                  -fx-padding: 24 20; -fx-border-width: 1;" maxWidth="660">
-                        <Label text="GoldenCare CPRS"
+                        <Label text="CJC-Clinic+ (CPRS)"
                                style="-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: #8B0000;"/>
                         <Label text="Clinic Patient Records System"
                                style="-fx-font-size: 13; -fx-text-fill: #555;"/>
