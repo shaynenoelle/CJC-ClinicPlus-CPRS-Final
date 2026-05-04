@@ -7,7 +7,7 @@
 <VBox spacing="10.0" style="-fx-background-color: #f5f5f5;"
       xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="com.example.cjcschoolclinicmanagementsystem.controller.PatientRegistryController">
-    <padding><Insets bottom="16.0" left="18.0" right="18.0" top="14.0" /></padding>
+    <padding><Insets bottom="12.0" left="18.0" right="18.0" top="10.0" /></padding>
 
     <!-- HEADER ROW -->
     <HBox alignment="CENTER_LEFT" spacing="10.0">
@@ -52,20 +52,20 @@
     <TableView fx:id="patientTable" VBox.vgrow="ALWAYS"
                style="-fx-background-color: white; -fx-border-color: #e0e0e0; -fx-border-radius: 6;">
         <columns>
-            <TableColumn fx:id="colID"          prefWidth="110.0" text="Patient ID#" />
-            <TableColumn fx:id="colLastName"    prefWidth="110.0" text="Last Name" />
-            <TableColumn fx:id="colFirstName"   prefWidth="100.0" text="First Name" />
-            <TableColumn fx:id="colMI"          prefWidth="40.0"  text="M.I." />
-            <TableColumn fx:id="colGender"      prefWidth="65.0"  text="Gender" />
-            <TableColumn fx:id="colBirthdate"   prefWidth="90.0"  text="Birthdate" />
-            <TableColumn fx:id="colYear"        prefWidth="70.0"  text="Year" />
-            <TableColumn fx:id="colCourse"      prefWidth="100.0" text="Course" />
-            <TableColumn fx:id="colDept"        prefWidth="90.0"  text="College/Dept" />
-            <TableColumn fx:id="colType"        prefWidth="80.0"  text="Type" />
-            <TableColumn fx:id="colContact"     prefWidth="110.0" text="Contact No." />
-            <TableColumn fx:id="colMedHistory"  prefWidth="180.0" text="Medical History" />
-            <TableColumn fx:id="colStatus"      prefWidth="72.0"  text="Status" />
-            <TableColumn fx:id="colAction"      prefWidth="260.0" text="Action" />
+            <TableColumn fx:id="colID"          prefWidth="100.0" text="Patient ID#" />
+            <TableColumn fx:id="colLastName"    prefWidth="100.0" text="Last Name" />
+            <TableColumn fx:id="colFirstName"   prefWidth="90.0" text="First Name" />
+            <TableColumn fx:id="colMI"          prefWidth="36.0"  text="M.I." />
+            <TableColumn fx:id="colGender"      prefWidth="58.0"  text="Gender" />
+            <TableColumn fx:id="colBirthdate"   prefWidth="85.0"  text="Birthdate" />
+            <TableColumn fx:id="colYear"        prefWidth="55.0"  text="Year" />
+            <TableColumn fx:id="colCourse"      prefWidth="80.0" text="Course" />
+            <TableColumn fx:id="colDept"        prefWidth="80.0"  text="College/Dept" />
+            <TableColumn fx:id="colType"        prefWidth="68.0"  text="Type" />
+            <TableColumn fx:id="colContact"     prefWidth="100.0" text="Contact No." />
+            <TableColumn fx:id="colMedHistory"  prefWidth="140.0" text="Medical History" />
+            <TableColumn fx:id="colStatus"      prefWidth="65.0"  text="Status" />
+            <TableColumn fx:id="colAction"      prefWidth="200.0" text="Action" />
         </columns>
         <placeholder>
             <Label text="No patients found." style="-fx-text-fill: #aaa; -fx-font-size: 13;" />

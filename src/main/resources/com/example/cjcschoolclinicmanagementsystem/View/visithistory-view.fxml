@@ -16,7 +16,7 @@
                  -fx-border-color: #e0e0e0;
                  -fx-border-width: 0 0 1 0;"
           alignment="CENTER_LEFT">
-        <padding><Insets top="18" bottom="18" left="24" right="24"/></padding>
+        <padding><Insets top="12" bottom="12" left="18" right="18"/></padding>
         <VBox HBox.hgrow="ALWAYS">
             <Label text="Visit History"
                    style="-fx-font-size: 20; -fx-font-weight: bold; -fx-text-fill: #8B0000;"/>
@@ -37,11 +37,11 @@
     <HBox style="-fx-padding: 6 18 6 18;">
         <HBox spacing="8" alignment="CENTER_LEFT" HBox.hgrow="ALWAYS"
               style="-fx-background-color: white; -fx-border-color: #e0e0e0;
-                 -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 10 12;">
+                 -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 8 12;">
 
             <TextField fx:id="txtSearch"
                        promptText="Search name, course, diagnosis..."
-                       prefWidth="240" prefHeight="30"
+                       prefWidth="180" prefHeight="30"
                        onKeyReleased="#onSearch"
                        style="-fx-background-radius: 6; -fx-border-color: #ddd;
                           -fx-border-radius: 6; -fx-padding: 6 12; -fx-font-size: 12;"/>
@@ -64,10 +64,10 @@
             <Separator orientation="VERTICAL" opacity="0.3"/>
 
             <Label text="From:" style="-fx-font-size: 12; -fx-text-fill: #555;"/>
-            <DatePicker fx:id="dpFrom" prefWidth="130" prefHeight="30"/>
+            <DatePicker fx:id="dpFrom" prefWidth="110" prefHeight="30"/>
 
             <Label text="To:" style="-fx-font-size: 12; -fx-text-fill: #555;"/>
-            <DatePicker fx:id="dpTo" prefWidth="130" prefHeight="30"/>
+            <DatePicker fx:id="dpTo" prefWidth="110" prefHeight="30"/>
 
             <Button text="Apply" onAction="#filterCustomRange"
                     style="-fx-background-color: #555; -fx-text-fill: white;
