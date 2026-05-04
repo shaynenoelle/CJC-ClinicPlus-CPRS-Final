@@ -2,6 +2,8 @@ package com.example.cjcschoolclinicmanagementsystem.controller;
 
 import com.example.cjcschoolclinicmanagementsystem.database.DatabaseManager;
 import com.example.cjcschoolclinicmanagementsystem.util.PreferencesManager;
+import javafx.animation.FadeTransition;
+import javafx.animation.PauseTransition;
 import javafx.beans.binding.Bindings;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
@@ -12,10 +14,12 @@ import javafx.scene.chart.*;
 import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.stage.Window;
+import javafx.util.Duration;
 
 import java.io.IOException;
 import java.net.URL;
@@ -32,6 +36,8 @@ public class DashboardController {
     @FXML private Label      lblSubtitle;
     @FXML private Label      lblDashboardTitle;
     @FXML private MenuButton btnExport;
+    @FXML private StackPane loadingOverlay;
+    @FXML private ProgressIndicator loadingSpinner;
     private javafx.scene.Node dashboardCenter;
 
     // ── Nav buttons (all 5 need fx:id for highlight) ──────────────
@@ -98,6 +104,12 @@ public class DashboardController {
     // ─────────────────────────────────────────────────────────────
     @FXML
     public void initialize() {
+        // Ensure loading overlay is visible at start
+        if (loadingOverlay != null) {
+            loadingOverlay.setVisible(true);
+            loadingOverlay.setManaged(true);
+        }
+
         setupFilters();
         loadDashboard();
         dashboardCenter = mainBorderPane.getCenter();
@@ -115,6 +127,26 @@ public class DashboardController {
                         n.setStyle("-fx-background-color: white;"));
             }
             setupResponsiveBindings();
+
+            // Hide loading overlay with fade-out animation after a brief delay
+            if (loadingOverlay != null && loadingOverlay.isVisible()) {
+                // Wait 300ms to ensure loading screen is visible, then fade out
+                PauseTransition pause = new PauseTransition(Duration.millis(300));
+                pause.setOnFinished(e -> {
+                    FadeTransition fadeOut = new FadeTransition(
+                            Duration.millis(300), loadingOverlay);
+                    fadeOut.setFromValue(1.0);
+                    fadeOut.setToValue(0.0);
+                    fadeOut.setCycleCount(1);
+                    fadeOut.setAutoReverse(false);
+                    fadeOut.setOnFinished(finish -> {
+                        loadingOverlay.setVisible(false);
+                        loadingOverlay.setManaged(false);
+                    });
+                    fadeOut.play();
+                });
+                pause.play();
+            }
         });
     }
 
