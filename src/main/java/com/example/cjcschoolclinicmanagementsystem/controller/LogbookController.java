@@ -231,6 +231,17 @@ public class LogbookController {
                 setGraphic(btn);
             }
         });
+
+        // Empty state
+        tblLogbook.setPlaceholder(new Label("No check-ins for this period."));
+
+        // Double-click to open Attend form
+        tblLogbook.setOnMouseClicked(e -> {
+            if (e.getClickCount() == 2) {
+                Map<String, String> row = tblLogbook.getSelectionModel().getSelectedItem();
+                if (row != null) openAttendForm(row);
+            }
+        });
     }
 
     /**

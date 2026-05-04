@@ -132,6 +132,17 @@ public class VisitHistoryController {
                 setGraphic(empty ? null : box);
             }
         });
+
+        // Empty state
+        tblVisits.setPlaceholder(new Label("No visits found for this period."));
+
+        // Double-click to view
+        tblVisits.setOnMouseClicked(e -> {
+            if (e.getClickCount() == 2) {
+                Map<String, String> row = tblVisits.getSelectionModel().getSelectedItem();
+                if (row != null) openAttendForm(row, true);
+            }
+        });
     }
 
     private void openAttendForm(Map<String, String> row, boolean readOnly) {

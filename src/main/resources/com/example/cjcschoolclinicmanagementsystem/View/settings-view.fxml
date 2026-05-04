@@ -203,7 +203,7 @@
                         <Label text="System Users"
                                style="-fx-font-size: 15; -fx-font-weight: bold; -fx-text-fill: #8B0000;"/>
                         <Separator/>
-                        <Label text="Accounts that can log in to CJC-Clinic+(CPRS)."
+                        <Label text="Accounts that can log in to CJC-Clinic+."
                                style="-fx-text-fill: #555;"/>
                         <HBox spacing="10">
                             <Button text="➕ Add User" onAction="#handleAddUser"
@@ -420,11 +420,11 @@
                           style="-fx-background-color: white; -fx-border-color: #E0E0E0;
                                  -fx-border-radius: 8; -fx-background-radius: 8;
                                  -fx-padding: 24 20; -fx-border-width: 1;" maxWidth="660">
-                        <Label text="CJC-Clinic+ (CPRS)"
+                        <Label text="CJC-Clinic+"
                                style="-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: #8B0000;"/>
                         <Label text="Clinic Patient Records System"
                                style="-fx-font-size: 13; -fx-text-fill: #555;"/>
-                        <Label text="Version 1.0.0  •  © 2025–2026 CJC School Clinic"
+                        <Label text="Version 1.0.0  •  © 2025–2026 CJC School Clinics"
                                style="-fx-font-size: 11; -fx-text-fill: #999;"/>
                         <Label text="Built to simplify patient registration, clinic visit tracking, and health record management for Cor Jesu College."
                                wrapText="true" textAlignment="CENTER"
@@ -526,7 +526,7 @@
                         </FlowPane>
                     </VBox>
 
-                    <Label text="Made with ❤ for Cor Jesu College School Clinic"
+                    <Label text="Software Engineering 1 Final Project"
                            style="-fx-font-size: 11; -fx-text-fill: #AAAAAA; -fx-padding: 4 0 12 0;"/>
                 </VBox>
             </ScrollPane>
