@@ -6,12 +6,14 @@ import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.chart.*;
 import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
+import javafx.stage.Stage;
 import javafx.stage.Window;
 
 import java.io.IOException;
@@ -578,7 +580,38 @@ public class DashboardController {
         loadView("visithistory-view.fxml");
     }
 
-    @FXML private void handleLogout() { System.exit(0); }
+    @FXML private void handleLogout() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource(
+                    "/com/example/cjcschoolclinicmanagementsystem/View/login-view.fxml"));
+            Parent root = loader.load();
+
+            Stage stage = (Stage) mainBorderPane.getScene().getWindow();
+
+            // Get full screen bounds for consistency
+            javafx.geometry.Rectangle2D screenBounds =
+                    javafx.stage.Screen.getPrimary().getVisualBounds();
+
+            Scene scene = new Scene(root, screenBounds.getWidth(), screenBounds.getHeight());
+
+            // Reset stage maximized state before switching scene
+            stage.setMaximized(false);
+            stage.setScene(scene);
+            stage.setMinWidth(900);
+            stage.setMinHeight(600);
+            stage.setTitle("CJC School Clinic - Login");
+
+            // Use Platform.runLater to maximize after scene is attached
+            javafx.application.Platform.runLater(() -> {
+                stage.setMaximized(true);
+            });
+
+            stage.show();
+        } catch (IOException e) {
+            System.err.println("Error loading login view: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
 
     @FXML
     private void openSettings() {
