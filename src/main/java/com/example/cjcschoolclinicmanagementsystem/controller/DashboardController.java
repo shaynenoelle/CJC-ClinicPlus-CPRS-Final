@@ -634,23 +634,22 @@ public class DashboardController {
 
             Stage stage = (Stage) mainBorderPane.getScene().getWindow();
 
-            // Get full screen bounds for consistency
-            javafx.geometry.Rectangle2D screenBounds =
-                    javafx.stage.Screen.getPrimary().getVisualBounds();
+            // Return to login as a clean fixed-size centered window — NOT maximized.
+            // Mirrors HelloApplication.start() so the window is always consistent.
+            Scene scene = new Scene(root, 960, 600);
 
-            Scene scene = new Scene(root, screenBounds.getWidth(), screenBounds.getHeight());
-
-            // Reset stage maximized state before switching scene
+            stage.setResizable(false);
             stage.setMaximized(false);
             stage.setScene(scene);
-            stage.setMinWidth(900);
-            stage.setMinHeight(600);
+            stage.setMinWidth(0);
+            stage.setMinHeight(0);
             stage.setTitle("CJC School Clinic - Login");
 
-            // Use Platform.runLater to maximize after scene is attached
-            javafx.application.Platform.runLater(() -> {
-                stage.setMaximized(true);
-            });
+            // Center on screen — works on any monitor size
+            javafx.geometry.Rectangle2D screenBounds =
+                    javafx.stage.Screen.getPrimary().getVisualBounds();
+            stage.setX((screenBounds.getWidth()  - 960) / 2);
+            stage.setY((screenBounds.getHeight() - 600) / 2);
 
             stage.show();
         } catch (IOException e) {
