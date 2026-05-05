@@ -670,6 +670,34 @@ public class SettingsController {
         }
     }
 
+    @FXML private void handleRestoreBackup() {
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle("Select Backup File to Restore");
+        chooser.getExtensionFilters().add(
+                new FileChooser.ExtensionFilter("Database Backup (*.db)", "*.db"));
+        File selected = chooser.showOpenDialog(getStage());
+        if (selected == null) return;
+
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        confirm.setTitle("Restore Backup");
+        confirm.setHeaderText("This will REPLACE all current data with the selected backup.");
+        confirm.setContentText(
+                "File: " + selected.getName() +
+                        "\n\nAll current patients, visits, and records will be overwritten." +
+                        "\n\nAre you sure you want to continue?");
+        confirm.showAndWait().ifPresent(response -> {
+            if (response != ButtonType.OK) return;
+            if (DatabaseManager.restoreDatabase(selected.getAbsolutePath())) {
+                showAlert(Alert.AlertType.INFORMATION, "Restore Successful",
+                        "Data has been restored from:\n" + selected.getAbsolutePath() +
+                                "\n\nPlease restart the application for changes to take effect.");
+            } else {
+                showAlert(Alert.AlertType.ERROR, "Restore Failed",
+                        "Could not restore the backup file.\nMake sure it is a valid CJC-Clinic backup (.db).");
+            }
+        });
+    }
+
     @FXML private void handleExportPatients() {
         String path = txtBackupPath.getText().trim();
         if (path.isEmpty()) { showAlert(Alert.AlertType.WARNING, "No Destination", "Please specify an export folder."); return; }

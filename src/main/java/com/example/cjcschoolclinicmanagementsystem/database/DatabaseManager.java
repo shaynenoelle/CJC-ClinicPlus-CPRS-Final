@@ -823,6 +823,15 @@ public class DatabaseManager {
         } catch (Exception e) { System.err.println("Backup Error: " + e.getMessage()); return false; }
     }
 
+    public static boolean restoreDatabase(String backupFilePath) {
+        try {
+            java.nio.file.Files.copy(java.nio.file.Paths.get(backupFilePath),
+                    java.nio.file.Paths.get("cjclinic.db"),
+                    java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            return true;
+        } catch (Exception e) { System.err.println("Restore Error: " + e.getMessage()); return false; }
+    }
+
     public static boolean exportPatientsToCSV(String filePath) {
         String sql = "SELECT patient_id, full_name, age, course_dept, year_level, gender, college, " +
                 "contact_number, email, birthdate, type, emergency_name, relationship, " +

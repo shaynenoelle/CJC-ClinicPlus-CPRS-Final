@@ -352,6 +352,10 @@
                                     style="-fx-background-color: #8B0000; -fx-text-fill: white;
                                            -fx-font-weight: bold; -fx-cursor: hand;
                                            -fx-padding: 10 28; -fx-font-size: 13;"/>
+                            <Button text="📂 Restore from Backup" onAction="#handleRestoreBackup"
+                                    style="-fx-background-color: #E65100; -fx-text-fill: white;
+                                           -fx-font-weight: bold; -fx-cursor: hand;
+                                           -fx-padding: 10 20; -fx-font-size: 12;"/>
                             <Button text="📤 Export Health Records (CSV)" onAction="#handleExportPatients"
                                     style="-fx-background-color: #2E7D32; -fx-text-fill: white;
                                            -fx-font-weight: bold; -fx-cursor: hand;
