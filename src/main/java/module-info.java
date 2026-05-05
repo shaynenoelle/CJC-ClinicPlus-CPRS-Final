@@ -1,9 +1,13 @@
 module com.example.cjcschoolclinicmanagementsystem {
     requires javafx.controls;
     requires javafx.fxml;
+    requires javafx.swing;   // SwingFXUtils.fromFXImage() used in PDF snapshot export
     requires java.sql;
     requires org.xerial.sqlitejdbc;
     requires jbcrypt;
+
+    // ── Apache PDFBox (PDF export) ────────────────────────────────
+    requires org.apache.pdfbox;
 
     // ── Apache POI (Excel import) ─────────────────────────────────
     requires org.apache.poi.poi;

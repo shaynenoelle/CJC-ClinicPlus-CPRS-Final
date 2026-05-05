@@ -398,6 +398,7 @@ public class AttendController {
 
         // Header
         VBox header = new VBox(4);
+        header.setPadding(new Insets(14, 16, 10, 16));
         Label lblTitle = new Label("Record Re-check Vitals");
         lblTitle.setStyle("-fx-font-size: 15; -fx-font-weight: bold; -fx-text-fill: #8B0000;");
         Label lblNote = new Label(nurseNote.isBlank()

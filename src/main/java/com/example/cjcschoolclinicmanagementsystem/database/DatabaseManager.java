@@ -546,7 +546,7 @@ public class DatabaseManager {
         java.util.List<java.util.Map<String, String>> queue = new java.util.ArrayList<>();
         // FIX: also select time_out, and exclude patients who already have a time_out
         // (they have been seen and left — should not stay in queue overnight or after checkout)
-        String sql = "SELECT v.visit_id, v.time_in, v.time_out, p.full_name, " +
+        String sql = "SELECT v.visit_id, v.patient_id, v.visit_date, v.time_in, v.time_out, p.full_name, " +
                 "COALESCE(p.allergies,'') AS allergies, COALESCE(p.conditions,'') AS conditions " +
                 "FROM Visits v JOIN Patients p ON v.patient_id = p.patient_id " +
                 "WHERE v.visit_date = DATE('now') " +
@@ -557,6 +557,9 @@ public class DatabaseManager {
              ResultSet rs = stmt.executeQuery(sql)) {
             while (rs.next()) {
                 java.util.Map<String, String> row = new java.util.HashMap<>();
+                row.put("visit_id",   rs.getString("visit_id")   != null ? rs.getString("visit_id")   : "");
+                row.put("patient_id", rs.getString("patient_id") != null ? rs.getString("patient_id") : "");
+                row.put("visit_date", rs.getString("visit_date") != null ? rs.getString("visit_date") : "");
                 row.put("full_name",  rs.getString("full_name"));
                 row.put("time_in",    rs.getString("time_in") != null ? rs.getString("time_in") : "—");
                 row.put("time_out",   rs.getString("time_out") != null ? rs.getString("time_out") : "");

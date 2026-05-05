@@ -16,7 +16,6 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import javafx.print.PrinterJob;
 import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
@@ -273,6 +272,7 @@ public class DashboardController {
     // ── Live queue panel ──────────────────────────────────────────
     private void loadQueuePanel() {
         vboxQueueRows.getChildren().clear();
+        vboxQueueRows.setFillWidth(true);   // ← guarantee rows stretch to full panel width
         java.util.List<java.util.Map<String, String>> queue =
                 DatabaseManager.getQueueToday();
 
@@ -293,6 +293,7 @@ public class DashboardController {
                 // Build one queue row
                 javafx.scene.layout.HBox hbox = new javafx.scene.layout.HBox(10);
                 hbox.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+                hbox.setMaxWidth(Double.MAX_VALUE);   // ← lets VBox stretch it; spacer can now push Attend right
                 hbox.setStyle("-fx-background-color: #fafafa; -fx-border-color: #eeeeee; " +
                         "-fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 8 12;");
 
@@ -482,50 +483,135 @@ public class DashboardController {
         }
     }
 
-    // ── Change 2: print all four charts — uses JavaFX PrinterJob ─
-    // No external library needed. On Windows, choosing "Microsoft Print to PDF"
-    // in the print dialog saves directly as a PDF file.
+    // ── PDF Export: saves a landscape PDF directly — no print dialog ──
+    // Snapshots the entire center panel (queue + all charts) at 1.5× for
+    // crispness, then embeds the image into a landscape A4 PDF via PDFBox.
+    // The user just picks a save location and gets a proper .pdf file.
     @FXML
     private void exportChartsPDF() {
-        PrinterJob job = PrinterJob.createPrinterJob();
-        if (job == null) {
-            showError("Print / PDF Export",
-                    "No printer found.\n" +
-                            "On Windows, install 'Microsoft Print to PDF' via Settings → Printers.");
-            return;
-        }
-
         Window owner = mainBorderPane != null && mainBorderPane.getScene() != null
                 ? mainBorderPane.getScene().getWindow() : null;
 
-        // Show the OS print dialog (user selects "Microsoft Print to PDF" to get a PDF)
-        boolean proceed = job.showPrintDialog(owner);
-        if (!proceed) {
-            job.cancelJob();
-            return;
-        }
+        // ── 1. Ask where to save ──────────────────────────────────────────
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle("Save Dashboard Report");
+        chooser.getExtensionFilters().add(
+                new FileChooser.ExtensionFilter("PDF Document", "*.pdf"));
+        String stamp = LocalDateTime.now()
+                .format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmm"));
+        chooser.setInitialFileName("CJC_Dashboard_" + stamp + ".pdf");
 
-        // Use the printer's default page layout — printPage(Node) with no
-        // PageLayout argument applies the printer's own default automatically.
-        javafx.scene.Node[] charts = {
-                chartIllnesses, chartMonthly, chartCollege, chartPurpose
-        };
-        String[] titles = {
-                "Top Diagnoses", "Illness Trend",
-                "Visits by College / Dept", "Purpose of Visit"
-        };
+        java.io.File file = chooser.showSaveDialog(owner);
+        if (file == null) return;
 
-        boolean allOk = true;
-        for (int i = 0; i < charts.length; i++) {
-            if (!job.printPage(charts[i])) {
-                allOk = false;
-                showError("Print Error", "Failed to print chart: " + titles[i]);
-                break;
+        // ── 2. Snapshot the center panel at 1.5× for sharpness ───────────
+        javafx.scene.Node center = mainBorderPane.getCenter();
+        javafx.scene.SnapshotParameters snapParams = new javafx.scene.SnapshotParameters();
+        snapParams.setTransform(javafx.scene.transform.Transform.scale(1.5, 1.5));
+        javafx.scene.image.WritableImage fxSnap = center.snapshot(snapParams, null);
+
+        java.awt.image.BufferedImage buffered =
+                javafx.embed.swing.SwingFXUtils.fromFXImage(fxSnap, null);
+
+        // ── 3. Build the PDF with PDFBox ──────────────────────────────────
+        try (org.apache.pdfbox.pdmodel.PDDocument doc =
+                     new org.apache.pdfbox.pdmodel.PDDocument()) {
+
+            // Landscape A4: 841 × 595 pt  (1 pt = 1/72 inch)
+            org.apache.pdfbox.pdmodel.common.PDRectangle landscape =
+                    new org.apache.pdfbox.pdmodel.common.PDRectangle(
+                            org.apache.pdfbox.pdmodel.common.PDRectangle.A4.getHeight(),
+                            org.apache.pdfbox.pdmodel.common.PDRectangle.A4.getWidth());
+
+            org.apache.pdfbox.pdmodel.PDPage page =
+                    new org.apache.pdfbox.pdmodel.PDPage(landscape);
+            doc.addPage(page);
+
+            float pageW = landscape.getWidth();   // ~841 pt
+            float pageH = landscape.getHeight();  // ~595 pt
+            float margin = 28f;                   // ~1 cm margin
+
+            // ── Header ───────────────────────────────────────────────────
+            org.apache.pdfbox.pdmodel.font.PDType1Font fontBold =
+                    org.apache.pdfbox.pdmodel.font.Standard14Fonts.FontName.HELVETICA_BOLD
+                            != null
+                            ? new org.apache.pdfbox.pdmodel.font.PDType1Font(
+                            org.apache.pdfbox.pdmodel.font.Standard14Fonts.FontName.HELVETICA_BOLD)
+                            : new org.apache.pdfbox.pdmodel.font.PDType1Font(
+                            org.apache.pdfbox.pdmodel.font.Standard14Fonts.FontName.HELVETICA_BOLD);
+
+            org.apache.pdfbox.pdmodel.font.PDType1Font fontNormal =
+                    new org.apache.pdfbox.pdmodel.font.PDType1Font(
+                            org.apache.pdfbox.pdmodel.font.Standard14Fonts.FontName.HELVETICA);
+
+            String title    = "CJC School Clinics — Clinic+ Dashboard Report";
+            String period   = periodLabel();
+            String dateStamp = LocalDateTime.now()
+                    .format(DateTimeFormatter.ofPattern("MMMM dd, yyyy  hh:mm a"));
+            String subtitle = "Period: " + period + "   |   Generated: " + dateStamp;
+
+            try (org.apache.pdfbox.pdmodel.PDPageContentStream cs =
+                         new org.apache.pdfbox.pdmodel.PDPageContentStream(doc, page)) {
+
+                // White background
+                cs.setNonStrokingColor(java.awt.Color.WHITE);
+                cs.addRect(0, 0, pageW, pageH);
+                cs.fill();
+
+                // Title in dark red
+                cs.setNonStrokingColor(new java.awt.Color(0x8B, 0x00, 0x00));
+                cs.beginText();
+                cs.setFont(fontBold, 16);
+                cs.newLineAtOffset(margin, pageH - margin - 16);
+                cs.showText(title);
+                cs.endText();
+
+                // Subtitle in gray
+                cs.setNonStrokingColor(new java.awt.Color(0x55, 0x55, 0x55));
+                cs.beginText();
+                cs.setFont(fontNormal, 9);
+                cs.newLineAtOffset(margin, pageH - margin - 30);
+                cs.showText(subtitle);
+                cs.endText();
+
+                // Thin separator line
+                cs.setStrokingColor(new java.awt.Color(0xCC, 0xCC, 0xCC));
+                cs.setLineWidth(0.5f);
+                cs.moveTo(margin, pageH - margin - 38);
+                cs.lineTo(pageW - margin, pageH - margin - 38);
+                cs.stroke();
+
+                // ── Embed the snapshot image ──────────────────────────────
+                org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject pdImage =
+                        org.apache.pdfbox.pdmodel.graphics.image.LosslessFactory
+                                .createFromImage(doc, buffered);
+
+                float imgAreaW = pageW  - (margin * 2);
+                float imgAreaH = pageH  - margin - 44 - margin; // below header line
+                float imgW     = buffered.getWidth();
+                float imgH     = buffered.getHeight();
+
+                // Scale to fit the image area while preserving aspect ratio
+                float scale = Math.min(imgAreaW / imgW, imgAreaH / imgH);
+                float drawW = imgW * scale;
+                float drawH = imgH * scale;
+                float drawX = margin + (imgAreaW - drawW) / 2f; // center horizontally
+                float drawY = margin;                            // pin to bottom margin
+
+                cs.drawImage(pdImage, drawX, drawY, drawW, drawH);
             }
-        }
 
-        if (allOk) job.endJob();
-        else       job.cancelJob();
+            doc.save(file);
+
+            Alert a = new Alert(Alert.AlertType.INFORMATION);
+            a.setTitle("PDF Saved");
+            a.setHeaderText(null);
+            a.setContentText("Dashboard report saved to:\n" + file.getAbsolutePath());
+            a.showAndWait();
+
+        } catch (java.io.IOException ex) {
+            showError("Export Failed", "Could not create PDF: " + ex.getMessage());
+        }
     }
 
     private void loadIllnessChart(String period, String label) {

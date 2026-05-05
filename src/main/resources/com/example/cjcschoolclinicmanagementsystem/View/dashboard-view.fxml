@@ -182,7 +182,7 @@
                     </HBox>
 
                     <!-- ═══ LIVE QUEUE PANEL ═══ -->
-                    <VBox fx:id="vboxQueue" spacing="0"
+                    <VBox fx:id="vboxQueue" spacing="0" fillWidth="true" maxWidth="Infinity"
                           style="-fx-background-color: white; -fx-background-radius: 10;
                              -fx-border-color: #e0e0e0; -fx-border-radius: 10;
                              -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.06),8,0,0,2);">
@@ -197,7 +197,8 @@
                         <Separator style="-fx-padding: 6 0 6 0;">
                             <VBox.margin><Insets top="8" bottom="8"/></VBox.margin>
                         </Separator>
-                        <VBox fx:id="vboxQueueRows" spacing="6"/>
+                        <VBox fx:id="vboxQueueRows" spacing="6" maxWidth="Infinity" fillWidth="true"
+                              VBox.vgrow="ALWAYS"/>
                         <Label fx:id="lblQueueEmpty" text="No patients currently waiting."
                                style="-fx-font-size: 11; -fx-text-fill: #bbb; -fx-font-style: italic; -fx-padding: 4 0 0 0;"/>
                     </VBox>

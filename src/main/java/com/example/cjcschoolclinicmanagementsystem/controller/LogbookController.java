@@ -276,7 +276,11 @@ public class LogbookController {
         try {
             LocalTime target = LocalTime.parse(hhMm, DateTimeFormatter.ofPattern("HH:mm"));
             LocalTime now    = LocalTime.now();
-            return (int) java.time.Duration.between(now, target).toMinutes();
+            int mins = (int) java.time.Duration.between(now, target).toMinutes();
+            // If the result is deeply negative (more than 12 hours past),
+            // the target time is actually on the next day (e.g. now=23:51, target=00:50).
+            if (mins < -(12 * 60)) mins += 24 * 60;
+            return mins;
         } catch (Exception ex) {
             return Integer.MAX_VALUE;
         }
