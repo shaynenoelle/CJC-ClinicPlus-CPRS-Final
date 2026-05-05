@@ -433,6 +433,7 @@ public class DatabaseManager {
                 "v.time_in, v.time_out, v.purpose, v.chief_complaint, " +
                 "v.diagnosis, v.treatment, v.remarks, v.temperature, " +
                 "v.blood_pressure, v.heart_rate, v.oxygen_sat, p.course_dept, v.attended_by, " +
+                "p.type, " +
                 "(SELECT COUNT(*) FROM FollowUps f " +
                 " WHERE f.visit_id = v.visit_id AND f.status = 'done') AS done_recheck_count " +
                 "FROM Visits v JOIN Patients p ON v.patient_id = p.patient_id " +
@@ -450,6 +451,7 @@ public class DatabaseManager {
                 "v.time_in, v.time_out, v.purpose, v.chief_complaint, " +
                 "v.diagnosis, v.treatment, v.remarks, v.temperature, " +
                 "v.blood_pressure, v.heart_rate, v.oxygen_sat, p.course_dept, v.attended_by, " +
+                "p.type, " +
                 "(SELECT COUNT(*) FROM FollowUps f " +
                 " WHERE f.visit_id = v.visit_id AND f.status = 'done') AS done_recheck_count " +
                 "FROM Visits v JOIN Patients p ON v.patient_id = p.patient_id " +
@@ -467,6 +469,18 @@ public class DatabaseManager {
         try (Connection conn = connect(); PreparedStatement p = conn.prepareStatement(sql)) {
             p.setInt(1, visitId); p.executeUpdate(); return true;
         } catch (SQLException e) { System.err.println("DeleteVisit Error: " + e.getMessage()); return false; }
+    }
+
+    public static int bulkTimeOutToday() {
+        String sql = "UPDATE Visits SET time_out = strftime('%H:%M', 'now', 'localtime') " +
+                "WHERE date(visit_date) = date('now', 'localtime') " +
+                "AND (time_out IS NULL OR time_out = '')";
+        try (Connection conn = connect(); PreparedStatement p = conn.prepareStatement(sql)) {
+            return p.executeUpdate();
+        } catch (SQLException e) {
+            System.err.println("BulkTimeOut Error: " + e.getMessage());
+            return 0;
+        }
     }
 
     private static java.util.Map<String, String> buildVisitRow(ResultSet rs) throws SQLException {
@@ -489,6 +503,7 @@ public class DatabaseManager {
         try { row.put("course_dept",       nvl(rs.getString("course_dept")));       } catch (SQLException ignored) {}
         try { row.put("respiratory_rate",  nvl(rs.getString("respiratory_rate")));  } catch (SQLException ignored) {}
         try { row.put("attended_by",       nvl(rs.getString("attended_by")));       } catch (SQLException ignored) {}
+        try { row.put("type",              nvl(rs.getString("type")));              } catch (SQLException ignored) {}
         try { row.put("done_recheck_count",nvl(rs.getString("done_recheck_count")));} catch (SQLException ignored) {}
         return row;
     }

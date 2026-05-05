@@ -217,6 +217,14 @@
                                -fx-background-radius: 6;
                                -fx-cursor: hand;
                                -fx-font-size: 12;"/>
+                <Button text="⏱ Set All Time-Out"
+                        onAction="#markAllDone"
+                        style="-fx-background-color: #27ae60;
+                               -fx-text-fill: white;
+                               -fx-background-radius: 6;
+                               -fx-cursor: hand;
+                               -fx-font-size: 12;
+                               -fx-font-weight: bold;"/>
             </HBox>
 
             <TableView fx:id="tblLogbook"

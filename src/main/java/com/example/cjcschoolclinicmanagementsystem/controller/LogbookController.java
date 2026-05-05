@@ -120,6 +120,30 @@ public class LogbookController {
                 new SimpleStringProperty(d.getValue().getOrDefault("patient_id", "")));
         colName.setCellValueFactory(d ->
                 new SimpleStringProperty(d.getValue().getOrDefault("full_name", "")));
+        colName.setCellFactory(col -> new TableCell<>() {
+            @Override
+            protected void updateItem(String name, boolean empty) {
+                super.updateItem(name, empty);
+                if (empty || name == null) { setGraphic(null); setText(null); return; }
+                Map<String, String> row = getTableView().getItems().get(getIndex());
+                String type = row.getOrDefault("type", "Student");
+                boolean isEmployee = "Employee".equalsIgnoreCase(type);
+                Label pill = new Label(isEmployee ? "EMP" : "STU");
+                pill.setStyle(
+                        "-fx-background-color: " + (isEmployee ? "#6a1b9a" : "#1565c0") + ";" +
+                                "-fx-text-fill: white;" +
+                                "-fx-background-radius: 8;" +
+                                "-fx-font-size: 9;" +
+                                "-fx-font-weight: bold;" +
+                                "-fx-padding: 1 5 1 5;");
+                Label nameLbl = new Label(name);
+                nameLbl.setStyle("-fx-font-size: 12;");
+                HBox box = new HBox(5, pill, nameLbl);
+                box.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+                setGraphic(box);
+                setText(null);
+            }
+        });
         colTimeIn.setCellValueFactory(d ->
                 new SimpleStringProperty(d.getValue().getOrDefault("time_in", "")));
         colPurpose.setCellValueFactory(d ->
@@ -342,8 +366,8 @@ public class LogbookController {
             stage.setTitle("Attend — " + visitRow.get("full_name"));
             javafx.geometry.Rectangle2D screen =
                     javafx.stage.Screen.getPrimary().getVisualBounds();
-            double w = Math.min(820, screen.getWidth()  * 0.75);
-            double h = Math.min(700, screen.getHeight() * 0.88);
+            double w = screen.getWidth()  * 0.80;
+            double h = screen.getHeight() * 0.88;
             stage.setScene(new Scene(root, w, h));
             stage.setMinWidth(640);
             stage.setMinHeight(540);
@@ -445,6 +469,28 @@ public class LogbookController {
         if (btnNext != null) btnNext.setDisable(currentPage >= totalPages - 1);
 
         lblVisitorCount.setText(total + " patient" + (total != 1 ? "s" : ""));
+    }
+
+    @FXML
+    private void markAllDone() {
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        confirm.setTitle("Set All Time-Out");
+        confirm.setHeaderText("Set time-out for all remaining patients?");
+        confirm.setContentText(
+                "This will record the current time as Time Out for every patient\n" +
+                        "today who has no Time Out yet. This cannot be undone.");
+        confirm.showAndWait().ifPresent(response -> {
+            if (response == ButtonType.OK) {
+                int count = DatabaseManager.bulkTimeOutToday();
+                Alert done = new Alert(Alert.AlertType.INFORMATION);
+                done.setTitle("Done");
+                done.setHeaderText(null);
+                done.setContentText(count + " patient" + (count != 1 ? "s" : "") +
+                        " marked as done.");
+                done.showAndWait();
+                refreshLogbook();
+            }
+        });
     }
 
     @FXML private void goToPrevPage() {
