@@ -16,7 +16,9 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.print.PrinterJob;
 import javafx.stage.FileChooser;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 import javafx.util.Duration;
@@ -320,8 +322,22 @@ public class DashboardController {
                     Label lblFlag = new Label(flagText.toString().trim());
                     lblFlag.setStyle("-fx-font-size: 10; -fx-text-fill: #c62828; " +
                             "-fx-font-weight: bold; -fx-wrap-text: true;");
-                    lblFlag.setMaxWidth(340);
+                    lblFlag.setMaxWidth(280);
                     hbox.getChildren().add(lblFlag);
+                }
+
+                // ── → Attend button (pushed to the far right) ─────────────
+                if (!row.getOrDefault("visit_id", "").isEmpty()) {
+                    javafx.scene.layout.Region spacer = new javafx.scene.layout.Region();
+                    javafx.scene.layout.HBox.setHgrow(spacer, javafx.scene.layout.Priority.ALWAYS);
+                    Button btnAttend = new Button("→ Attend");
+                    btnAttend.setStyle(
+                            "-fx-background-color: #8B0000; -fx-text-fill: white;" +
+                                    "-fx-background-radius: 4; -fx-cursor: hand;" +
+                                    "-fx-font-size: 11; -fx-font-weight: bold;");
+                    final java.util.Map<String, String> rowRef = row;
+                    btnAttend.setOnAction(ev -> openAttendFormFromDashboard(rowRef));
+                    hbox.getChildren().addAll(spacer, btnAttend);
                 }
 
                 vboxQueueRows.getChildren().add(hbox);
@@ -437,6 +453,81 @@ public class DashboardController {
             vboxRecheckRows.getChildren().add(hbox);
         }
     }
+    // ── Change 1: open attend form directly from the dashboard queue ─
+    private void openAttendFormFromDashboard(java.util.Map<String, String> visitRow) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource(
+                    "/com/example/cjcschoolclinicmanagementsystem/View/attend-view.fxml"));
+            Parent root = loader.load();
+            AttendController controller = loader.getController();
+            controller.setVisitData(visitRow);
+
+            Stage stage = new Stage();
+            stage.setTitle("Attend — " + visitRow.getOrDefault("full_name", ""));
+            javafx.geometry.Rectangle2D screen =
+                    javafx.stage.Screen.getPrimary().getVisualBounds();
+            double w = Math.min(820, screen.getWidth()  * 0.75);
+            double h = Math.min(700, screen.getHeight() * 0.88);
+            stage.setScene(new Scene(root, w, h));
+            stage.setMinWidth(640);
+            stage.setMinHeight(540);
+            stage.setResizable(true);
+            stage.initModality(Modality.APPLICATION_MODAL);
+            stage.showAndWait();
+            loadDashboard();   // refresh queue + stat cards after attending
+        } catch (Exception e) {
+            showError("Attend Form Error",
+                    "Could not open attend form: " +
+                            (e.getMessage() != null ? e.getMessage() : e.getClass().getName()));
+        }
+    }
+
+    // ── Change 2: print all four charts — uses JavaFX PrinterJob ─
+    // No external library needed. On Windows, choosing "Microsoft Print to PDF"
+    // in the print dialog saves directly as a PDF file.
+    @FXML
+    private void exportChartsPDF() {
+        PrinterJob job = PrinterJob.createPrinterJob();
+        if (job == null) {
+            showError("Print / PDF Export",
+                    "No printer found.\n" +
+                            "On Windows, install 'Microsoft Print to PDF' via Settings → Printers.");
+            return;
+        }
+
+        Window owner = mainBorderPane != null && mainBorderPane.getScene() != null
+                ? mainBorderPane.getScene().getWindow() : null;
+
+        // Show the OS print dialog (user selects "Microsoft Print to PDF" to get a PDF)
+        boolean proceed = job.showPrintDialog(owner);
+        if (!proceed) {
+            job.cancelJob();
+            return;
+        }
+
+        // Use the printer's default page layout — printPage(Node) with no
+        // PageLayout argument applies the printer's own default automatically.
+        javafx.scene.Node[] charts = {
+                chartIllnesses, chartMonthly, chartCollege, chartPurpose
+        };
+        String[] titles = {
+                "Top Diagnoses", "Illness Trend",
+                "Visits by College / Dept", "Purpose of Visit"
+        };
+
+        boolean allOk = true;
+        for (int i = 0; i < charts.length; i++) {
+            if (!job.printPage(charts[i])) {
+                allOk = false;
+                showError("Print Error", "Failed to print chart: " + titles[i]);
+                break;
+            }
+        }
+
+        if (allOk) job.endJob();
+        else       job.cancelJob();
+    }
+
     private void loadIllnessChart(String period, String label) {
         chartIllnesses.getData().clear();
         lblIllnessSubtitle.setText("Most frequent diagnoses — " + label);
@@ -556,7 +647,6 @@ public class DashboardController {
     @FXML private void exportDaily()   { exportDashboardData("daily"); }
     @FXML private void exportWeekly()  { exportDashboardData("weekly"); }
     @FXML private void exportMonthly() { exportDashboardData("monthly"); }
-
     private void exportDashboardData(String period) {
         // Sync the dropdown and charts to match the export period
         String label = switch (period) {
