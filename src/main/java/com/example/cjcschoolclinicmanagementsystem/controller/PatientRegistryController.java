@@ -194,6 +194,16 @@ public class PatientRegistryController {
                 setGraphic(empty ? null : box);
             }
         });
+        // Empty state
+        patientTable.setPlaceholder(new Label("No patients found."));
+
+        // Double-click to view profile
+        patientTable.setOnMouseClicked(e -> {
+            if (e.getClickCount() == 2) {
+                Patient patient = patientTable.getSelectionModel().getSelectedItem();
+                if (patient != null) openViewProfile(patient);
+            }
+        });
 
         patientTable.setItems(pageItems);
     }

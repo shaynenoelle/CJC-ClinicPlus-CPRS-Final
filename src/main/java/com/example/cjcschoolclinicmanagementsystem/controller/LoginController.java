@@ -14,6 +14,8 @@ import javafx.stage.Stage;
 import javafx.util.Duration;
 import com.example.cjcschoolclinicmanagementsystem.database.DatabaseManager;
 import com.example.cjcschoolclinicmanagementsystem.SessionManager;
+import javafx.scene.input.KeyEvent;
+import javafx.scene.input.KeyCode;
 import java.io.IOException;
 import java.time.LocalDateTime;
 
@@ -101,6 +103,13 @@ public class LoginController {
     }
 
     @FXML
+    protected void onKeyPressed(KeyEvent event) {
+        if (event.getCode() == KeyCode.ENTER) {
+            onLoginClick();
+        }
+    }
+
+    @FXML
     protected void onLoginClick() {
         String user = txtUsername.getText();
         String pass = passwordVisible ?
@@ -116,50 +125,54 @@ public class LoginController {
 
             SessionManager.setCurrentUser(user); // ← store logged-in nurse's name
             System.out.println("[AUDIT LOG] Access Granted: " + user + " at " + LocalDateTime.now());
-            try {
-                switchToDashboard();
-            } catch (IOException e) {
-                lblStatus.setText("System Error: Dashboard View missing.");
-            }
+            switchToDashboard();
         } else {
             lblStatus.setText("Access Denied: Invalid Credentials.");
         }
     }
 
-    private void switchToDashboard() throws IOException {
-        FXMLLoader loader = new FXMLLoader(getClass().getResource(
-                "/com/example/cjcschoolclinicmanagementsystem/View/dashboard-view.fxml"));
-        Parent root = loader.load();
-
+    private void switchToDashboard() {
         Stage stage = (Stage) lblStatus.getScene().getWindow();
+        Parent loginRoot = (Parent) lblStatus.getScene().getRoot();
 
-        // Get full screen bounds so the scene matches before maximizing
-        javafx.geometry.Rectangle2D screenBounds =
-                javafx.stage.Screen.getPrimary().getVisualBounds();
+        // Step 1: Fade OUT the login screen smoothly
+        FadeTransition fadeOut = new FadeTransition(Duration.millis(300), loginRoot);
+        fadeOut.setFromValue(1.0);
+        fadeOut.setToValue(0.0);
+        fadeOut.setOnFinished(e -> {
+            try {
+                // Step 2: Load dashboard while screen is already dark/invisible
+                FXMLLoader loader = new FXMLLoader(getClass().getResource(
+                        "/com/example/cjcschoolclinicmanagementsystem/View/dashboard-view.fxml"));
+                Parent dashRoot = loader.load();
+                dashRoot.setOpacity(0.0); // start invisible
 
-        Scene scene = new Scene(root, screenBounds.getWidth(), screenBounds.getHeight());
+                // Use a neutral base size — maximize will take over immediately.
+                // Do NOT pass screen bounds here; that fights with setMaximized
+                // and causes the window to overflow past the taskbar.
+                Scene dashScene = new Scene(dashRoot, 900, 600);
 
-        // Must set maximized = false first to force a state change, then true
-        stage.setMaximized(false);
-        stage.setScene(scene);
-        stage.setMinWidth(900);
-        stage.setMinHeight(600);
+                // Step 3: Swap scene — user sees nothing (both sides are transparent)
+                stage.setResizable(true);   // re-enable resizing for dashboard
+                stage.setMinWidth(900);
+                stage.setMinHeight(600);
+                stage.setScene(dashScene);
+                stage.setMaximized(true);
 
-        // Use Platform.runLater to guarantee maximize happens after scene is attached
-        javafx.application.Platform.runLater(() -> {
-            stage.setMaximized(true);
+                // Step 4: Fade IN the dashboard after everything is settled
+                javafx.application.Platform.runLater(() -> {
+                    FadeTransition fadeIn = new FadeTransition(Duration.millis(350), dashRoot);
+                    fadeIn.setFromValue(0.0);
+                    fadeIn.setToValue(1.0);
+                    fadeIn.play();
+                });
 
-            // Create fast, smooth fade-in animation for the dashboard
-            root.setOpacity(0.0);
-            FadeTransition fadeIn = new FadeTransition(Duration.millis(250), root);
-            fadeIn.setFromValue(0.0);
-            fadeIn.setToValue(1.0);
-            fadeIn.setCycleCount(1);
-            fadeIn.setAutoReverse(false);
-            fadeIn.play();
+            } catch (IOException ex) {
+                lblStatus.setText("System Error: Dashboard View missing.");
+                loginRoot.setOpacity(1.0); // restore login if load fails
+            }
         });
-
-        stage.show();
+        fadeOut.play();
     }
 
     @FXML

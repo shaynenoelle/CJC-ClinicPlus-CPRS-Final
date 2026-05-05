@@ -17,284 +17,284 @@
                 prefHeight="768.0" prefWidth="1024.0"
                 minWidth="900" minHeight="600">
         <left>
-        <VBox fx:id="sidebar" minWidth="60" prefWidth="220" maxWidth="260" spacing="4"
-              style="-fx-background-color: #8B0000;">
-            <padding>
-                <Insets bottom="20" left="12" right="12" top="24"/>
-            </padding>
+            <VBox fx:id="sidebar" minWidth="60" prefWidth="220" maxWidth="260" spacing="4"
+                  style="-fx-background-color: #8B0000;">
+                <padding>
+                    <Insets bottom="16" left="12" right="12" top="16"/>
+                </padding>
 
-            <!-- Logo + Clinic Name + Subtitle -->
-            <VBox alignment="CENTER" spacing="6">
-                <ImageView fx:id="logoImg" fitHeight="56" fitWidth="56" preserveRatio="true">
-                    <image><Image url="@../Images/cjclogo.png"/></image>
-                </ImageView>
-                <HBox alignment="CENTER" spacing="0">
-                    <Label fx:id="lblClinicName" text="CJC-Clinic" textFill="WHITE"
-                           style="-fx-font-size: 20; -fx-font-weight: bold;"/>
-                    <Label text="+" textFill="WHITE"
-                           style="-fx-font-size: 14; -fx-font-weight: bold; -fx-padding: 0 0 8 2;"/>
-                </HBox>
-                <!-- NEW: subtitle below clinic name -->
-                <Label fx:id="lblSubtitle" text="Clinic Patient Records System"
-                       textFill="WHITE" wrapText="true" alignment="CENTER"
-                       maxWidth="Infinity"
-                       style="-fx-font-size: 10; -fx-opacity: 0.72; -fx-text-alignment: center;"/>
-            </VBox>
-
-            <Separator opacity="0.25">
-                <VBox.margin><Insets top="10" bottom="10"/></VBox.margin>
-            </Separator>
-
-            <!-- NAV BUTTONS — bold + same size as SIGN OUT -->
-            <Button fx:id="btnDashboard" maxWidth="Infinity"
-                    onAction="#showDashboard" text="📊  DASHBOARD"
-                    style="-fx-background-color: transparent; -fx-text-fill: white;
-                           -fx-alignment: BASELINE_LEFT; -fx-cursor: hand;
-                           -fx-font-size: 13; -fx-font-weight: normal;
-                           -fx-background-radius: 8; -fx-padding: 10 12 10 12;"/>
-
-            <Button fx:id="btnPatientRecords" maxWidth="Infinity"
-                    onAction="#showPatientRegistry" text="👥  PATIENT LIST"
-                    style="-fx-background-color: transparent; -fx-text-fill: white;
-                           -fx-alignment: BASELINE_LEFT; -fx-cursor: hand;
-                           -fx-font-size: 13; -fx-font-weight: normal;
-                           -fx-background-radius: 8; -fx-padding: 10 12 10 12;"/>
-
-            <Button fx:id="btnLogbook" maxWidth="Infinity"
-                    onAction="#showLogbook" text="📋  LOGBOOK / CHECK-IN"
-                    style="-fx-background-color: transparent; -fx-text-fill: white;
-                           -fx-alignment: BASELINE_LEFT; -fx-cursor: hand;
-                           -fx-font-size: 13; -fx-font-weight: normal;
-                           -fx-background-radius: 8; -fx-padding: 10 12 10 12;"/>
-
-            <Button fx:id="btnVisitHistory" maxWidth="Infinity"
-                    onAction="#showVisitHistory" text="🕘  VISIT HISTORY"
-                    style="-fx-background-color: transparent; -fx-text-fill: white;
-                           -fx-alignment: BASELINE_LEFT; -fx-cursor: hand;
-                           -fx-font-size: 13; -fx-font-weight: normal;
-                           -fx-background-radius: 8; -fx-padding: 10 12 10 12;"/>
-
-            <Region VBox.vgrow="ALWAYS"/>
-
-            <Button fx:id="btnSettings" maxWidth="Infinity"
-                    onAction="#openSettings" text="⚙  SETTINGS"
-                    style="-fx-background-color: transparent; -fx-text-fill: white;
-                           -fx-alignment: BASELINE_LEFT; -fx-cursor: hand;
-                           -fx-font-size: 13; -fx-font-weight: normal;
-                           -fx-background-radius: 8; -fx-padding: 10 12 10 12;"/>
-
-            <Button maxWidth="Infinity" onAction="#handleLogout" text="SIGN OUT"
-                    style="-fx-background-color: #5D0000; -fx-text-fill: white;
-                           -fx-font-weight: bold; -fx-padding: 10; -fx-cursor: hand;
-                           -fx-font-size: 13; -fx-background-radius: 6;"/>
-        </VBox>
-    </left>
-
-    <center>
-        <ScrollPane fitToWidth="true"
-                    style="-fx-background-color: #f5f5f5; -fx-background: #f5f5f5;">
-            <VBox spacing="14" style="-fx-background-color: #f5f5f5;">
-                <padding><Insets top="18" bottom="18" left="18" right="18"/></padding>
-
-                <!-- HEADER -->
-                <HBox alignment="CENTER_LEFT" spacing="10">
-                    <VBox HBox.hgrow="ALWAYS">
-                        <Label fx:id="lblDashboardTitle" text="Dashboard"
-                               style="-fx-font-size: 20; -fx-font-weight: bold; -fx-text-fill: #8B0000;"/>
-                        <Label text="Overview of clinic activity"
-                               style="-fx-font-size: 11; -fx-text-fill: #888;"/>
-                    </VBox>
-                    <!-- UNIFIED period dropdown — controls all Row 2 & 3 charts -->
-                    <Label text="View period:" style="-fx-font-size: 11; -fx-text-fill: #555;"/>
-                    <ComboBox fx:id="cmbPeriod" onAction="#onPeriodChanged"
-                              prefWidth="110" style="-fx-font-size: 12;"/>
-                    <MenuButton text="⬇ Export" fx:id="btnExport"
-                                style="-fx-background-color: #8B0000; -fx-text-fill: white;
-                                       -fx-mark-color: white; -fx-background-radius: 6;
-                                       -fx-cursor: hand; -fx-font-size: 11;">
-                        <items>
-                            <MenuItem text="Daily"   onAction="#exportDaily"/>
-                            <MenuItem text="Weekly"  onAction="#exportWeekly"/>
-                            <MenuItem text="Monthly" onAction="#exportMonthly"/>
-                        </items>
-                    </MenuButton>
-                    <Button text="⟳ Refresh" onAction="#refreshDashboard"
-                            style="-fx-background-color: #f0f0f0; -fx-text-fill: #555;
-                                   -fx-background-radius: 6; -fx-cursor: hand; -fx-font-size: 11;"/>
-                </HBox>
-
-                <!-- ═══ ROW 1: Stat Cards ═══ -->
-                <HBox spacing="10">
-                    <!-- Total Visits — follows period dropdown -->
-                    <VBox alignment="CENTER" spacing="4" HBox.hgrow="ALWAYS"
-                          style="-fx-background-color: white; -fx-background-radius: 10;
-                                 -fx-border-color: #e0e0e0; -fx-border-radius: 10;
-                                 -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.06),8,0,0,2);">
-                        <padding><Insets top="14" bottom="14" left="12" right="12"/></padding>
-                        <Label fx:id="lblVisitsCardTitle" text="VISITS THIS WEEK"
-                               style="-fx-font-size: 10; -fx-text-fill: #888; -fx-font-weight: bold;"/>
-                        <Label fx:id="lblTotalVisits" text="0"
-                               style="-fx-font-size: 28; -fx-font-weight: bold; -fx-text-fill: #8B0000;"/>
-                        <Label fx:id="lblVisitsCardSub" text="for the selected period"
-                               style="-fx-font-size: 9; -fx-text-fill: #aaa;"/>
-                    </VBox>
-                    <!-- Total Registered — always fixed -->
-                    <VBox alignment="CENTER" spacing="4" HBox.hgrow="ALWAYS"
-                          style="-fx-background-color: white; -fx-background-radius: 10;
-                                 -fx-border-color: #e0e0e0; -fx-border-radius: 10;
-                                 -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.06),8,0,0,2);">
-                        <padding><Insets top="14" bottom="14" left="12" right="12"/></padding>
-                        <Label text="TOTAL REGISTERED"
-                               style="-fx-font-size: 10; -fx-text-fill: #888; -fx-font-weight: bold;"/>
-                        <Label fx:id="lblTotalPatients" text="0"
-                               style="-fx-font-size: 28; -fx-font-weight: bold; -fx-text-fill: #1976D2;"/>
-                        <Label text="students &amp; employees"
-                               style="-fx-font-size: 9; -fx-text-fill: #aaa;"/>
-                    </VBox>
-                    <!-- Unattended — always fixed to today -->
-                    <VBox alignment="CENTER" spacing="4" HBox.hgrow="ALWAYS"
-                          style="-fx-background-color: #fff8e1; -fx-background-radius: 10;
-                                 -fx-border-color: #ffe082; -fx-border-radius: 10;
-                                 -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.06),8,0,0,2);">
-                        <padding><Insets top="14" bottom="14" left="12" right="12"/></padding>
-                        <Label text="⚠  UNATTENDED"
-                               style="-fx-font-size: 10; -fx-text-fill: #e65100; -fx-font-weight: bold;"/>
-                        <Label fx:id="lblUnattended" text="0"
-                               style="-fx-font-size: 28; -fx-font-weight: bold; -fx-text-fill: #e65100;"/>
-                        <Label text="Today: waiting for care"
-                               style="-fx-font-size: 9; -fx-text-fill: #bf360c;"/>
-                    </VBox>
-                    <!-- Pending Re-checks — always fixed to today -->
-                    <VBox alignment="CENTER" spacing="4" HBox.hgrow="ALWAYS"
-                          style="-fx-background-color: #fff0f0; -fx-background-radius: 10;
-                                 -fx-border-color: #ffcdd2; -fx-border-radius: 10;
-                                 -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.06),8,0,0,2);">
-                        <padding><Insets top="14" bottom="14" left="12" right="12"/></padding>
-                        <Label text="🔄  PENDING RE-CHECKS"
-                               style="-fx-font-size: 10; -fx-text-fill: #c0392b; -fx-font-weight: bold;"/>
-                        <Label fx:id="lblPendingRechecks" text="0"
-                               style="-fx-font-size: 28; -fx-font-weight: bold; -fx-text-fill: #c0392b;"/>
-                        <Label text="Today: follow-ups due"
-                               style="-fx-font-size: 9; -fx-text-fill: #c0392b;"/>
-                    </VBox>
-                </HBox>
-
-                <!-- ═══ LIVE QUEUE PANEL — always shows today's waiting patients ═══ -->
-                <VBox fx:id="vboxQueue" spacing="0"
-                      style="-fx-background-color: white; -fx-background-radius: 10;
-                             -fx-border-color: #e0e0e0; -fx-border-radius: 10;
-                             -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.06),8,0,0,2);">
-                    <padding><Insets top="12" bottom="12" left="14" right="14"/></padding>
-                    <HBox alignment="CENTER_LEFT" spacing="10">
-                        <Label text="🕐  Today's Queue"
-                               style="-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #333;"
-                               HBox.hgrow="ALWAYS"/>
-                        <Label text="Patients checked in and waiting · refreshes with dashboard"
-                               style="-fx-font-size: 10; -fx-text-fill: #999;"/>
+                <!-- Logo + Clinic Name + Subtitle -->
+                <VBox alignment="CENTER" spacing="6">
+                    <ImageView fx:id="logoImg" fitHeight="48" fitWidth="48" preserveRatio="true">
+                        <image><Image url="@../Images/cjclogo.png"/></image>
+                    </ImageView>
+                    <HBox alignment="CENTER" spacing="0">
+                        <Label fx:id="lblClinicName" text="CJC-Clinic" textFill="WHITE"
+                               style="-fx-font-size: 17; -fx-font-weight: bold;"/>
+                        <Label text="+" textFill="WHITE"
+                               style="-fx-font-size: 14; -fx-font-weight: bold; -fx-padding: 0 0 8 2;"/>
                     </HBox>
-                    <Separator style="-fx-padding: 6 0 6 0;">
-                        <VBox.margin><Insets top="8" bottom="8"/></VBox.margin>
-                    </Separator>
-                    <!-- Queue rows injected here by controller -->
-                    <VBox fx:id="vboxQueueRows" spacing="6"/>
-                    <Label fx:id="lblQueueEmpty" text="No patients currently waiting."
-                           style="-fx-font-size: 11; -fx-text-fill: #bbb; -fx-font-style: italic; -fx-padding: 4 0 0 0;"/>
-                    <!-- ═══ PENDING RE-CHECKS PANEL ═══ -->
-                    <VBox spacing="0"
-                          style="-fx-background-color: white; -fx-background-radius: 10;
-                         -fx-border-color: #e0e0e0; -fx-border-radius: 10;
-                         -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.06),8,0,0,2);">
-                        <padding><Insets top="12" bottom="12" left="14" right="14"/></padding>
-                        <HBox alignment="CENTER_LEFT" spacing="10">
-                            <Label fx:id="lblRecheckHeader" text="🔄  Pending Re-checks"
-                                   style="-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #333;"
-                                   HBox.hgrow="ALWAYS"/>
-                            <Label text="Patients due for follow-up today"
-                                   style="-fx-font-size: 10; -fx-text-fill: #999;"/>
-                        </HBox>
-                        <Separator><VBox.margin><Insets top="8" bottom="8"/></VBox.margin></Separator>
-                        <VBox fx:id="vboxRecheckRows" spacing="6"/>
-                        <Label fx:id="lblRecheckEmpty" text="No re-checks pending."
-                               style="-fx-font-size: 11; -fx-text-fill: #bbb; -fx-font-style: italic; -fx-padding: 4 0 0 0;"/>
-                    </VBox>
+                    <!-- NEW: subtitle below clinic name -->
+                    <Label fx:id="lblSubtitle" text="Clinic Patient Records System"
+                           textFill="WHITE" wrapText="true" alignment="CENTER"
+                           maxWidth="Infinity"
+                           style="-fx-font-size: 10; -fx-opacity: 0.72; -fx-text-alignment: center;"/>
                 </VBox>
 
-                <!-- ═══ ROW 2: Illness Charts ═══ -->
-                <HBox spacing="10">
-                    <VBox spacing="10" HBox.hgrow="ALWAYS"
-                          style="-fx-background-color: white; -fx-background-radius: 10;
+                <Separator opacity="0.25">
+                    <VBox.margin><Insets top="10" bottom="10"/></VBox.margin>
+                </Separator>
+
+                <!-- NAV BUTTONS — bold + same size as SIGN OUT -->
+                <Button fx:id="btnDashboard" maxWidth="Infinity"
+                        onAction="#showDashboard" text="📊  DASHBOARD"
+                        style="-fx-background-color: transparent; -fx-text-fill: white;
+                           -fx-alignment: BASELINE_LEFT; -fx-cursor: hand;
+                           -fx-font-size: 13; -fx-font-weight: normal;
+                           -fx-background-radius: 8; -fx-padding: 10 12 10 12;"/>
+
+                <Button fx:id="btnPatientRecords" maxWidth="Infinity"
+                        onAction="#showPatientRegistry" text="👥  PATIENT LIST"
+                        style="-fx-background-color: transparent; -fx-text-fill: white;
+                           -fx-alignment: BASELINE_LEFT; -fx-cursor: hand;
+                           -fx-font-size: 13; -fx-font-weight: normal;
+                           -fx-background-radius: 8; -fx-padding: 10 12 10 12;"/>
+
+                <Button fx:id="btnLogbook" maxWidth="Infinity"
+                        onAction="#showLogbook" text="📋  LOGBOOK / CHECK-IN"
+                        style="-fx-background-color: transparent; -fx-text-fill: white;
+                           -fx-alignment: BASELINE_LEFT; -fx-cursor: hand;
+                           -fx-font-size: 13; -fx-font-weight: normal;
+                           -fx-background-radius: 8; -fx-padding: 10 12 10 12;"/>
+
+                <Button fx:id="btnVisitHistory" maxWidth="Infinity"
+                        onAction="#showVisitHistory" text="🕘  VISIT HISTORY"
+                        style="-fx-background-color: transparent; -fx-text-fill: white;
+                           -fx-alignment: BASELINE_LEFT; -fx-cursor: hand;
+                           -fx-font-size: 13; -fx-font-weight: normal;
+                           -fx-background-radius: 8; -fx-padding: 10 12 10 12;"/>
+
+                <Region VBox.vgrow="ALWAYS"/>
+
+                <Button fx:id="btnSettings" maxWidth="Infinity"
+                        onAction="#openSettings" text="⚙  SETTINGS"
+                        style="-fx-background-color: transparent; -fx-text-fill: white;
+                           -fx-alignment: BASELINE_LEFT; -fx-cursor: hand;
+                           -fx-font-size: 13; -fx-font-weight: normal;
+                           -fx-background-radius: 8; -fx-padding: 10 12 10 12;"/>
+
+                <Button maxWidth="Infinity" onAction="#handleLogout" text="SIGN OUT"
+                        style="-fx-background-color: #5D0000; -fx-text-fill: white;
+                           -fx-font-weight: bold; -fx-padding: 10; -fx-cursor: hand;
+                           -fx-font-size: 13; -fx-background-radius: 6;"/>
+            </VBox>
+        </left>
+
+        <center>
+            <ScrollPane fitToWidth="true"
+                        style="-fx-background-color: #f5f5f5; -fx-background: #f5f5f5;">
+                <VBox spacing="10" style="-fx-background-color: #f5f5f5;">
+                    <padding><Insets top="12" bottom="12" left="18" right="18"/></padding>
+
+                    <!-- HEADER -->
+                    <HBox alignment="CENTER_LEFT" spacing="10">
+                        <VBox HBox.hgrow="ALWAYS">
+                            <Label fx:id="lblDashboardTitle" text="Dashboard"
+                                   style="-fx-font-size: 16; -fx-font-weight: bold; -fx-text-fill: #8B0000;"/>
+                            <Label text="Overview of clinic activity"
+                                   style="-fx-font-size: 11; -fx-text-fill: #888;"/>
+                        </VBox>
+                        <!-- UNIFIED period dropdown — controls all Row 2 & 3 charts -->
+                        <Label text="View period:" style="-fx-font-size: 11; -fx-text-fill: #555;"/>
+                        <ComboBox fx:id="cmbPeriod" onAction="#onPeriodChanged"
+                                  prefWidth="110" style="-fx-font-size: 12;"/>
+                        <MenuButton text="⬇ Export" fx:id="btnExport"
+                                    style="-fx-background-color: #8B0000; -fx-text-fill: white;
+                                       -fx-mark-color: white; -fx-background-radius: 6;
+                                       -fx-cursor: hand; -fx-font-size: 11;">
+                            <items>
+                                <MenuItem text="Daily"   onAction="#exportDaily"/>
+                                <MenuItem text="Weekly"  onAction="#exportWeekly"/>
+                                <MenuItem text="Monthly" onAction="#exportMonthly"/>
+                            </items>
+                        </MenuButton>
+                        <Button text="⟳ Refresh" onAction="#refreshDashboard"
+                                style="-fx-background-color: #f0f0f0; -fx-text-fill: #555;
+                                   -fx-background-radius: 6; -fx-cursor: hand; -fx-font-size: 11;"/>
+                    </HBox>
+
+                    <!-- ═══ ROW 1: Stat Cards ═══ -->
+                    <HBox spacing="10">
+                        <!-- Total Visits — follows period dropdown -->
+                        <VBox alignment="CENTER" spacing="4" HBox.hgrow="ALWAYS"
+                              style="-fx-background-color: white; -fx-background-radius: 10;
                                  -fx-border-color: #e0e0e0; -fx-border-radius: 10;
                                  -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.06),8,0,0,2);">
-                        <padding><Insets top="14" bottom="14" left="14" right="14"/></padding>
+                            <padding><Insets top="10" bottom="10" left="12" right="12"/></padding>
+                            <Label fx:id="lblVisitsCardTitle" text="VISITS THIS WEEK"
+                                   style="-fx-font-size: 10; -fx-text-fill: #888; -fx-font-weight: bold;"/>
+                            <Label fx:id="lblTotalVisits" text="0"
+                                   style="-fx-font-size: 22; -fx-font-weight: bold; -fx-text-fill: #8B0000;"/>
+                            <Label fx:id="lblVisitsCardSub" text="for the selected period"
+                                   style="-fx-font-size: 9; -fx-text-fill: #aaa;"/>
+                        </VBox>
+                        <!-- Total Registered — always fixed -->
+                        <VBox alignment="CENTER" spacing="4" HBox.hgrow="ALWAYS"
+                              style="-fx-background-color: white; -fx-background-radius: 10;
+                                 -fx-border-color: #e0e0e0; -fx-border-radius: 10;
+                                 -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.06),8,0,0,2);">
+                            <padding><Insets top="10" bottom="10" left="12" right="12"/></padding>
+                            <Label text="TOTAL REGISTERED"
+                                   style="-fx-font-size: 10; -fx-text-fill: #888; -fx-font-weight: bold;"/>
+                            <Label fx:id="lblTotalPatients" text="0"
+                                   style="-fx-font-size: 22; -fx-font-weight: bold; -fx-text-fill: #1976D2;"/>
+                            <Label text="students &amp; employees"
+                                   style="-fx-font-size: 9; -fx-text-fill: #aaa;"/>
+                        </VBox>
+                        <!-- Unattended — always fixed to today -->
+                        <VBox alignment="CENTER" spacing="4" HBox.hgrow="ALWAYS"
+                              style="-fx-background-color: #fff8e1; -fx-background-radius: 10;
+                                 -fx-border-color: #ffe082; -fx-border-radius: 10;
+                                 -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.06),8,0,0,2);">
+                            <padding><Insets top="10" bottom="10" left="12" right="12"/></padding>
+                            <Label text="⚠  UNATTENDED"
+                                   style="-fx-font-size: 10; -fx-text-fill: #e65100; -fx-font-weight: bold;"/>
+                            <Label fx:id="lblUnattended" text="0"
+                                   style="-fx-font-size: 22; -fx-font-weight: bold; -fx-text-fill: #e65100;"/>
+                            <Label text="Today: waiting for care"
+                                   style="-fx-font-size: 9; -fx-text-fill: #bf360c;"/>
+                        </VBox>
+                        <!-- Pending Re-checks — always fixed to today -->
+                        <VBox alignment="CENTER" spacing="4" HBox.hgrow="ALWAYS"
+                              style="-fx-background-color: #fff0f0; -fx-background-radius: 10;
+                                 -fx-border-color: #ffcdd2; -fx-border-radius: 10;
+                                 -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.06),8,0,0,2);">
+                            <padding><Insets top="10" bottom="10" left="12" right="12"/></padding>
+                            <Label text="🔄  PENDING RE-CHECKS"
+                                   style="-fx-font-size: 10; -fx-text-fill: #c0392b; -fx-font-weight: bold;"/>
+                            <Label fx:id="lblPendingRechecks" text="0"
+                                   style="-fx-font-size: 22; -fx-font-weight: bold; -fx-text-fill: #c0392b;"/>
+                            <Label text="Today: follow-ups due"
+                                   style="-fx-font-size: 9; -fx-text-fill: #c0392b;"/>
+                        </VBox>
+                    </HBox>
+
+                    <!-- ═══ LIVE QUEUE PANEL — always shows today's waiting patients ═══ -->
+                    <VBox fx:id="vboxQueue" spacing="0"
+                          style="-fx-background-color: white; -fx-background-radius: 10;
+                             -fx-border-color: #e0e0e0; -fx-border-radius: 10;
+                             -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.06),8,0,0,2);">
+                        <padding><Insets top="12" bottom="12" left="14" right="14"/></padding>
                         <HBox alignment="CENTER_LEFT" spacing="10">
-                            <Label text="Top Diagnoses"
+                            <Label text="🕐  Today's Queue"
                                    style="-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #333;"
                                    HBox.hgrow="ALWAYS"/>
+                            <Label text="Patients checked in and waiting · refreshes with dashboard"
+                                   style="-fx-font-size: 10; -fx-text-fill: #999;"/>
                         </HBox>
-                        <Label fx:id="lblIllnessSubtitle"
-                               text="Most frequent diagnoses — This Week"
-                               style="-fx-font-size: 10; -fx-text-fill: #999;"/>
-                        <BarChart fx:id="chartIllnesses" prefHeight="230" maxHeight="260"
-                                  VBox.vgrow="ALWAYS" animated="true" legendVisible="false">
-                            <xAxis><CategoryAxis label="Diagnosis"/></xAxis>
-                            <yAxis><NumberAxis label="Count"/></yAxis>
-                        </BarChart>
+                        <Separator style="-fx-padding: 6 0 6 0;">
+                            <VBox.margin><Insets top="8" bottom="8"/></VBox.margin>
+                        </Separator>
+                        <!-- Queue rows injected here by controller -->
+                        <VBox fx:id="vboxQueueRows" spacing="6"/>
+                        <Label fx:id="lblQueueEmpty" text="No patients currently waiting."
+                               style="-fx-font-size: 11; -fx-text-fill: #bbb; -fx-font-style: italic; -fx-padding: 4 0 0 0;"/>
+                        <!-- ═══ PENDING RE-CHECKS PANEL ═══ -->
+                        <VBox spacing="0"
+                              style="-fx-background-color: white; -fx-background-radius: 10;
+                         -fx-border-color: #e0e0e0; -fx-border-radius: 10;
+                         -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.06),8,0,0,2);">
+                            <padding><Insets top="12" bottom="12" left="14" right="14"/></padding>
+                            <HBox alignment="CENTER_LEFT" spacing="10">
+                                <Label fx:id="lblRecheckHeader" text="🔄  Pending Re-checks"
+                                       style="-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #333;"
+                                       HBox.hgrow="ALWAYS"/>
+                                <Label text="Patients due for follow-up today"
+                                       style="-fx-font-size: 10; -fx-text-fill: #999;"/>
+                            </HBox>
+                            <Separator><VBox.margin><Insets top="8" bottom="8"/></VBox.margin></Separator>
+                            <VBox fx:id="vboxRecheckRows" spacing="6"/>
+                            <Label fx:id="lblRecheckEmpty" text="No re-checks pending."
+                                   style="-fx-font-size: 11; -fx-text-fill: #bbb; -fx-font-style: italic; -fx-padding: 4 0 0 0;"/>
+                        </VBox>
                     </VBox>
-                    <VBox spacing="10" HBox.hgrow="ALWAYS"
-                          style="-fx-background-color: white; -fx-background-radius: 10;
-                                 -fx-border-color: #e0e0e0; -fx-border-radius: 10;
-                                 -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.06),8,0,0,2);">
-                        <padding><Insets top="14" bottom="14" left="14" right="14"/></padding>
-                        <Label text="Illness Trend"
-                               style="-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #333;"/>
-                        <Label fx:id="lblTrendSubtitle"
-                               text="Weekly visits over the past 8 weeks"
-                               style="-fx-font-size: 10; -fx-text-fill: #999;"/>
-                        <LineChart fx:id="chartMonthly" prefHeight="230" maxHeight="260"
-                                   VBox.vgrow="ALWAYS" animated="true" legendVisible="true">
-                            <xAxis><CategoryAxis label="Week"/></xAxis>
-                            <yAxis><NumberAxis label="Visits"/></yAxis>
-                        </LineChart>
-                    </VBox>
-                </HBox>
 
-                <!-- ═══ ROW 3: College Bar + Purpose Pie ═══ -->
-                <HBox spacing="10">
-                    <VBox spacing="10" HBox.hgrow="ALWAYS"
-                          style="-fx-background-color: white; -fx-background-radius: 10;
+                    <!-- ═══ ROW 2: Illness Charts ═══ -->
+                    <HBox spacing="10">
+                        <VBox spacing="10" HBox.hgrow="ALWAYS"
+                              style="-fx-background-color: white; -fx-background-radius: 10;
                                  -fx-border-color: #e0e0e0; -fx-border-radius: 10;
                                  -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.06),8,0,0,2);">
-                        <padding><Insets top="14" bottom="14" left="14" right="14"/></padding>
-                        <Label text="Visits by College / Dept"
-                               style="-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #333;"/>
-                        <Label fx:id="lblCollegeSubtitle"
-                               text="Visits by department — This Week"
-                               style="-fx-font-size: 9; -fx-text-fill: #999;"/>
-                        <BarChart fx:id="chartCollege" prefHeight="200" maxHeight="240"
-                                  VBox.vgrow="ALWAYS" animated="true" legendVisible="true">
-                            <xAxis><CategoryAxis label="College / Dept"/></xAxis>
-                            <yAxis><NumberAxis label="Visits"/></yAxis>
-                        </BarChart>
-                        <VBox fx:id="vboxCollegeBreakdown" spacing="3"/>
-                    </VBox>
-                    <VBox spacing="10" HBox.hgrow="ALWAYS"
-                          style="-fx-background-color: white; -fx-background-radius: 10;
+                            <padding><Insets top="14" bottom="14" left="14" right="14"/></padding>
+                            <HBox alignment="CENTER_LEFT" spacing="10">
+                                <Label text="Top Diagnoses"
+                                       style="-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #333;"
+                                       HBox.hgrow="ALWAYS"/>
+                            </HBox>
+                            <Label fx:id="lblIllnessSubtitle"
+                                   text="Most frequent diagnoses — This Week"
+                                   style="-fx-font-size: 10; -fx-text-fill: #999;"/>
+                            <BarChart fx:id="chartIllnesses" prefHeight="180" maxHeight="210"
+                                      VBox.vgrow="ALWAYS" animated="true" legendVisible="false">
+                                <xAxis><CategoryAxis label="Diagnosis"/></xAxis>
+                                <yAxis><NumberAxis label="Count"/></yAxis>
+                            </BarChart>
+                        </VBox>
+                        <VBox spacing="10" HBox.hgrow="ALWAYS"
+                              style="-fx-background-color: white; -fx-background-radius: 10;
                                  -fx-border-color: #e0e0e0; -fx-border-radius: 10;
                                  -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.06),8,0,0,2);">
-                        <padding><Insets top="14" bottom="14" left="14" right="14"/></padding>
-                        <Label text="Purpose of Visit"
-                               style="-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #333;"/>
-                        <Label fx:id="lblPurposeSubtitle"
-                               text="Health-Related vs Med Cert — This Week"
-                               style="-fx-font-size: 10; -fx-text-fill: #999;"/>
-                        <PieChart fx:id="chartPurpose" prefHeight="200" maxHeight="240"
-                                  VBox.vgrow="ALWAYS" animated="true" legendVisible="true"/>
-                    </VBox>
-                </HBox>
+                            <padding><Insets top="14" bottom="14" left="14" right="14"/></padding>
+                            <Label text="Illness Trend"
+                                   style="-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #333;"/>
+                            <Label fx:id="lblTrendSubtitle"
+                                   text="Weekly visits over the past 8 weeks"
+                                   style="-fx-font-size: 10; -fx-text-fill: #999;"/>
+                            <LineChart fx:id="chartMonthly" prefHeight="180" maxHeight="210"
+                                       VBox.vgrow="ALWAYS" animated="true" legendVisible="true">
+                                <xAxis><CategoryAxis label="Week"/></xAxis>
+                                <yAxis><NumberAxis label="Visits"/></yAxis>
+                            </LineChart>
+                        </VBox>
+                    </HBox>
 
-            </VBox>
-        </ScrollPane>
-    </center>
+                    <!-- ═══ ROW 3: College Bar + Purpose Pie ═══ -->
+                    <HBox spacing="10">
+                        <VBox spacing="10" HBox.hgrow="ALWAYS"
+                              style="-fx-background-color: white; -fx-background-radius: 10;
+                                 -fx-border-color: #e0e0e0; -fx-border-radius: 10;
+                                 -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.06),8,0,0,2);">
+                            <padding><Insets top="14" bottom="14" left="14" right="14"/></padding>
+                            <Label text="Visits by College / Dept"
+                                   style="-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #333;"/>
+                            <Label fx:id="lblCollegeSubtitle"
+                                   text="Visits by department — This Week"
+                                   style="-fx-font-size: 9; -fx-text-fill: #999;"/>
+                            <BarChart fx:id="chartCollege" prefHeight="160" maxHeight="190"
+                                      VBox.vgrow="ALWAYS" animated="true" legendVisible="true">
+                                <xAxis><CategoryAxis label="College / Dept"/></xAxis>
+                                <yAxis><NumberAxis label="Visits"/></yAxis>
+                            </BarChart>
+                            <VBox fx:id="vboxCollegeBreakdown" spacing="3"/>
+                        </VBox>
+                        <VBox spacing="10" HBox.hgrow="ALWAYS"
+                              style="-fx-background-color: white; -fx-background-radius: 10;
+                                 -fx-border-color: #e0e0e0; -fx-border-radius: 10;
+                                 -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.06),8,0,0,2);">
+                            <padding><Insets top="14" bottom="14" left="14" right="14"/></padding>
+                            <Label text="Purpose of Visit"
+                                   style="-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #333;"/>
+                            <Label fx:id="lblPurposeSubtitle"
+                                   text="Health-Related vs Med Cert — This Week"
+                                   style="-fx-font-size: 10; -fx-text-fill: #999;"/>
+                            <PieChart fx:id="chartPurpose" prefHeight="160" maxHeight="190"
+                                      VBox.vgrow="ALWAYS" animated="true" legendVisible="true"/>
+                        </VBox>
+                    </HBox>
+
+                </VBox>
+            </ScrollPane>
+        </center>
 
     </BorderPane>
 

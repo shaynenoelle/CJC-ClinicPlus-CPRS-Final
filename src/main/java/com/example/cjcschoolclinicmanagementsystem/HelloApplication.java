@@ -15,21 +15,24 @@ public class HelloApplication extends Application {
     public void start(Stage stage) throws IOException {
         FXMLLoader fxmlLoader = new FXMLLoader(HelloApplication.class.getResource("View/login-view.fxml"));
 
-        // Use screen bounds for fully responsive sizing
-        javafx.geometry.Rectangle2D screenBounds =
-                javafx.stage.Screen.getPrimary().getVisualBounds();
+        // Login opens as a clean fixed-size centered window — NOT maximized.
+        // This ensures the dashboard's setMaximized(true) always fires correctly
+        // because it will be a genuine normal → maximized state change.
+        Scene scene = new Scene(fxmlLoader.load(), 960, 600);
 
-        Scene scene = new Scene(fxmlLoader.load(),
-                screenBounds.getWidth(), screenBounds.getHeight());
-
-        stage.setMinWidth(900);
-        stage.setMinHeight(600);
+        stage.setResizable(false);  // login doesn't need resizing
         stage.setTitle("CJC School Clinic - Login");
         stage.setScene(scene);
 
+        // Center the login window on whatever screen the user has
+        javafx.geometry.Rectangle2D screenBounds =
+                javafx.stage.Screen.getPrimary().getVisualBounds();
+        stage.setX((screenBounds.getWidth()  - 960) / 2);
+        stage.setY((screenBounds.getHeight() - 600) / 2);
+
         // Set the app icon
         try {
-            var iconStream = HelloApplication.class.getResourceAsStream("Images/cliniclogov2.jpeg");
+            var iconStream = HelloApplication.class.getResourceAsStream("Images/cliniclogov3.png");
             if (iconStream != null) {
                 Image icon = new Image(iconStream);
                 stage.getIcons().add(icon);
@@ -38,8 +41,6 @@ public class HelloApplication extends Application {
             System.err.println("Warning: Could not load app icon: " + e.getMessage());
         }
 
-        // Maximize to fill screen on start
-        stage.setMaximized(true);
         stage.show();
     }
 }
