@@ -1,6 +1,4 @@
 package com.example.cjcschoolclinicmanagementsystem.controller;
-
-import com.example.cjcschoolclinicmanagementsystem.util.PreferencesManager;
 import javafx.animation.FadeTransition;
 import javafx.animation.SequentialTransition;
 import javafx.animation.PauseTransition;
@@ -29,7 +27,6 @@ public class LoginController {
     @FXML
     private Label taglineLabel;
     @FXML private TextField txtPasswordVisible;
-    @FXML private CheckBox chkRemember;
     @FXML private Label btnTogglePassword;
     private boolean passwordVisible = false;
 
@@ -116,13 +113,6 @@ public class LoginController {
                 txtPasswordVisible.getText() : txtPassword.getText();
 
         if (DatabaseManager.validateLogin(user, pass)) {
-            // Save credentials if Remember Me is checked
-            if (chkRemember.isSelected()) {
-                PreferencesManager.saveCredentials(user, pass, true);
-            } else {
-                PreferencesManager.clearCredentials();
-            }
-
             SessionManager.setCurrentUser(user); // ← store logged-in nurse's name
             System.out.println("[AUDIT LOG] Access Granted: " + user + " at " + LocalDateTime.now());
             switchToDashboard();

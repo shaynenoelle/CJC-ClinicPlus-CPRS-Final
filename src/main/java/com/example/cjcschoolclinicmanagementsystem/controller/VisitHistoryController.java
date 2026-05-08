@@ -9,6 +9,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.control.Tooltip;
 import javafx.scene.layout.HBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
@@ -101,17 +102,20 @@ public class VisitHistoryController {
 
         // Action column: View + Edit + Delete
         colAction.setCellFactory(col -> new TableCell<>() {
-            final Button btnView   = new Button("View");
-            final Button btnEdit   = new Button("Edit");
-            final Button btnDelete = new Button("Delete");
+            final Button btnView   = new Button("👁");
+            final Button btnEdit   = new Button("✏");
+            final Button btnDelete = new Button("🗑");
             final HBox box = new HBox(4, btnView, btnEdit, btnDelete);
             {
                 btnView.setStyle("-fx-background-color: #2196F3; -fx-text-fill: white;" +
-                        "-fx-background-radius: 4; -fx-cursor: hand; -fx-font-size: 10;");
+                        "-fx-background-radius: 4; -fx-cursor: hand; -fx-font-size: 13; -fx-padding: 3 8 3 8;");
                 btnEdit.setStyle("-fx-background-color: #8B0000; -fx-text-fill: white;" +
-                        "-fx-background-radius: 4; -fx-cursor: hand; -fx-font-size: 10;");
+                        "-fx-background-radius: 4; -fx-cursor: hand; -fx-font-size: 13; -fx-padding: 3 8 3 8;");
                 btnDelete.setStyle("-fx-background-color: #e74c3c; -fx-text-fill: white;" +
-                        "-fx-background-radius: 4; -fx-cursor: hand; -fx-font-size: 10;");
+                        "-fx-background-radius: 4; -fx-cursor: hand; -fx-font-size: 13; -fx-padding: 3 8 3 8;");
+                Tooltip.install(btnView,   new Tooltip("View Visit"));
+                Tooltip.install(btnEdit,   new Tooltip("Edit Visit"));
+                Tooltip.install(btnDelete, new Tooltip("Delete Visit"));
 
                 btnView.setOnAction(e -> {
                     Map<String, String> row = getTableView().getItems().get(getIndex());

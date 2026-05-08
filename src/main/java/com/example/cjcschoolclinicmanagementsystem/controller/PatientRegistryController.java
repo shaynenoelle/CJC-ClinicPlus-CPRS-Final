@@ -169,19 +169,22 @@ public class PatientRegistryController {
             }
         });
 
-        // Action column — text buttons (View, Edit, Check-In) + delete
+        // Action column — icon buttons with tooltips (View, Edit, Check-In, Delete)
         colAction.setCellFactory(col -> new TableCell<>() {
-            private final Button btnView    = new Button("View");
-            private final Button btnEdit    = new Button("Edit");
+            private final Button btnView    = new Button("👁");
+            private final Button btnEdit    = new Button("✏");
             private final Button btnCheckin = new Button("Check-In");
-            private final Button btnDelete  = new Button("🗑 Delete");
+            private final Button btnDelete  = new Button("🗑");
             private final HBox   box        = new HBox(4, btnView, btnEdit, btnCheckin, btnDelete);
             {
-                String base = "-fx-cursor: hand; -fx-background-radius: 4; -fx-padding: 4 10 4 10; -fx-font-size: 11;";
-                btnView   .setStyle(base + "-fx-background-color: #1976D2; -fx-text-fill: white;");
-                btnEdit   .setStyle(base + "-fx-background-color: #388E3C; -fx-text-fill: white;");
+                String base = "-fx-cursor: hand; -fx-background-radius: 4; -fx-padding: 4 9 4 9; -fx-font-size: 11;";
+                btnView   .setStyle(base + "-fx-font-size: 13; -fx-background-color: #1976D2; -fx-text-fill: white;");
+                btnEdit   .setStyle(base + "-fx-font-size: 13; -fx-background-color: #388E3C; -fx-text-fill: white;");
                 btnCheckin.setStyle(base + "-fx-background-color: #F57C00; -fx-text-fill: white;");
-                btnDelete .setStyle("-fx-cursor: hand; -fx-background-radius: 4; -fx-padding: 4 8 4 8; -fx-font-size: 12; -fx-background-color: #C62828; -fx-text-fill: white;");
+                btnDelete .setStyle(base + "-fx-font-size: 13; -fx-background-color: #C62828; -fx-text-fill: white;");
+                Tooltip.install(btnView,   new Tooltip("View Patient Profile"));
+                Tooltip.install(btnEdit,   new Tooltip("Edit Patient Info"));
+                Tooltip.install(btnDelete, new Tooltip("Delete Patient Record"));
                 box.setAlignment(Pos.CENTER);
 
                 btnView   .setOnAction(e -> openViewProfile(getTableView().getItems().get(getIndex())));
@@ -613,17 +616,18 @@ public class PatientRegistryController {
         // ── Action column: View / Edit / Delete ───────────────────
         TableColumn<Map<String,String>, String> colAction = new TableColumn<>("Action");
         colAction.setCellFactory(col -> new TableCell<>() {
-            final Button btnView   = new Button("View");
-            final Button btnEdit   = new Button("Edit");
-            final Button btnDelete = new Button("Delete");
+            final Button btnView   = new Button("👁");
+            final Button btnEdit   = new Button("✏");
+            final Button btnDelete = new Button("🗑");
             final HBox   actionBox = new HBox(4, btnView, btnEdit, btnDelete);
             {
-                btnView.setStyle("-fx-background-color: #2196F3; -fx-text-fill: white;" +
-                        "-fx-background-radius: 4; -fx-cursor: hand; -fx-font-size: 10;");
-                btnEdit.setStyle("-fx-background-color: #8B0000; -fx-text-fill: white;" +
-                        "-fx-background-radius: 4; -fx-cursor: hand; -fx-font-size: 10;");
-                btnDelete.setStyle("-fx-background-color: #e74c3c; -fx-text-fill: white;" +
-                        "-fx-background-radius: 4; -fx-cursor: hand; -fx-font-size: 10;");
+                String base = "-fx-background-radius: 4; -fx-cursor: hand; -fx-font-size: 13; -fx-padding: 3 8 3 8;";
+                btnView.setStyle(base + "-fx-background-color: #2196F3; -fx-text-fill: white;");
+                btnEdit.setStyle(base + "-fx-background-color: #8B0000; -fx-text-fill: white;");
+                btnDelete.setStyle(base + "-fx-background-color: #e74c3c; -fx-text-fill: white;");
+                Tooltip.install(btnView,   new Tooltip("View Visit"));
+                Tooltip.install(btnEdit,   new Tooltip("Edit Visit"));
+                Tooltip.install(btnDelete, new Tooltip("Delete Visit"));
 
                 btnView.setOnAction(e -> {
                     Map<String,String> row = getTableView().getItems().get(getIndex());

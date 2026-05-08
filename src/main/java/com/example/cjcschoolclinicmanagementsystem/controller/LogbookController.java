@@ -90,6 +90,25 @@ public class LogbookController {
         setupLogbookTable();
         setCurrentTime();
         refreshLogbook();
+
+        // Bind logbook column widths as % of table — responsive on small screens
+        javafx.application.Platform.runLater(() -> {
+            if (tblLogbook.getScene() != null) bindLogbookColumnWidths();
+            else tblLogbook.sceneProperty().addListener((obs, ov, nv) -> {
+                if (nv != null) bindLogbookColumnWidths();
+            });
+        });
+    }
+
+    private void bindLogbookColumnWidths() {
+        javafx.beans.binding.DoubleBinding w = tblLogbook.widthProperty().subtract(20);
+        colId         .prefWidthProperty().bind(w.multiply(0.11));
+        colName       .prefWidthProperty().bind(w.multiply(0.32)); // wide enough for EMP/STU pill + full name
+        colTimeIn     .prefWidthProperty().bind(w.multiply(0.08));
+        colPurpose    .prefWidthProperty().bind(w.multiply(0.11));
+        colTimeOut    .prefWidthProperty().bind(w.multiply(0.08));
+        colAttendedBy .prefWidthProperty().bind(w.multiply(0.13));
+        colAction     .prefWidthProperty().bind(w.multiply(0.17)); // trimmed — only 1 button fits here
     }
 
     // ── Search table ──────────────────────────────────────────────
