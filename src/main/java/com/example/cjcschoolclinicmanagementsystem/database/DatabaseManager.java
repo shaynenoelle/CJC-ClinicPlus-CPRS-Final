@@ -46,12 +46,14 @@ public class DatabaseManager {
 
     // ── LOGIN ─────────────────────────────────────────────────────
     public static boolean validateLogin(String username, String password) {
-        String sql = "SELECT * FROM Users WHERE username = ? AND password_hash = ?";
+        String sql = "SELECT password_hash FROM Users WHERE username = ?";
         try (Connection conn = connect(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, username);
-            pstmt.setString(2, password);
-            return pstmt.executeQuery().next();
-        } catch (SQLException e) {
+            ResultSet rs = pstmt.executeQuery();
+            if (!rs.next()) return false;
+            String storedHash = rs.getString("password_hash");
+            return org.mindrot.jbcrypt.BCrypt.checkpw(password, storedHash);
+        } catch (Exception e) {
             System.err.println("Login DB Error: " + e.getMessage());
             return false;
         }
@@ -751,13 +753,16 @@ public class DatabaseManager {
     // ── SETTINGS ─────────────────────────────────────────────────
     public static boolean changePassword(String username, String oldPassword, String newPassword) {
         try (Connection conn = connect();
-             PreparedStatement p = conn.prepareStatement("SELECT * FROM Users WHERE username=? AND password_hash=?")) {
-            p.setString(1, username); p.setString(2, oldPassword);
-            if (!p.executeQuery().next()) return false;
-        } catch (SQLException e) { return false; }
+             PreparedStatement p = conn.prepareStatement("SELECT password_hash FROM Users WHERE username=?")) {
+            p.setString(1, username);
+            ResultSet rs = p.executeQuery();
+            if (!rs.next()) return false;
+            if (!org.mindrot.jbcrypt.BCrypt.checkpw(oldPassword, rs.getString("password_hash"))) return false;
+        } catch (Exception e) { return false; }
         try (Connection conn = connect();
              PreparedStatement p = conn.prepareStatement("UPDATE Users SET password_hash=? WHERE username=?")) {
-            p.setString(1, newPassword); p.setString(2, username);
+            p.setString(1, org.mindrot.jbcrypt.BCrypt.hashpw(newPassword, org.mindrot.jbcrypt.BCrypt.gensalt()));
+            p.setString(2, username);
             p.executeUpdate(); return true;
         } catch (SQLException e) { System.err.println("ChangePassword Error: " + e.getMessage()); return false; }
     }
@@ -774,7 +779,8 @@ public class DatabaseManager {
     public static boolean addUser(String username, String password) {
         try (Connection conn = connect();
              PreparedStatement p = conn.prepareStatement("INSERT INTO Users(username, password_hash, role) VALUES(?,?,'STAFF')")) {
-            p.setString(1, username); p.setString(2, password);
+            p.setString(1, username);
+            p.setString(2, org.mindrot.jbcrypt.BCrypt.hashpw(password, org.mindrot.jbcrypt.BCrypt.gensalt()));
             p.executeUpdate(); return true;
         } catch (SQLException e) { System.err.println("AddUser Error: " + e.getMessage()); return false; }
     }
@@ -789,7 +795,8 @@ public class DatabaseManager {
     public static boolean resetUserPassword(String username, String newPassword) {
         try (Connection conn = connect();
              PreparedStatement p = conn.prepareStatement("UPDATE Users SET password_hash=? WHERE username=?")) {
-            p.setString(1, newPassword); p.setString(2, username);
+            p.setString(1, org.mindrot.jbcrypt.BCrypt.hashpw(newPassword, org.mindrot.jbcrypt.BCrypt.gensalt()));
+            p.setString(2, username);
             return p.executeUpdate() > 0;
         } catch (SQLException e) { System.err.println("ResetPassword Error: " + e.getMessage()); return false; }
     }

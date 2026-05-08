@@ -106,6 +106,12 @@ public class LoginController {
         }
     }
 
+    private static void auditLog(String message) {
+        try (java.io.FileWriter fw = new java.io.FileWriter("audit.log", true)) {
+            fw.write(java.time.LocalDateTime.now() + " | " + message + "\n");
+        } catch (Exception ignored) {}
+    }
+
     @FXML
     protected void onLoginClick() {
         String user = txtUsername.getText();
@@ -114,7 +120,7 @@ public class LoginController {
 
         if (DatabaseManager.validateLogin(user, pass)) {
             SessionManager.setCurrentUser(user); // ← store logged-in nurse's name
-            System.out.println("[AUDIT LOG] Access Granted: " + user + " at " + LocalDateTime.now());
+            auditLog("Access Granted: " + user);
             switchToDashboard();
         } else {
             lblStatus.setText("Access Denied: Invalid Credentials.");
