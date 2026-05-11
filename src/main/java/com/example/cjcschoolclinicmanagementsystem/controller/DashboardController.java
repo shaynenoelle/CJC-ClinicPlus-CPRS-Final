@@ -27,6 +27,7 @@ import java.net.URL;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class DashboardController {
 
@@ -614,28 +615,52 @@ public class DashboardController {
         }
     }
 
+    // Distinct color palette for diagnosis bars
+    private static final String[] DIAGNOSIS_COLORS = {
+            "#8B0000", "#1976D2", "#388E3C", "#F57C00", "#6A1B9A"
+    };
+
     private void loadIllnessChart(String period, String label) {
         chartIllnesses.getData().clear();
+        chartIllnesses.setLegendVisible(false);
         lblIllnessSubtitle.setText("Most frequent diagnoses — " + label);
 
+        Map<String, Integer> data = DatabaseManager.getTopIllnesses(period);
+
+        // Use ONE series with one data point per diagnosis — same pattern as
+        // loadCollegeBarChart. This keeps each bar directly under its X-axis
+        // label. Multiple series cause JavaFX to group/offset bars and misalign.
         XYChart.Series<String, Number> series = new XYChart.Series<>();
         series.setName("Diagnoses");
 
-        Map<String, Integer> data = DatabaseManager.getTopIllnesses(period);
         if (data.isEmpty()) {
             series.getData().add(new XYChart.Data<>("No data yet", 0));
-        } else {
-            data.entrySet().stream()
-                    .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
-                    .limit(5)
-                    .forEach(e -> series.getData().add(new XYChart.Data<>(e.getKey(), e.getValue())));
+            chartIllnesses.getData().add(series);
+            return;
         }
 
+        java.util.List<Map.Entry<String, Integer>> entries = data.entrySet().stream()
+                .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
+                .limit(5)
+                .collect(java.util.stream.Collectors.toList());
+
+        for (Map.Entry<String, Integer> e : entries) {
+            series.getData().add(new XYChart.Data<>(e.getKey(), e.getValue()));
+        }
         chartIllnesses.getData().add(series);
 
-        javafx.application.Platform.runLater(() ->
-                chartIllnesses.lookupAll(".bar").forEach(node ->
-                        node.setStyle("-fx-background-color: #8B0000; -fx-background-radius: 3;")));
+        // Color each bar by its position in the data list
+        javafx.application.Platform.runLater(() -> {
+            java.util.List<XYChart.Data<String, Number>> dataList = series.getData();
+            for (int i = 0; i < dataList.size(); i++) {
+                XYChart.Data<String, Number> d = dataList.get(i);
+                String color = DIAGNOSIS_COLORS[i % DIAGNOSIS_COLORS.length];
+                if (d.getNode() != null)
+                    d.getNode().setStyle(
+                            "-fx-background-color: " + color +
+                                    "; -fx-background-radius: 3;");
+            }
+        });
     }
 
     private void loadIllnessTrendChart(String period, String label) {
@@ -675,29 +700,36 @@ public class DashboardController {
 
         Map<String, Integer> data = DatabaseManager.getVisitsByCollegePeriod(period);
 
+        // Use ONE series with one data point per college.
+        // This keeps the X-axis labels directly beneath their bar —
+        // multiple series cause JavaFX to group/offset bars and misalign labels.
+        XYChart.Series<String, Number> series = new XYChart.Series<>();
+        series.setName("Visits");
+
+        for (String college : COLLEGE_ORDER) {
+            int count = data.getOrDefault(college, 0);
+            series.getData().add(new XYChart.Data<>(college, count));
+        }
+        chartCollege.getData().add(series);
+        chartCollege.setLegendVisible(false);
+
+        // Color each bar individually after the scene graph is ready
+        javafx.application.Platform.runLater(() -> {
+            java.util.List<XYChart.Data<String, Number>> dataList = series.getData();
+            for (int i = 0; i < dataList.size(); i++) {
+                XYChart.Data<String, Number> d = dataList.get(i);
+                String color = COLLEGE_COLORS[i % COLLEGE_COLORS.length];
+                if (d.getNode() != null)
+                    d.getNode().setStyle(
+                            "-fx-background-color: " + color +
+                                    "; -fx-background-radius: 3;");
+            }
+        });
+
+        // Breakdown text below chart (only depts with visits)
         for (int i = 0; i < COLLEGE_ORDER.length; i++) {
             String college = COLLEGE_ORDER[i];
-            String color   = COLLEGE_COLORS[i];
             int    count   = data.getOrDefault(college, 0);
-
-            XYChart.Series<String, Number> series = new XYChart.Series<>();
-            series.setName(college);
-            series.getData().add(new XYChart.Data<>(college, count));
-            chartCollege.getData().add(series);
-
-            final String c   = color;
-            final int    idx = i;
-            javafx.application.Platform.runLater(() -> {
-                if (idx < chartCollege.getData().size()) {
-                    chartCollege.getData().get(idx).getData().forEach(d -> {
-                        if (d.getNode() != null)
-                            d.getNode().setStyle("-fx-background-color: " + c +
-                                    "; -fx-background-radius: 3;");
-                    });
-                }
-            });
-
-            // Breakdown text below chart (only depts with visits)
             if (count > 0) {
                 Label lbl = new Label(college + ": " + count);
                 lbl.setStyle("-fx-font-size: 10; -fx-text-fill: #666;");

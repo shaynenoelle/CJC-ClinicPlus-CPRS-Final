@@ -191,7 +191,7 @@
                             <Label text="🕐  Today's Queue"
                                    style="-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #333;"
                                    HBox.hgrow="ALWAYS"/>
-                            <Label text="Patients checked in and waiting · refreshes with dashboard"
+                            <Label text="Patients Checked-in and Waiting · Refreshes with Dashboard"
                                    style="-fx-font-size: 10; -fx-text-fill: #999;"/>
                         </HBox>
                         <Separator style="-fx-padding: 6 0 6 0;">
@@ -214,7 +214,7 @@
                             <Label fx:id="lblRecheckHeader" text="🔄  Pending Re-checks"
                                    style="-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #333;"
                                    HBox.hgrow="ALWAYS"/>
-                            <Label text="Patients due for follow-up today"
+                            <Label text="Patients Due for Follow-up Today."
                                    style="-fx-font-size: 10; -fx-text-fill: #999;"/>
                         </HBox>
                         <Separator><VBox.margin><Insets top="8" bottom="8"/></VBox.margin></Separator>
@@ -274,8 +274,8 @@
                             <Label fx:id="lblCollegeSubtitle"
                                    text="Visits by department — This Week"
                                    style="-fx-font-size: 9; -fx-text-fill: #999;"/>
-                            <BarChart fx:id="chartCollege" prefHeight="160" maxHeight="190"
-                                      VBox.vgrow="ALWAYS" animated="true" legendVisible="true">
+                            <BarChart fx:id="chartCollege" prefHeight="200" minHeight="180"
+                                      VBox.vgrow="ALWAYS" animated="true" legendVisible="false">
                                 <xAxis><CategoryAxis label="College / Dept"/></xAxis>
                                 <yAxis><NumberAxis label="Visits"/></yAxis>
                             </BarChart>
@@ -291,8 +291,10 @@
                             <Label fx:id="lblPurposeSubtitle"
                                    text="Health-Related vs Med Cert — This Week"
                                    style="-fx-font-size: 10; -fx-text-fill: #999;"/>
-                            <PieChart fx:id="chartPurpose" prefHeight="160" maxHeight="190"
-                                      VBox.vgrow="ALWAYS" animated="true" legendVisible="true"/>
+                            <PieChart fx:id="chartPurpose" prefHeight="260" minHeight="240"
+                                      VBox.vgrow="ALWAYS" animated="true" legendVisible="true"
+                                      labelsVisible="true" labelLineLength="20"
+                                      style="-fx-label-line-length: 20;"/>
                         </VBox>
                     </HBox>
 
