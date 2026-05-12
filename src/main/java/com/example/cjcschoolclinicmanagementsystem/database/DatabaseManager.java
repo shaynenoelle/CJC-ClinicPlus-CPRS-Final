@@ -890,20 +890,20 @@ public class DatabaseManager {
 
     public static boolean exportVisitsToCSV(String filePath) {
         String sql = "SELECT v.visit_id, v.patient_id, p.full_name, v.visit_date, v.time_in, v.time_out, " +
-                "v.purpose, v.chief_complaint, v.diagnosis, v.treatment, v.remarks, " +
+                "v.purpose, v.chief_complaint, v.treatment, v.remarks, " +
                 "v.temperature, v.blood_pressure, v.heart_rate, v.oxygen_sat " +
                 "FROM Visits v JOIN Patients p ON v.patient_id = p.patient_id ORDER BY v.visit_date DESC";
         try (Connection conn = connect(); Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql);
              java.io.PrintWriter pw = new java.io.PrintWriter(new java.io.FileWriter(filePath))) {
             pw.println("Visit ID,Patient ID,Full Name,Date,Time In,Time Out,Purpose," +
-                    "Chief Complaint,Diagnosis,Treatment,Remarks,Temperature,Blood Pressure,Heart Rate,SpO2");
+                    "Cues,Treatment,Remarks,Temperature,Blood Pressure,Heart Rate,SpO2");
             while (rs.next()) {
                 pw.printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"," +
-                                "\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"%n",
+                                "\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"%n",
                         safe(rs.getString("visit_id")), safe(rs.getString("patient_id")), safe(rs.getString("full_name")),
                         safe(rs.getString("visit_date")), safe(rs.getString("time_in")), safe(rs.getString("time_out")),
-                        safe(rs.getString("purpose")), safe(rs.getString("chief_complaint")), safe(rs.getString("diagnosis")),
+                        safe(rs.getString("purpose")), safe(rs.getString("chief_complaint")),
                         safe(rs.getString("treatment")), safe(rs.getString("remarks")), safe(rs.getString("temperature")),
                         safe(rs.getString("blood_pressure")), safe(rs.getString("heart_rate")), safe(rs.getString("oxygen_sat")));
             }
@@ -920,16 +920,16 @@ public class DatabaseManager {
             pw.println("Visits (selected period)," + getVisitCount(normalized));
             pw.println("Total Patients," + getTotalPatients());
             pw.println("Unattended Today," + getUnattendedToday()); pw.println();
-            pw.println("Top Diagnoses"); pw.println("Diagnosis,Count");
+            pw.println("Top Cues"); pw.println("Cue,Count");
             java.util.Map<String, Integer> ill = getTopIllnesses(normalized);
             if (ill.isEmpty()) pw.println("No data,0"); else ill.forEach((k,v) -> pw.println("\""+safe(k)+"\","+v));
             pw.println(); pw.println("Visit Rows");
-            pw.println("Visit ID,Patient ID,Full Name,Date,Time In,Time Out,Purpose,Diagnosis");
+            pw.println("Visit ID,Patient ID,Full Name,Date,Time In,Time Out,Purpose,Cues");
             for (java.util.Map<String, String> row : getAllVisits(normalized)) {
                 pw.printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"%n",
                         safe(row.get("visit_id")), safe(row.get("patient_id")), safe(row.get("full_name")),
                         safe(row.get("visit_date")), safe(row.get("time_in")), safe(row.get("time_out")),
-                        safe(row.get("purpose")), safe(row.get("diagnosis")));
+                        safe(row.get("purpose")), safe(row.get("chief_complaint")));
             }
             return true;
         } catch (Exception e) { System.err.println("ExportDashboardCSV Error: " + e.getMessage()); return false; }
