@@ -36,12 +36,9 @@ public class SettingsController {
     @FXML private Label     lblCourseStatus;
 
     // ════════════════════ CLINICAL PRESETS TAB ════════════════════
-    @FXML private ListView<String> lstDiagnosisPresets;
-    @FXML private TextField txtNewDiagnosis;
-    @FXML private Label     lblDiagnosisStatus;
-    @FXML private ListView<String> lstComplaintPresets;
-    @FXML private TextField txtNewComplaint;
-    @FXML private Label     lblComplaintStatus;
+    @FXML private ListView<String> lstCuePresets;
+    @FXML private TextField txtNewCue;
+    @FXML private Label     lblCueStatus;
     @FXML private ListView<String> lstMedicines;
     @FXML private TextField txtNewMedicine;
     @FXML private Label     lblMedicineStatus;
@@ -83,8 +80,7 @@ public class SettingsController {
             DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
     // ── Preset category constants ─────────────────────────────────
-    private static final String CAT_DIAGNOSIS  = "diagnosis";
-    private static final String CAT_COMPLAINT  = "complaint";
+    private static final String CAT_CUE        = "cue";
     private static final String CAT_MEDICINE   = "medicine";
     private static final String CAT_DEPARTMENT = "department";
     private static final String CAT_COURSE     = "course";
@@ -131,18 +127,14 @@ public class SettingsController {
     // ════════════════════ CLINICAL PRESETS ════════════════════
 
     private void initPresetsTab() {
-        refreshList(lstDiagnosisPresets, CAT_DIAGNOSIS);
-        refreshList(lstComplaintPresets, CAT_COMPLAINT);
-        refreshList(lstMedicines,        CAT_MEDICINE);
+        refreshList(lstCuePresets, CAT_CUE);
+        refreshList(lstMedicines,  CAT_MEDICINE);
     }
 
-    @FXML private void addDiagnosisPreset() { addPreset(txtNewDiagnosis, lstDiagnosisPresets, CAT_DIAGNOSIS, lblDiagnosisStatus); }
-    @FXML private void removeDiagnosisPreset() { removePreset(lstDiagnosisPresets, CAT_DIAGNOSIS, lblDiagnosisStatus); }
+    @FXML private void addCuePreset()    { addPreset(txtNewCue, lstCuePresets, CAT_CUE, lblCueStatus); }
+    @FXML private void removeCuePreset() { removePreset(lstCuePresets, CAT_CUE, lblCueStatus); }
 
-    @FXML private void addComplaintPreset() { addPreset(txtNewComplaint, lstComplaintPresets, CAT_COMPLAINT, lblComplaintStatus); }
-    @FXML private void removeComplaintPreset() { removePreset(lstComplaintPresets, CAT_COMPLAINT, lblComplaintStatus); }
-
-    @FXML private void addMedicine() { addPreset(txtNewMedicine, lstMedicines, CAT_MEDICINE, lblMedicineStatus); }
+    @FXML private void addMedicine()    { addPreset(txtNewMedicine, lstMedicines, CAT_MEDICINE, lblMedicineStatus); }
     @FXML private void removeMedicine() { removePreset(lstMedicines, CAT_MEDICINE, lblMedicineStatus); }
 
     // ── Shared preset helpers ─────────────────────────────────────

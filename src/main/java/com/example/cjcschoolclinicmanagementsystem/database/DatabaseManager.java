@@ -473,6 +473,27 @@ public class DatabaseManager {
         } catch (SQLException e) { System.err.println("DeleteVisit Error: " + e.getMessage()); return false; }
     }
 
+    /**
+     * Fetches a single visit row with ALL columns (including chief_complaint,
+     * vitals, treatment, etc.) by visit_id. Used by the dashboard Attend button
+     * so the AttendController receives the full record, not the thin queue row.
+     */
+    public static java.util.Map<String, String> getVisitById(int visitId) {
+        String sql = "SELECT v.visit_id, v.patient_id, p.full_name, v.visit_date, " +
+                "v.time_in, v.time_out, v.purpose, v.chief_complaint, " +
+                "v.diagnosis, v.treatment, v.remarks, v.temperature, " +
+                "v.blood_pressure, v.heart_rate, v.oxygen_sat, v.respiratory_rate, " +
+                "p.course_dept, v.attended_by, p.type " +
+                "FROM Visits v JOIN Patients p ON v.patient_id = p.patient_id " +
+                "WHERE v.visit_id = ?";
+        try (Connection conn = connect(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, visitId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) return buildVisitRow(rs);
+        } catch (SQLException e) { System.err.println("getVisitById error: " + e.getMessage()); }
+        return null;
+    }
+
     public static int bulkTimeOutToday() {
         String sql = "UPDATE Visits SET time_out = strftime('%H:%M', 'now', 'localtime') " +
                 "WHERE date(visit_date) = date('now', 'localtime') " +

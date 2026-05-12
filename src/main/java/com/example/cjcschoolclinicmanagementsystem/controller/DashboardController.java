@@ -458,14 +458,24 @@ public class DashboardController {
     // ── Change 1: open attend form directly from the dashboard queue ─
     private void openAttendFormFromDashboard(java.util.Map<String, String> visitRow) {
         try {
+            // getQueueToday() only returns basic columns — it does NOT include
+            // chief_complaint, vitals, treatment, etc.  We must re-fetch the
+            // complete visit record so the AttendController gets all saved data.
+            String visitIdStr = visitRow.getOrDefault("visit_id", "");
+            if (visitIdStr.isEmpty()) return;
+
+            java.util.Map<String, String> fullRow =
+                    DatabaseManager.getVisitById(Integer.parseInt(visitIdStr));
+            if (fullRow == null) fullRow = visitRow; // fallback (shouldn't happen)
+
             FXMLLoader loader = new FXMLLoader(getClass().getResource(
                     "/com/example/cjcschoolclinicmanagementsystem/View/attend-view.fxml"));
             Parent root = loader.load();
             AttendController controller = loader.getController();
-            controller.setVisitData(visitRow);
+            controller.setVisitData(fullRow);  // ← full row with chief_complaint
 
             Stage stage = new Stage();
-            stage.setTitle("Attend — " + visitRow.getOrDefault("full_name", ""));
+            stage.setTitle("Attend — " + fullRow.getOrDefault("full_name", ""));
             javafx.geometry.Rectangle2D screen =
                     javafx.stage.Screen.getPrimary().getVisualBounds();
             double w = Math.min(820, screen.getWidth()  * 0.75);

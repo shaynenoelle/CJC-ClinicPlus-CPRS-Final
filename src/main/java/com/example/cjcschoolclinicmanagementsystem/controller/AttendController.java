@@ -108,11 +108,7 @@ public class AttendController {
 
     // ── Cues combo setup ──────────────────────────────────────────
     private void setupCuesCombo() {
-        List<String> presets = new ArrayList<>(DatabaseManager.getPresets("complaint"));
-        List<String> diagPresets = DatabaseManager.getPresets("diagnosis");
-        for (String d : diagPresets) {
-            if (!presets.contains(d)) presets.add(d);
-        }
+        List<String> presets = new ArrayList<>(DatabaseManager.getPresets("cue"));
         presets.sort(String.CASE_INSENSITIVE_ORDER);
         comboCues.setItems(FXCollections.observableArrayList(presets));
         comboCues.setPromptText("Select preset or type a cue…");
