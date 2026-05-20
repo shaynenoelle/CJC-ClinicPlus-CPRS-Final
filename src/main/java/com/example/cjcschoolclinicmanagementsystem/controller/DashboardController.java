@@ -47,6 +47,7 @@ public class DashboardController {
     @FXML private Button btnPatientRecords;
     @FXML private Button btnLogbook;
     @FXML private Button btnVisitHistory;
+    @FXML private Button btnMedicine;
     @FXML private Button btnSettings;
 
     // ── Stat-card labels ──────────────────────────────────────────
@@ -159,7 +160,7 @@ public class DashboardController {
      */
     private void setActiveNav(Button active) {
         Button[] navButtons = {
-                btnDashboard, btnPatientRecords, btnLogbook, btnVisitHistory, btnSettings
+                btnDashboard, btnPatientRecords, btnLogbook, btnVisitHistory, btnMedicine, btnSettings
         };
         for (Button btn : navButtons) {
             if (btn != null) btn.setStyle(NAV_DEFAULT);
@@ -831,6 +832,11 @@ public class DashboardController {
         loadView("visithistory-view.fxml");
     }
 
+    @FXML private void showMedicineInventory() {
+        setActiveNav(btnMedicine);
+        loadView("medicine-view.fxml");
+    }
+
     @FXML private void handleLogout() {
         // Confirm before signing out
         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
@@ -870,7 +876,7 @@ public class DashboardController {
             stage.setY((screenBounds.getHeight() - 600) / 2);
 
             stage.show();
-        } catch (IOException e) {
+        } catch (Exception e) {
             System.err.println("Error loading login view: " + e.getMessage());
             e.printStackTrace();
         }
@@ -890,8 +896,12 @@ public class DashboardController {
             FXMLLoader loader = new FXMLLoader(resource);
             Parent view = loader.load();
             mainBorderPane.setCenter(view);
-        } catch (IOException e) {
-            showError("Loading Error", "Could not load " + fxmlFile);
+        } catch (Exception e) {
+            Throwable cause = e;
+            StringBuilder sb = new StringBuilder();
+            while (cause != null) { sb.append(cause.getClass().getSimpleName()).append(": ").append(cause.getMessage()).append("\n"); cause = cause.getCause(); }
+            e.printStackTrace();
+            showError("Loading Error - " + fxmlFile, sb.toString());
         }
     }
 

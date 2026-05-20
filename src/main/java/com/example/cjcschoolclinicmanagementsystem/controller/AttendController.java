@@ -82,6 +82,14 @@ public class AttendController {
     private int     visitId;
     private String  currentPatientId = "";
 
+    // ── Medicine dispensing ───────────────────────────────────────
+    @FXML private ComboBox<String>  comboMedicine;
+    @FXML private TextField         txtMedicineQty;
+    @FXML private FlowPane          medicineFlowPane;
+
+    // Internal list: each entry = "id|name|unit|qty"
+    private final List<String> selectedMedicines = new ArrayList<>();
+
     // ─────────────────────────────────────────────────────────────
     @FXML
     public void initialize() {
@@ -90,6 +98,7 @@ public class AttendController {
         updateNavButtons(0);
 
         setupCuesCombo();
+        setupMedicineCombo();
         setupFollowUpsTable();
 
         if (tblPreviousVisits != null) {
@@ -115,6 +124,95 @@ public class AttendController {
         comboCues.getEditor().setOnKeyPressed(e -> {
             if (e.getCode() == KeyCode.ENTER) { e.consume(); onAddCue(); }
         });
+    }
+
+    // ── Medicine combo setup ─────────────────────────────────────
+    private void setupMedicineCombo() {
+        if (comboMedicine == null) return;
+        refreshMedicineCombo();
+    }
+
+    private void refreshMedicineCombo() {
+        if (comboMedicine == null) return;
+        List<Map<String, String>> medicines = DatabaseManager.getAllMedicines();
+        // Format for display: "Name (unit) — qty left"
+        comboMedicine.getItems().clear();
+        for (Map<String, String> m : medicines) {
+            comboMedicine.getItems().add(
+                    m.get("name") + " (" + m.get("unit") + ") — stock: " + m.get("quantity"));
+        }
+        comboMedicine.setPromptText("Select medicine…");
+        // Store full medicine data as user data on the ComboBox for lookup
+        comboMedicine.setUserData(medicines);
+    }
+
+    @FXML
+    private void onAddMedicine() {
+        if (comboMedicine == null || comboMedicine.getValue() == null) return;
+        int selectedIndex = comboMedicine.getSelectionModel().getSelectedIndex();
+        if (selectedIndex < 0) return;
+
+        @SuppressWarnings("unchecked")
+        List<Map<String, String>> medicines = (List<Map<String, String>>) comboMedicine.getUserData();
+        if (medicines == null || selectedIndex >= medicines.size()) return;
+
+        Map<String, String> med = medicines.get(selectedIndex);
+        int stock = Integer.parseInt(med.getOrDefault("quantity", "0"));
+        if (stock <= 0) {
+            showStatus("⚠ " + med.get("name") + " is out of stock.", false);
+            return;
+        }
+
+        int qty = 1;
+        if (txtMedicineQty != null && !txtMedicineQty.getText().trim().isEmpty()) {
+            try { qty = Math.max(1, Integer.parseInt(txtMedicineQty.getText().trim())); }
+            catch (NumberFormatException ignored) {}
+        }
+        if (qty > stock) {
+            showStatus("⚠ Only " + stock + " " + med.get("unit") + "(s) in stock.", false);
+            return;
+        }
+
+        // Check for duplicate
+        String medId = med.get("medicine_id");
+        boolean dup = selectedMedicines.stream().anyMatch(s -> s.startsWith(medId + "|"));
+        if (dup) {
+            showStatus("⚠ " + med.get("name") + " already added. Remove it first to change qty.", false);
+            return;
+        }
+
+        String entry = medId + "|" + med.get("name") + "|" + med.get("unit") + "|" + qty;
+        selectedMedicines.add(entry);
+        addMedicineChip(med.get("name"), med.get("unit"), qty, entry);
+
+        comboMedicine.getSelectionModel().clearSelection();
+        comboMedicine.setValue(null);
+        if (txtMedicineQty != null) txtMedicineQty.setText("1");
+    }
+
+    private void addMedicineChip(String name, String unit, int qty, String entryKey) {
+        if (medicineFlowPane == null) return;
+        Label lbl = new Label("💊 " + name + " ×" + qty + " " + unit);
+        lbl.setStyle("-fx-font-size: 12; -fx-text-fill: white;");
+        Button removeBtn = new Button("×");
+        removeBtn.setStyle(
+                "-fx-background-color: transparent; -fx-text-fill: rgba(255,255,255,0.85);" +
+                        "-fx-font-size: 13; -fx-font-weight: bold; -fx-cursor: hand;" +
+                        "-fx-padding: 0 2 0 4;");
+        removeBtn.setOnAction(e -> removeMedicineChip(entryKey));
+        HBox chip = new HBox(4, lbl, removeBtn);
+        chip.setStyle(
+                "-fx-background-color: #2e7d32; -fx-background-radius: 14;" +
+                        "-fx-padding: 4 10 4 10; -fx-alignment: CENTER_LEFT;");
+        chip.setUserData(entryKey);
+        if (isReadOnly) removeBtn.setVisible(false);
+        medicineFlowPane.getChildren().add(chip);
+    }
+
+    private void removeMedicineChip(String entryKey) {
+        selectedMedicines.remove(entryKey);
+        if (medicineFlowPane != null)
+            medicineFlowPane.getChildren().removeIf(node -> entryKey.equals(node.getUserData()));
     }
 
     // ── Follow-ups table setup ────────────────────────────────────
@@ -285,6 +383,18 @@ public class AttendController {
 
         if (txtTreatment != null) txtTreatment.setText(row.getOrDefault("treatment", ""));
         if (txtRemarks   != null) txtRemarks.setText(row.getOrDefault("remarks", ""));
+
+        // Load existing dispense records for this visit (read-only view)
+        if (medicineFlowPane != null && visitId != 0) {
+            List<Map<String, String>> dispensed = DatabaseManager.getDispenseLogForVisit(visitId);
+            for (Map<String, String> d : dispensed) {
+                String key = d.get("medicine_id") + "|" + d.get("medicine_name") +
+                        "|" + d.get("unit") + "|" + d.get("quantity_used");
+                selectedMedicines.add(key);
+                addMedicineChip(d.get("medicine_name"), d.get("unit"),
+                        Integer.parseInt(d.getOrDefault("quantity_used", "1")), key);
+            }
+        }
 
         loadRecentVisits(currentPatientId, row.getOrDefault("visit_date", ""));
         loadFollowUps();
@@ -709,6 +819,18 @@ public class AttendController {
                 try { Thread.sleep(1000); } catch (InterruptedException ignored) {}
                 Platform.runLater(() -> ((Stage) lblSaveStatus.getScene().getWindow()).close());
             }).start();
+            // Dispense selected medicines
+            String attendedBy2 = (lblAttendedBy != null && !lblAttendedBy.getText().isBlank())
+                    ? lblAttendedBy.getText() : SessionManager.getCurrentUser();
+            for (String entry : selectedMedicines) {
+                String[] parts = entry.split("\\|", 4);
+                if (parts.length < 4) continue;
+                int medId  = Integer.parseInt(parts[0]);
+                String medName = parts[1];
+                String unit    = parts[2];
+                int qty        = Integer.parseInt(parts[3]);
+                DatabaseManager.dispenseMedicine(visitId, medId, medName, unit, qty, attendedBy2);
+            }
         } else {
             showStatus("Save failed. Try again.", false);
         }

@@ -243,6 +243,59 @@
                           style="-fx-background-radius: 5; -fx-border-color: #ddd;
                                  -fx-border-radius: 5; -fx-font-size: 13;"/>
 
+                <Separator/>
+
+                <!-- ─── Medicines Dispensed ─── -->
+                <HBox spacing="4" alignment="CENTER_LEFT">
+                    <Label text="Medicines Dispensed"
+                           style="-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #444;"/>
+                    <Label text="(optional)"
+                           style="-fx-font-size: 11; -fx-text-fill: #999; -fx-padding: 0 0 0 4;"/>
+                </HBox>
+
+                <!-- Dropdown + qty + add button -->
+                <HBox spacing="8" alignment="CENTER_LEFT">
+                    <ComboBox fx:id="comboMedicine"
+                              HBox.hgrow="ALWAYS"
+                              maxWidth="1.7976931348623157E308"
+                              promptText="Select medicine…"
+                              style="-fx-border-color: #ddd; -fx-border-radius: 5; -fx-font-size: 12;"/>
+                    <Label text="Qty:"
+                           style="-fx-font-size: 12; -fx-text-fill: #555;"/>
+                    <TextField fx:id="txtMedicineQty"
+                               text="1"
+                               prefWidth="55" prefHeight="36"
+                               style="-fx-background-radius: 5; -fx-border-color: #ddd;
+                                      -fx-border-radius: 5; -fx-padding: 6; -fx-font-size: 12;"/>
+                    <Button text="+ Add"
+                            onAction="#onAddMedicine"
+                            prefHeight="36"
+                            style="-fx-background-color: #2e7d32;
+                                   -fx-text-fill: white;
+                                   -fx-background-radius: 6;
+                                   -fx-cursor: hand;
+                                   -fx-font-size: 12;
+                                   -fx-font-weight: bold;
+                                   -fx-padding: 6 14 6 14;"/>
+                </HBox>
+
+                <!-- Medicine chips display -->
+                <FlowPane fx:id="medicineFlowPane"
+                          hgap="6" vgap="6"
+                          prefWrapLength="500"
+                          minHeight="36"
+                          style="-fx-background-color: white;
+                                 -fx-border-color: #e0e0e0;
+                                 -fx-border-radius: 6;
+                                 -fx-background-radius: 6;
+                                 -fx-padding: 8;"/>
+
+                <Label text="(Select a medicine and quantity, then click + Add. Each medicine appears as a chip above. They are deducted from stock when you save.)"
+                       wrapText="true"
+                       style="-fx-font-size: 10; -fx-text-fill: #aaa; -fx-font-style: italic;"/>
+
+                <Separator/>
+
                 <Label text="Remarks / Nurse Notes"
                        style="-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #444;"/>
                 <TextArea fx:id="txtRemarks"

@@ -39,9 +39,6 @@ public class SettingsController {
     @FXML private ListView<String> lstCuePresets;
     @FXML private TextField txtNewCue;
     @FXML private Label     lblCueStatus;
-    @FXML private ListView<String> lstMedicines;
-    @FXML private TextField txtNewMedicine;
-    @FXML private Label     lblMedicineStatus;
 
     // ════════════════════ USER MANAGEMENT TAB ════════════════════
     @FXML private TableView<String> userTable;
@@ -81,7 +78,6 @@ public class SettingsController {
 
     // ── Preset category constants ─────────────────────────────────
     private static final String CAT_CUE        = "cue";
-    private static final String CAT_MEDICINE   = "medicine";
     private static final String CAT_DEPARTMENT = "department";
     private static final String CAT_COURSE     = "course";
 
@@ -128,14 +124,10 @@ public class SettingsController {
 
     private void initPresetsTab() {
         refreshList(lstCuePresets, CAT_CUE);
-        refreshList(lstMedicines,  CAT_MEDICINE);
     }
 
     @FXML private void addCuePreset()    { addPreset(txtNewCue, lstCuePresets, CAT_CUE, lblCueStatus); }
     @FXML private void removeCuePreset() { removePreset(lstCuePresets, CAT_CUE, lblCueStatus); }
-
-    @FXML private void addMedicine()    { addPreset(txtNewMedicine, lstMedicines, CAT_MEDICINE, lblMedicineStatus); }
-    @FXML private void removeMedicine() { removePreset(lstMedicines, CAT_MEDICINE, lblMedicineStatus); }
 
     // ── Shared preset helpers ─────────────────────────────────────
 

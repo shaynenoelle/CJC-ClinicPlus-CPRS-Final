@@ -801,6 +801,7 @@ public class DatabaseManager {
         try (Connection conn = connect();
              PreparedStatement p = conn.prepareStatement("INSERT INTO Users(username, password_hash, role) VALUES(?,?,'STAFF')")) {
             p.setString(1, username);
+            // On account creation — hash before storing:
             p.setString(2, org.mindrot.jbcrypt.BCrypt.hashpw(password, org.mindrot.jbcrypt.BCrypt.gensalt()));
             p.executeUpdate(); return true;
         } catch (SQLException e) { System.err.println("AddUser Error: " + e.getMessage()); return false; }
@@ -1255,5 +1256,341 @@ public class DatabaseManager {
         }
 
         return inserted;
+    }
+    // ═══════════════════════════════════════════════════════════════
+    //  MEDICINE INVENTORY
+    // ═══════════════════════════════════════════════════════════════
+
+    /** Creates medicines + dispense_log tables if they don't exist yet. */
+    public static void ensureMedicineTables() {
+        String medicines =
+                "CREATE TABLE IF NOT EXISTS medicines (" +
+                        "  medicine_id   INTEGER PRIMARY KEY AUTOINCREMENT," +
+                        "  name          TEXT    NOT NULL," +
+                        "  description   TEXT    DEFAULT ''," +
+                        "  unit          TEXT    DEFAULT 'tablet'," +
+                        "  quantity      INTEGER DEFAULT 0," +
+                        "  low_stock_qty INTEGER DEFAULT 10," +
+                        "  expiry_date   TEXT    DEFAULT ''," +   // YYYY-MM-DD or blank
+                        "  is_active     INTEGER DEFAULT 1" +
+                        ")";
+        String dispenseLog =
+                "CREATE TABLE IF NOT EXISTS dispense_log (" +
+                        "  log_id        INTEGER PRIMARY KEY AUTOINCREMENT," +
+                        "  visit_id      INTEGER," +
+                        "  medicine_id   INTEGER," +
+                        "  medicine_name TEXT    DEFAULT ''," +   // snapshot
+                        "  quantity_used INTEGER DEFAULT 1," +
+                        "  unit          TEXT    DEFAULT 'tablet'," +
+                        "  dispensed_by  TEXT    DEFAULT ''," +
+                        "  dispensed_at  TEXT    DEFAULT ''," +   // YYYY-MM-DD HH:mm
+                        "  notes         TEXT    DEFAULT ''" +
+                        ")";
+        try (Connection conn = connect(); Statement stmt = conn.createStatement()) {
+            stmt.execute(medicines);
+            stmt.execute(dispenseLog);
+        } catch (SQLException e) {
+            System.err.println("ensureMedicineTables Error: " + e.getMessage());
+        }
+    }
+
+    /** Returns all active medicines ordered by name. */
+    public static List<java.util.Map<String, String>> getAllMedicines() {
+        ensureMedicineTables();
+        List<java.util.Map<String, String>> list = new ArrayList<>();
+        String sql = "SELECT * FROM medicines WHERE is_active = 1 ORDER BY name COLLATE NOCASE";
+        try (Connection conn = connect();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            while (rs.next()) {
+                java.util.Map<String, String> row = new java.util.LinkedHashMap<>();
+                row.put("medicine_id",   String.valueOf(rs.getInt("medicine_id")));
+                row.put("name",          rs.getString("name"));
+                row.put("description",   rs.getString("description"));
+                row.put("unit",          rs.getString("unit"));
+                row.put("quantity",      String.valueOf(rs.getInt("quantity")));
+                row.put("low_stock_qty", String.valueOf(rs.getInt("low_stock_qty")));
+                row.put("expiry_date",   rs.getString("expiry_date"));
+                row.put("is_active",     String.valueOf(rs.getInt("is_active")));
+                list.add(row);
+            }
+        } catch (SQLException e) {
+            System.err.println("getAllMedicines Error: " + e.getMessage());
+        }
+        return list;
+    }
+
+    /** Inserts a new medicine. Returns true on success. */
+    public static boolean addMedicineInventory(String name, String description,
+                                               String unit, int quantity,
+                                               int lowStockQty, String expiryDate) {
+        ensureMedicineTables();
+        String sql = "INSERT INTO medicines (name, description, unit, quantity, low_stock_qty, expiry_date)" +
+                " VALUES (?, ?, ?, ?, ?, ?)";
+        try (Connection conn = connect();
+             PreparedStatement p = conn.prepareStatement(sql)) {
+            p.setString(1, name);
+            p.setString(2, description);
+            p.setString(3, unit);
+            p.setInt   (4, quantity);
+            p.setInt   (5, lowStockQty);
+            p.setString(6, expiryDate);
+            return p.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("addMedicineInventory Error: " + e.getMessage());
+            return false;
+        }
+    }
+
+    /** Updates an existing medicine record. */
+    public static boolean updateMedicineInventory(int medicineId, String name, String description,
+                                                  String unit, int quantity,
+                                                  int lowStockQty, String expiryDate) {
+        ensureMedicineTables();
+        String sql = "UPDATE medicines SET name=?, description=?, unit=?, quantity=?," +
+                " low_stock_qty=?, expiry_date=? WHERE medicine_id=?";
+        try (Connection conn = connect();
+             PreparedStatement p = conn.prepareStatement(sql)) {
+            p.setString(1, name);
+            p.setString(2, description);
+            p.setString(3, unit);
+            p.setInt   (4, quantity);
+            p.setInt   (5, lowStockQty);
+            p.setString(6, expiryDate);
+            p.setInt   (7, medicineId);
+            return p.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("updateMedicineInventory Error: " + e.getMessage());
+            return false;
+        }
+    }
+
+    /** Soft-deletes (deactivates) a medicine. */
+    public static boolean deactivateMedicine(int medicineId) {
+        ensureMedicineTables();
+        String sql = "UPDATE medicines SET is_active = 0 WHERE medicine_id = ?";
+        try (Connection conn = connect();
+             PreparedStatement p = conn.prepareStatement(sql)) {
+            p.setInt(1, medicineId);
+            return p.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("deactivateMedicine Error: " + e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Adds quantity to an existing medicine (restocking).
+     * Pass a negative value to manually reduce stock.
+     */
+    public static boolean restockMedicine(int medicineId, int addQty) {
+        ensureMedicineTables();
+        String sql = "UPDATE medicines SET quantity = MAX(0, quantity + ?) WHERE medicine_id = ?";
+        try (Connection conn = connect();
+             PreparedStatement p = conn.prepareStatement(sql)) {
+            p.setInt(1, addQty);
+            p.setInt(2, medicineId);
+            return p.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("restockMedicine Error: " + e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Dispenses one or more medicines for a visit.
+     * Deducts qty from stock and writes to dispense_log.
+     * @param visitId      the visit's ID (0 if not yet saved — should always be saved first)
+     * @param medicineId   from medicines.medicine_id
+     * @param medicineName snapshot of the name at time of dispensing
+     * @param unit         unit snapshot
+     * @param qty          how many to dispense
+     * @param dispensedBy  nurse username
+     * @return true if both deduction and log write succeeded
+     */
+    public static boolean dispenseMedicine(int visitId, int medicineId,
+                                           String medicineName, String unit,
+                                           int qty, String dispensedBy) {
+        ensureMedicineTables();
+        String deduct = "UPDATE medicines SET quantity = MAX(0, quantity - ?) " +
+                "WHERE medicine_id = ? AND is_active = 1";
+        String log    = "INSERT INTO dispense_log " +
+                "(visit_id, medicine_id, medicine_name, quantity_used, unit, dispensed_by, dispensed_at)" +
+                " VALUES (?, ?, ?, ?, ?, ?, ?)";
+        String now = java.time.LocalDateTime.now()
+                .format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+        try (Connection conn = connect()) {
+            conn.setAutoCommit(false);
+            try (PreparedStatement p1 = conn.prepareStatement(deduct);
+                 PreparedStatement p2 = conn.prepareStatement(log)) {
+                p1.setInt(1, qty);
+                p1.setInt(2, medicineId);
+                int deducted = p1.executeUpdate();
+
+                p2.setInt   (1, visitId);
+                p2.setInt   (2, medicineId);
+                p2.setString(3, medicineName);
+                p2.setInt   (4, qty);
+                p2.setString(5, unit);
+                p2.setString(6, dispensedBy);
+                p2.setString(7, now);
+                p2.executeUpdate();
+
+                conn.commit();
+                return deducted > 0;
+            } catch (SQLException e) {
+                conn.rollback();
+                System.err.println("dispenseMedicine Error: " + e.getMessage());
+                return false;
+            }
+        } catch (SQLException e) {
+            System.err.println("dispenseMedicine Connection Error: " + e.getMessage());
+            return false;
+        }
+    }
+
+    /** Returns dispense log entries for a specific visit. */
+    public static List<java.util.Map<String, String>> getDispenseLogForVisit(int visitId) {
+        ensureMedicineTables();
+        List<java.util.Map<String, String>> list = new ArrayList<>();
+        String sql = "SELECT * FROM dispense_log WHERE visit_id = ? ORDER BY log_id";
+        try (Connection conn = connect();
+             PreparedStatement p = conn.prepareStatement(sql)) {
+            p.setInt(1, visitId);
+            ResultSet rs = p.executeQuery();
+            while (rs.next()) {
+                java.util.Map<String, String> row = new java.util.LinkedHashMap<>();
+                row.put("log_id",        String.valueOf(rs.getInt("log_id")));
+                row.put("medicine_id",   String.valueOf(rs.getInt("medicine_id")));
+                row.put("medicine_name", rs.getString("medicine_name"));
+                row.put("quantity_used", String.valueOf(rs.getInt("quantity_used")));
+                row.put("unit",          rs.getString("unit"));
+                row.put("dispensed_by",  rs.getString("dispensed_by"));
+                row.put("dispensed_at",  rs.getString("dispensed_at"));
+                list.add(row);
+            }
+        } catch (SQLException e) {
+            System.err.println("getDispenseLogForVisit Error: " + e.getMessage());
+        }
+        return list;
+    }
+
+    /** Returns full dispense log (all visits), most recent first. */
+    public static List<java.util.Map<String, String>> getAllDispenseLog() {
+        ensureMedicineTables();
+        List<java.util.Map<String, String>> list = new ArrayList<>();
+        String sql = "SELECT dl.*, m.quantity AS current_stock " +
+                "FROM dispense_log dl " +
+                "LEFT JOIN medicines m ON dl.medicine_id = m.medicine_id " +
+                "ORDER BY dl.log_id DESC";
+        try (Connection conn = connect();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            while (rs.next()) {
+                java.util.Map<String, String> row = new java.util.LinkedHashMap<>();
+                row.put("log_id",        String.valueOf(rs.getInt("log_id")));
+                row.put("visit_id",      String.valueOf(rs.getInt("visit_id")));
+                row.put("medicine_id",   String.valueOf(rs.getInt("medicine_id")));
+                row.put("medicine_name", rs.getString("medicine_name"));
+                row.put("quantity_used", String.valueOf(rs.getInt("quantity_used")));
+                row.put("unit",          rs.getString("unit"));
+                row.put("dispensed_by",  rs.getString("dispensed_by"));
+                row.put("dispensed_at",  rs.getString("dispensed_at"));
+                list.add(row);
+            }
+        } catch (SQLException e) {
+            System.err.println("getAllDispenseLog Error: " + e.getMessage());
+        }
+        return list;
+    }
+
+    /** Count of medicines whose stock is at or below their low_stock_qty threshold. */
+    public static int getLowStockCount() {
+        ensureMedicineTables();
+        String sql = "SELECT COUNT(*) FROM medicines WHERE is_active=1 AND quantity <= low_stock_qty";
+        try (Connection conn = connect();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            return rs.next() ? rs.getInt(1) : 0;
+        } catch (SQLException e) {
+            System.err.println("getLowStockCount Error: " + e.getMessage());
+            return 0;
+        }
+    }
+
+    /**
+     * Count of medicines expiring within the next {@code days} days.
+     * Medicines with a blank expiry_date are excluded.
+     */
+    public static int getExpiringSoonCount(int days) {
+        ensureMedicineTables();
+        String today  = java.time.LocalDate.now().toString();
+        String cutoff = java.time.LocalDate.now().plusDays(days).toString();
+        String sql = "SELECT COUNT(*) FROM medicines WHERE is_active=1" +
+                " AND expiry_date != '' AND expiry_date <= ? AND expiry_date >= ?";
+        try (Connection conn = connect();
+             PreparedStatement p = conn.prepareStatement(sql)) {
+            p.setString(1, cutoff);
+            p.setString(2, today);
+            ResultSet rs = p.executeQuery();
+            return rs.next() ? rs.getInt(1) : 0;
+        } catch (SQLException e) {
+            System.err.println("getExpiringSoonCount Error: " + e.getMessage());
+            return 0;
+        }
+    }
+
+    /**
+     * Exports current medicine inventory + dispense log to two CSV files.
+     * @param inventoryPath  path for the inventory CSV
+     * @param dispensePath   path for the dispense log CSV
+     */
+    public static boolean exportMedicineCSV(String inventoryPath, String dispensePath) {
+        ensureMedicineTables();
+        try {
+            // ── Inventory CSV ──────────────────────────────────────
+            try (java.io.PrintWriter pw = new java.io.PrintWriter(
+                    new java.io.FileWriter(inventoryPath))) {
+                pw.println("Medicine ID,Name,Description,Unit,Quantity,Low Stock Threshold,Expiry Date,Status");
+                for (java.util.Map<String, String> m : getAllMedicines()) {
+                    int qty      = Integer.parseInt(m.get("quantity"));
+                    int lowStock = Integer.parseInt(m.get("low_stock_qty"));
+                    String expiry = m.get("expiry_date");
+                    String status = "OK";
+                    if (qty <= lowStock) status = "Low Stock";
+                    if (!expiry.isEmpty()) {
+                        java.time.LocalDate exp = java.time.LocalDate.parse(expiry);
+                        if (!exp.isAfter(java.time.LocalDate.now())) status = "Expired";
+                        else if (!exp.isAfter(java.time.LocalDate.now().plusDays(30)))
+                            status = "Expiring Soon";
+                    }
+                    pw.printf("\"%s\",\"%s\",\"%s\",\"%s\",%s,%s,\"%s\",\"%s\"%n",
+                            m.get("medicine_id"), escape(m.get("name")),
+                            escape(m.get("description")), escape(m.get("unit")),
+                            qty, lowStock, expiry, status);
+                }
+            }
+            // ── Dispense Log CSV ───────────────────────────────────
+            try (java.io.PrintWriter pw = new java.io.PrintWriter(
+                    new java.io.FileWriter(dispensePath))) {
+                pw.println("Log ID,Visit ID,Medicine,Qty Used,Unit,Dispensed By,Date/Time");
+                for (java.util.Map<String, String> d : getAllDispenseLog()) {
+                    pw.printf("%s,%s,\"%s\",%s,\"%s\",\"%s\",\"%s\"%n",
+                            d.get("log_id"), d.get("visit_id"),
+                            escape(d.get("medicine_name")), d.get("quantity_used"),
+                            escape(d.get("unit")), escape(d.get("dispensed_by")),
+                            d.get("dispensed_at"));
+                }
+            }
+            return true;
+        } catch (Exception e) {
+            System.err.println("exportMedicineCSV Error: " + e.getMessage());
+            return false;
+        }
+    }
+
+    /** CSV-escapes double-quotes in a string. */
+    private static String escape(String s) {
+        return s == null ? "" : s.replace("\"", "\"\"");
     }
 }

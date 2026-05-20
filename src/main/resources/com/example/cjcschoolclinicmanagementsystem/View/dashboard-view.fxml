@@ -74,6 +74,13 @@
                            -fx-font-size: 13; -fx-font-weight: normal;
                            -fx-background-radius: 8; -fx-padding: 10 12 10 12;"/>
 
+                <Button fx:id="btnMedicine" maxWidth="Infinity"
+                        onAction="#showMedicineInventory" text="💊  MEDICINE INVENTORY"
+                        style="-fx-background-color: transparent; -fx-text-fill: white;
+                           -fx-alignment: BASELINE_LEFT; -fx-cursor: hand;
+                           -fx-font-size: 13; -fx-font-weight: normal;
+                           -fx-background-radius: 8; -fx-padding: 10 12 10 12;"/>
+
                 <Region VBox.vgrow="ALWAYS"/>
 
                 <Button fx:id="btnSettings" maxWidth="Infinity"

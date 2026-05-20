@@ -140,33 +140,6 @@
                         <Label fx:id="lblCueStatus" text=""
                                style="-fx-font-size: 11; -fx-font-style: italic;"/>
                     </VBox>
-
-                    <!-- Medicine List -->
-                    <VBox style="-fx-background-color: white; -fx-border-color: #DDDDDD;
-                                 -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 18;"
-                          spacing="12">
-                        <Label text="Medicine Reference List"
-                               style="-fx-font-size: 15; -fx-font-weight: bold; -fx-text-fill: #8B0000;"/>
-                        <Separator/>
-                        <Label text="Medicines the clinic stocks. Used as a reference when recording treatment given. Will connect to the inventory system later."
-                               style="-fx-text-fill: #555;" wrapText="true"/>
-                        <HBox spacing="10" alignment="CENTER_LEFT">
-                            <TextField fx:id="txtNewMedicine" promptText="e.g. Biogesic, Amoxicillin"
-                                       prefWidth="280"
-                                       style="-fx-border-color: #CCCCCC; -fx-border-radius: 4; -fx-padding: 8;"/>
-                            <Button text="+ Add" onAction="#addMedicine"
-                                    style="-fx-background-color: #1976D2; -fx-text-fill: white;
-                                           -fx-font-weight: bold; -fx-cursor: hand; -fx-padding: 8 20;"/>
-                            <Button text="🗑 Remove Selected" onAction="#removeMedicine"
-                                    style="-fx-background-color: #c62828; -fx-text-fill: white;
-                                           -fx-font-weight: bold; -fx-cursor: hand; -fx-padding: 8 16;"/>
-                        </HBox>
-                        <ListView fx:id="lstMedicines" prefHeight="150"
-                                  style="-fx-border-color: #e0e0e0; -fx-border-radius: 4;"/>
-                        <Label fx:id="lblMedicineStatus" text=""
-                               style="-fx-font-size: 11; -fx-font-style: italic;"/>
-                    </VBox>
-
                 </VBox>
             </ScrollPane>
         </Tab>
