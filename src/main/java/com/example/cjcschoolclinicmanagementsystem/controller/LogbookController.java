@@ -401,7 +401,13 @@ public class LogbookController {
             // After closing the form, refresh so the badge + button update immediately
             refreshLogbook();
         } catch (Exception e) {
-            System.err.println("Attend form error: " + e.getMessage());
+            e.printStackTrace();
+            javafx.scene.control.Alert alert = new javafx.scene.control.Alert(
+                    javafx.scene.control.Alert.AlertType.ERROR);
+            alert.setTitle("Error Opening Attend Form");
+            alert.setHeaderText("Could not open the attend form.");
+            alert.setContentText(e.getCause() != null ? e.getCause().getMessage() : e.getMessage());
+            alert.showAndWait();
         }
     }
 

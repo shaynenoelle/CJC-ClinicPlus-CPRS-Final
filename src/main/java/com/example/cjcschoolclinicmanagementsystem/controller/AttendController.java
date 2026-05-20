@@ -2,6 +2,7 @@ package com.example.cjcschoolclinicmanagementsystem.controller;
 
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import com.example.cjcschoolclinicmanagementsystem.database.DatabaseManager;
@@ -12,6 +13,8 @@ import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.input.MouseEvent;
+import javafx.event.Event;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 
@@ -22,6 +25,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.HashMap;
+import java.util.Map;
 
 public class AttendController {
 
@@ -82,16 +87,19 @@ public class AttendController {
     private int     visitId;
     private String  currentPatientId = "";
 
-    // ── Medicine dispensing ───────────────────────────────────────
-    @FXML private ComboBox<String>  comboMedicine;
-    @FXML private TextField         txtMedicineQty;
-    @FXML private FlowPane          medicineFlowPane;
+    // ── Medicine dispensing (checkbox selector table) ──────────────
+    @FXML private TableView<Map<String, Object>>            tblMedicineSelector;
+    @FXML private TableColumn<Map<String, Object>, Boolean> colMedCheck;
+    @FXML private TableColumn<Map<String, Object>, String>  colMedName;
+    @FXML private TableColumn<Map<String, Object>, String>  colMedUnit;
+    @FXML private TableColumn<Map<String, Object>, String>  colMedStock;
+    @FXML private TableColumn<Map<String, Object>, String>  colMedQty;
+
+    @FXML private Label lblMedicineSummary;
 
     // Internal list: each entry = "id|name|unit|qty"
     private final List<String> selectedMedicines = new ArrayList<>();
-    // Tracks entries that were loaded from dispense_log (already saved) — skip these on save
     private final java.util.Set<String> preExistingMedicines = new java.util.HashSet<>();
-
     // ─────────────────────────────────────────────────────────────
     @FXML
     public void initialize() {
@@ -102,6 +110,23 @@ public class AttendController {
         setupCuesCombo();
         setupMedicineCombo();
         setupFollowUpsTable();
+
+        // Disable direct tab-header clicks once the scene is ready.
+        // Users navigate only via Next / Back buttons. This avoids JavaFX's
+        // lazy-render problem entirely: each tab's content is built on demand
+        // when Next fires, and a full layout pulse runs naturally before the
+        // user ever sees it — no hacks required.
+        tabPane.sceneProperty().addListener((obs, ov, nv) -> {
+            if (nv != null) Platform.runLater(() -> {
+                tabPane.lookupAll(".tab").forEach(node -> {
+                    node.addEventFilter(MouseEvent.MOUSE_PRESSED, Event::consume);
+                    node.addEventFilter(MouseEvent.MOUSE_CLICKED, Event::consume);
+                    // Visual cue: pointer stays default so tabs don't look clickable
+                    node.setStyle(node.getStyle() +
+                            "; -fx-cursor: default; -fx-opacity: 0.85;");
+                });
+            });
+        });
 
         if (tblPreviousVisits != null) {
             colPrevDate.setCellValueFactory(d ->
@@ -123,139 +148,274 @@ public class AttendController {
         presets.sort(String.CASE_INSENSITIVE_ORDER);
         comboCues.setItems(FXCollections.observableArrayList(presets));
         comboCues.setPromptText("Select preset or type a cue…");
-        comboCues.getEditor().setOnKeyPressed(e -> {
-            if (e.getCode() == KeyCode.ENTER) { e.consume(); onAddCue(); }
+        // Use editor-level handler so Enter is consumed and NEVER bubbles to the scene.
+        // Tab navigation is also handled here since we removed onKeyPressed from the FXML node.
+        // addEventFilter on the ComboBox fires in the CAPTURING phase (event travels down),
+        // before the ComboBox skin's own Enter filter on the editor node.
+        // Previously used setOnKeyPressed on the editor (bubbling phase), which lost the
+        // race against the skin's capturing filter once Tab 1 was first rendered.
+        comboCues.addEventFilter(KeyEvent.KEY_PRESSED, e -> {
+            if (e.getCode() == KeyCode.ENTER) {
+                e.consume();
+                onAddCue();
+            } else if (e.getCode() == KeyCode.TAB && !e.isShiftDown()) {
+                e.consume();
+                txtTreatment.requestFocus();
+            }
         });
     }
 
-    // ── Medicine combo setup ─────────────────────────────────────
+    // ── Medicine selector table setup ─────────────────────────────
     private void setupMedicineCombo() {
-        if (comboMedicine == null) return;
-        refreshMedicineCombo();
-        // Attach Enter key handler to the medicine combo's editor so Enter adds a medicine,
-        // NOT a cue. This prevents the event from bubbling up to the comboCues handler.
-        comboMedicine.getEditor().setOnKeyPressed(e -> {
-            if (e.getCode() == KeyCode.ENTER) { e.consume(); onAddMedicine(); }
-        });
+        if (tblMedicineSelector == null) return;
+        loadMedicineSelectorTable();
     }
 
-    @FXML
-    private void onMedicineQtyKeyPressed(KeyEvent e) {
-        if (e.getCode() == KeyCode.ENTER) { e.consume(); onAddMedicine(); }
-    }
+    /**
+     * Populates tblMedicineSelector with every medicine from inventory.
+     * Each row has a CheckBox to select it and an inline qty TextField.
+     * Pre-existing dispensed medicines for this visit are pre-checked.
+     */
+    private void loadMedicineSelectorTable() {
+        if (tblMedicineSelector == null) return;
 
-    private void refreshMedicineCombo() {
-        if (comboMedicine == null) return;
         List<Map<String, String>> medicines = DatabaseManager.getAllMedicines();
-        // Format for display: "Name (unit) — qty left"
-        comboMedicine.getItems().clear();
+        ObservableList<Map<String, Object>> rows = FXCollections.observableArrayList();
+
         for (Map<String, String> m : medicines) {
-            comboMedicine.getItems().add(
-                    m.get("name") + " (" + m.get("unit") + ") — stock: " + m.get("quantity"));
-        }
-        comboMedicine.setPromptText("Select medicine…");
-        // Store full medicine data as user data on the ComboBox for lookup
-        comboMedicine.setUserData(medicines);
-    }
+            Map<String, Object> row = new HashMap<>();
+            row.put("medicine_id", m.get("medicine_id"));
+            row.put("name",        m.get("name"));
+            row.put("unit",        m.get("unit"));
+            int stock = 0;
+            try { stock = Integer.parseInt(m.getOrDefault("quantity", "0")); } catch (NumberFormatException ignored) {}
+            row.put("stock", stock);
 
-    @FXML
-    private void onAddMedicine() {
-        if (comboMedicine == null) return;
-
-        // 1. Get the exact text currently typed or selected
-        String text = comboMedicine.getEditor().getText();
-        if (text == null || text.trim().isEmpty()) {
-            text = comboMedicine.getValue();
-        }
-        if (text == null || text.trim().isEmpty()) return;
-        text = text.trim();
-
-        @SuppressWarnings("unchecked")
-        List<Map<String, String>> medicines = (List<Map<String, String>>) comboMedicine.getUserData();
-        if (medicines == null) return;
-
-        int selectedIndex = comboMedicine.getSelectionModel().getSelectedIndex();
-        Map<String, String> med = null;
-
-        // 2. Identify medicine whether they clicked the dropdown OR typed it manually
-        if (selectedIndex >= 0 && selectedIndex < medicines.size()) {
-            med = medicines.get(selectedIndex);
-        } else {
-            for (Map<String, String> m : medicines) {
-                String displayText = m.get("name") + " (" + m.get("unit") + ") — stock: " + m.get("quantity");
-                if (text.equalsIgnoreCase(m.get("name")) || text.equalsIgnoreCase(displayText)) {
-                    med = m;
+            // Check if already dispensed for this visit (pre-check + pre-fill qty)
+            final String medId = m.get("medicine_id");
+            String preQty = "1";
+            boolean preChecked = false;
+            for (String entry : preExistingMedicines) {
+                if (entry.startsWith(medId + "|")) {
+                    preChecked = true;
+                    String[] parts = entry.split("\\|", 4);
+                    if (parts.length == 4) preQty = parts[3];
                     break;
                 }
             }
+
+            final int finalStock = stock;
+            TextField qtyField = new TextField(preChecked ? preQty : "1");
+            qtyField.setPrefWidth(52);
+            qtyField.setStyle("-fx-font-size: 12; -fx-background-radius: 4; -fx-border-color: #ddd;" +
+                    "-fx-border-radius: 4; -fx-padding: 3 5 3 5;");
+            if (stock <= 0) qtyField.setDisable(true);
+
+            // Real-time qty validation: red border + status warning if over stock
+            qtyField.textProperty().addListener((obs, oldVal, newVal) -> {
+                if (!newVal.trim().isEmpty()) {
+                    try {
+                        int entered = Integer.parseInt(newVal.trim());
+                        if (entered > finalStock) {
+                            qtyField.setStyle(
+                                    "-fx-font-size: 12; -fx-background-radius: 4;" +
+                                            "-fx-border-color: #e74c3c; -fx-border-width: 2;" +
+                                            "-fx-border-radius: 4; -fx-padding: 3 5 3 5;" +
+                                            "-fx-background-color: #fff5f5;");
+                            showStatus("⚠ Only " + finalStock + " available — reduce qty.", false);
+                        } else if (entered < 1) {
+                            qtyField.setStyle(
+                                    "-fx-font-size: 12; -fx-background-radius: 4;" +
+                                            "-fx-border-color: #e74c3c; -fx-border-width: 2;" +
+                                            "-fx-border-radius: 4; -fx-padding: 3 5 3 5;" +
+                                            "-fx-background-color: #fff5f5;");
+                            showStatus("⚠ Quantity must be at least 1.", false);
+                        } else {
+                            qtyField.setStyle(
+                                    "-fx-font-size: 12; -fx-background-radius: 4;" +
+                                            "-fx-border-color: #43a047; -fx-border-width: 2;" +
+                                            "-fx-border-radius: 4; -fx-padding: 3 5 3 5;" +
+                                            "-fx-background-color: #f9fff9;");
+                            if (lblSaveStatus != null && lblSaveStatus.getText().startsWith("⚠"))
+                                lblSaveStatus.setText("");
+                        }
+                    } catch (NumberFormatException ex) {
+                        qtyField.setStyle(
+                                "-fx-font-size: 12; -fx-background-radius: 4;" +
+                                        "-fx-border-color: #e74c3c; -fx-border-width: 2;" +
+                                        "-fx-border-radius: 4; -fx-padding: 3 5 3 5;" +
+                                        "-fx-background-color: #fff5f5;");
+                        showStatus("⚠ Qty must be a whole number.", false);
+                    }
+                    updateMedicineSummary();
+                }
+            });
+
+            row.put("checked",  preChecked);
+            row.put("qtyField", qtyField);
+            rows.add(row);
         }
 
-        if (med == null) {
-            showStatus("⚠ Please select a valid medicine from the list.", false);
-            return;
-        }
+        // Checkbox column
+        colMedCheck.setCellFactory(col -> new TableCell<>() {
+            final CheckBox cb = new CheckBox();
+            {
+                cb.setStyle("-fx-cursor: hand;");
+                cb.setOnAction(e -> {
+                    Map<String, Object> r = getTableView().getItems().get(getIndex());
+                    int stock = (int) r.get("stock");
+                    if (cb.isSelected() && stock <= 0) {
+                        cb.setSelected(false);
+                        showStatus("⚠ " + r.get("name") + " is out of stock.", false);
+                        return;
+                    }
+                    r.put("checked", cb.isSelected());
+                    tblMedicineSelector.refresh();
+                    updateMedicineSummary();
+                });
+            }
+            @Override protected void updateItem(Boolean item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty) { setGraphic(null); return; }
+                Map<String, Object> r = getTableView().getItems().get(getIndex());
+                cb.setSelected(Boolean.TRUE.equals(r.get("checked")));
+                int stock = (int) r.get("stock");
+                cb.setDisable(stock <= 0 && !Boolean.TRUE.equals(r.get("checked")));
+                setGraphic(cb);
+            }
+        });
+        colMedCheck.setCellValueFactory(data ->
+                new SimpleObjectProperty<>(
+                        Boolean.TRUE.equals(data.getValue().get("checked"))));
 
-        // 3. Stock & Quantity Checks
-        int stock = Integer.parseInt(med.getOrDefault("quantity", "0"));
-        if (stock <= 0) {
-            showStatus("⚠ " + med.get("name") + " is out of stock.", false);
-            return;
-        }
+        // Name column — greyed out if out of stock
+        colMedName.setCellValueFactory(data ->
+                new SimpleStringProperty((String) data.getValue().get("name")));
+        colMedName.setCellFactory(col -> new TableCell<>() {
+            @Override protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) { setText(null); setStyle(""); return; }
+                Map<String, Object> r = getTableView().getItems().get(getIndex());
+                int stock = (int) r.get("stock");
+                setText(item);
+                setStyle(stock <= 0 ? "-fx-text-fill: #bbb;"
+                        : "-fx-font-weight: bold; -fx-text-fill: #222;");
+            }
+        });
 
-        int qty = 1;
-        if (txtMedicineQty != null && !txtMedicineQty.getText().trim().isEmpty()) {
-            try { qty = Math.max(1, Integer.parseInt(txtMedicineQty.getText().trim())); }
+        // Unit column
+        colMedUnit.setCellValueFactory(data ->
+                new SimpleStringProperty((String) data.getValue().get("unit")));
+
+        // Stock column — green if available, red if out
+        colMedStock.setCellValueFactory(data ->
+                new SimpleStringProperty(data.getValue().get("stock").toString()));
+        colMedStock.setCellFactory(col -> new TableCell<>() {
+            @Override protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) { setText(null); setStyle(""); return; }
+                int stock = Integer.parseInt(item);
+                setText(stock <= 0 ? "Out of stock" : item);
+                setStyle(stock <= 0 ? "-fx-text-fill: #e74c3c; -fx-font-size: 11;"
+                        : "-fx-text-fill: #27ae60; -fx-font-weight: bold;");
+            }
+        });
+
+        // Qty column — inline TextField per row
+        colMedQty.setCellFactory(col -> new TableCell<>() {
+            @Override protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty) { setGraphic(null); return; }
+                Map<String, Object> r = getTableView().getItems().get(getIndex());
+                setGraphic((TextField) r.get("qtyField"));
+            }
+        });
+        colMedQty.setCellValueFactory(data -> new SimpleStringProperty(""));
+
+        tblMedicineSelector.setItems(rows);
+        updateMedicineSummary();
+
+        // Row click (outside checkbox) also toggles selection.
+        // updateItem() applies a green highlight to checked rows and re-runs on
+        // every tblMedicineSelector.refresh() call, keeping colours in sync.
+        tblMedicineSelector.setRowFactory(tv -> {
+            javafx.scene.control.TableRow<Map<String, Object>> tableRow =
+                    new javafx.scene.control.TableRow<>() {
+                        @Override
+                        protected void updateItem(Map<String, Object> item, boolean empty) {
+                            super.updateItem(item, empty);
+                            if (empty || item == null) {
+                                setStyle("");
+                                return;
+                            }
+                            boolean checked = Boolean.TRUE.equals(item.get("checked"));
+                            int stock = 0;
+                            try { stock = (int) item.get("stock"); } catch (Exception ignored) {}
+                            if (checked) {
+                                // Soft green row — "queued for dispensing"
+                                setStyle("-fx-background-color: #e8f5e9;" +
+                                        "-fx-border-color: transparent transparent transparent #43a047;" +
+                                        "-fx-border-width: 0 0 0 4;");
+                            } else if (stock <= 0) {
+                                // Slightly dimmed row — out of stock
+                                setStyle("-fx-background-color: #f9f9f9; -fx-opacity: 0.7;");
+                            } else {
+                                setStyle("");
+                            }
+                        }
+                    };
+            tableRow.setOnMouseClicked(e -> {
+                if (tableRow.isEmpty()) return;
+                Map<String, Object> data = tableRow.getItem();
+                int stock = (int) data.get("stock");
+                boolean nowChecked = !Boolean.TRUE.equals(data.get("checked"));
+                if (nowChecked && stock <= 0) {
+                    showStatus("⚠ " + data.get("name") + " is out of stock.", false);
+                    return;
+                }
+                data.put("checked", nowChecked);
+                tblMedicineSelector.refresh();
+                updateMedicineSummary();
+            });
+            return tableRow;
+        });
+    }
+
+    /**
+     * Reads the selector table and builds selectedMedicines list.
+     * Called from onSaveRecord() before dispensing.
+     */
+    private void collectSelectedMedicines() {
+        if (tblMedicineSelector == null) return;
+        selectedMedicines.removeIf(e -> !preExistingMedicines.contains(e));
+
+        for (Map<String, Object> row : tblMedicineSelector.getItems()) {
+            if (!Boolean.TRUE.equals(row.get("checked"))) continue;
+            String medId = (String) row.get("medicine_id");
+            String name  = (String) row.get("name");
+            String unit  = (String) row.get("unit");
+            int stock    = (int)    row.get("stock");
+
+            TextField qtyField = (TextField) row.get("qtyField");
+            int qty = 1;
+            try { qty = Math.max(1, Integer.parseInt(qtyField.getText().trim())); }
             catch (NumberFormatException ignored) {}
+
+            if (qty > stock) {
+                // Clamp to max available and highlight the field red so the nurse sees it
+                qty = stock;
+                qtyField.setText(String.valueOf(stock));
+                qtyField.setStyle(
+                        "-fx-font-size: 12; -fx-background-radius: 4;" +
+                                "-fx-border-color: #e74c3c; -fx-border-width: 2;" +
+                                "-fx-border-radius: 4; -fx-padding: 3 5 3 5;" +
+                                "-fx-background-color: #fff5f5;");
+                showStatus("⚠ " + name + ": qty clamped to max available (" + stock + " " + unit + ").", false);
+            }
+
+            String entry = medId + "|" + name + "|" + unit + "|" + qty;
+            if (!selectedMedicines.contains(entry)) selectedMedicines.add(entry);
         }
-        if (qty > stock) {
-            showStatus("⚠ Only " + stock + " " + med.get("unit") + "(s) in stock.", false);
-            return;
-        }
-
-        // 4. Duplicate Check
-        String medId = med.get("medicine_id");
-        boolean dup = selectedMedicines.stream().anyMatch(s -> s.startsWith(medId + "|"));
-        if (dup) {
-            showStatus("⚠ " + med.get("name") + " already added. Remove it first to change qty.", false);
-            return;
-        }
-
-        // 5. Add the medicine chip
-        String entry = medId + "|" + med.get("name") + "|" + med.get("unit") + "|" + qty;
-        selectedMedicines.add(entry);
-        addMedicineChip(med.get("name"), med.get("unit"), qty, entry);
-
-        // 6. CRITICAL FIX: Fully wipe the memory so the dropdown choices work again!
-        comboMedicine.getSelectionModel().clearSelection();
-        comboMedicine.setValue(null);
-        comboMedicine.getEditor().clear();
-
-        if (txtMedicineQty != null) txtMedicineQty.setText("1");
-    }
-
-    private void addMedicineChip(String name, String unit, int qty, String entryKey) {
-        if (medicineFlowPane == null) return;
-        Label lbl = new Label("💊 " + name + " ×" + qty + " " + unit);
-        lbl.setStyle("-fx-font-size: 12; -fx-text-fill: white;");
-        Button removeBtn = new Button("×");
-        removeBtn.setStyle(
-                "-fx-background-color: transparent; -fx-text-fill: rgba(255,255,255,0.85);" +
-                        "-fx-font-size: 13; -fx-font-weight: bold; -fx-cursor: hand;" +
-                        "-fx-padding: 0 2 0 4;");
-        removeBtn.setOnAction(e -> removeMedicineChip(entryKey));
-        HBox chip = new HBox(4, lbl, removeBtn);
-        chip.setStyle(
-                "-fx-background-color: #2e7d32; -fx-background-radius: 14;" +
-                        "-fx-padding: 4 10 4 10; -fx-alignment: CENTER_LEFT;");
-        chip.setUserData(entryKey);
-        if (isReadOnly) removeBtn.setVisible(false);
-        medicineFlowPane.getChildren().add(chip);
-    }
-
-    private void removeMedicineChip(String entryKey) {
-        selectedMedicines.remove(entryKey);
-        if (medicineFlowPane != null)
-            medicineFlowPane.getChildren().removeIf(node -> entryKey.equals(node.getUserData()));
     }
 
     // ── Follow-ups table setup ────────────────────────────────────
@@ -440,21 +600,25 @@ public class AttendController {
         if (txtTreatment != null) txtTreatment.setText(row.getOrDefault("treatment", ""));
         if (txtRemarks   != null) txtRemarks.setText(row.getOrDefault("remarks", ""));
 
-        // Load existing dispense records for this visit (read-only view)
-        if (medicineFlowPane != null && visitId != 0) {
+        // Load existing dispense records — populate preExistingMedicines BEFORE
+        // loadMedicineSelectorTable() so pre-checks and pre-filled quantities are correct.
+        if (visitId != 0) {
             List<Map<String, String>> dispensed = DatabaseManager.getDispenseLogForVisit(visitId);
             for (Map<String, String> d : dispensed) {
                 String key = d.get("medicine_id") + "|" + d.get("medicine_name") +
                         "|" + d.get("unit") + "|" + d.get("quantity_used");
                 selectedMedicines.add(key);
-                preExistingMedicines.add(key);  // ← mark as already dispensed
-                addMedicineChip(d.get("medicine_name"), d.get("unit"),
-                        Integer.parseInt(d.getOrDefault("quantity_used", "1")), key);
+                preExistingMedicines.add(key);
             }
         }
+        // Now build the selector table (it reads preExistingMedicines to pre-check rows)
+        loadMedicineSelectorTable();
 
         loadRecentVisits(currentPatientId, row.getOrDefault("visit_date", ""));
         loadFollowUps();
+
+        // No tab-cycling needed: tab headers are disabled, so content renders
+        // naturally on the full layout pulse triggered by the Next/Back buttons.
     }
 
     // ── Load / refresh follow-ups tab ─────────────────────────────
@@ -872,6 +1036,9 @@ public class AttendController {
             String timeOut = txtTimeOut.getText() != null ? txtTimeOut.getText().trim() : "";
             if (!timeOut.isEmpty()) DatabaseManager.checkOutPatient(visitId, timeOut);
 
+            // Collect checked medicines from the selector table into selectedMedicines
+            collectSelectedMedicines();
+
             // Dispense newly added medicines BEFORE closing the window.
             // Entries in preExistingMedicines were already saved on a previous save — skip them.
             String attendedBy2 = (lblAttendedBy != null && !lblAttendedBy.getText().isBlank())
@@ -901,10 +1068,6 @@ public class AttendController {
     // ── Keyboard navigation ───────────────────────────────────────
     @FXML private void onTempKeyPressed(KeyEvent e) {
         if (e.getCode() == KeyCode.TAB && !e.isShiftDown()) { e.consume(); txtBpSystolic.requestFocus(); }
-    }
-    @FXML private void onCuesKeyPressed(KeyEvent e) {
-        if      (e.getCode() == KeyCode.ENTER)                   { e.consume(); onAddCue(); }
-        else if (e.getCode() == KeyCode.TAB && !e.isShiftDown()) { e.consume(); txtTreatment.requestFocus(); }
     }
     @FXML private void onTreatmentKeyPressed(KeyEvent e) {
         if      (e.getCode() == KeyCode.TAB && !e.isShiftDown()) { e.consume(); txtRemarks.requestFocus(); }
@@ -957,7 +1120,8 @@ public class AttendController {
                 chip.getChildren().stream().filter(n -> n instanceof Button)
                         .forEach(n -> n.setVisible(false));
         });
-        txtTreatment.setEditable(!readOnly);
+        if (tblMedicineSelector != null) tblMedicineSelector.setDisable(readOnly);
+        if (txtTreatment != null) txtTreatment.setEditable(!readOnly);
         txtRemarks.setEditable(!readOnly);
         txtTimeIn.setEditable(!readOnly);
         txtTimeOut.setEditable(!readOnly);
@@ -976,6 +1140,34 @@ public class AttendController {
     @FXML private void setTimeIn() {
         txtTimeIn.setText(LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm")));
     }
+    // ── Medicine summary feedback ────────────────────────────────
+    /** Updates the green "Queued for dispensing" label under the medicine table. */
+    private void updateMedicineSummary() {
+        if (tblMedicineSelector == null || lblMedicineSummary == null) return;
+        StringBuilder sb = new StringBuilder();
+        int count = 0;
+        for (Map<String, Object> row : tblMedicineSelector.getItems()) {
+            if (!Boolean.TRUE.equals(row.get("checked"))) continue;
+            String name = (String) row.get("name");
+            String unit = (String) row.get("unit");
+            TextField qtyField = (TextField) row.get("qtyField");
+            String qty = (qtyField != null) ? qtyField.getText().trim() : "1";
+            if (qty.isEmpty()) qty = "1";
+            if (count > 0) sb.append("   •   ");
+            sb.append("✔ ").append(name).append(" × ").append(qty).append(" ").append(unit);
+            count++;
+        }
+        if (count == 0) {
+            lblMedicineSummary.setText("");
+            lblMedicineSummary.setVisible(false);
+            lblMedicineSummary.setManaged(false);
+        } else {
+            lblMedicineSummary.setText("Queued for dispensing:   " + sb);
+            lblMedicineSummary.setVisible(true);
+            lblMedicineSummary.setManaged(true);
+        }
+    }
+
     @FXML private void setTimeOut() {
         txtTimeOut.setText(LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm")));
     }

@@ -210,7 +210,6 @@
                                   HBox.hgrow="ALWAYS"
                                   maxWidth="1.7976931348623157E308"
                                   promptText="Select preset or type a cue…"
-                                  onKeyPressed="#onCuesKeyPressed"
                                   style="-fx-border-color: #ddd; -fx-border-radius: 5; -fx-font-size: 13;"/>
                         <Button fx:id="btnAddCue"
                                 text="+ Add"
@@ -260,50 +259,42 @@
                     <HBox spacing="4" alignment="CENTER_LEFT">
                         <Label text="Medicines Dispensed"
                                style="-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #444;"/>
-                        <Label text="(optional)"
+                        <Label text="(optional — check the medicines to dispense and set quantity)"
                                style="-fx-font-size: 11; -fx-text-fill: #999; -fx-padding: 0 0 0 4;"/>
                     </HBox>
 
-                    <!-- Dropdown + qty + add button -->
-                    <HBox spacing="8" alignment="CENTER_LEFT">
-                        <ComboBox fx:id="comboMedicine"
-                                  editable="true"
-                                  HBox.hgrow="ALWAYS"
-                                  maxWidth="1.7976931348623157E308"
-                                  promptText="Select medicine…"
-                                  style="-fx-border-color: #ddd; -fx-border-radius: 5; -fx-font-size: 12;"/>
-                        <Label text="Qty:"
-                               style="-fx-font-size: 12; -fx-text-fill: #555;"/>
-                        <TextField fx:id="txtMedicineQty"
-                                   text="1"
-                                   prefWidth="55" prefHeight="36"
-                                   onKeyPressed="#onMedicineQtyKeyPressed"
-                                   style="-fx-background-radius: 5; -fx-border-color: #ddd;
-                                      -fx-border-radius: 5; -fx-padding: 6; -fx-font-size: 12;"/>
-                        <Button text="+ Add"
-                                onAction="#onAddMedicine"
-                                prefHeight="36"
-                                style="-fx-background-color: #8B0000;
-                                   -fx-text-fill: white;
-                                   -fx-background-radius: 6;
-                                   -fx-cursor: hand;
-                                   -fx-font-size: 12;
-                                   -fx-font-weight: bold;
-                                   -fx-padding: 6 14 6 14;"/>
-                    </HBox>
+                    <!-- Medicine selector: all medicines shown as a checkable table -->
+                    <TableView fx:id="tblMedicineSelector"
+                               prefHeight="160"
+                               style="-fx-background-color: white; -fx-border-color: #ddd;
+                                  -fx-border-radius: 6; -fx-background-radius: 6;">
+                        <columnResizePolicy>
+                            <TableView fx:constant="CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN"/>
+                        </columnResizePolicy>
+                        <columns>
+                            <TableColumn fx:id="colMedCheck"  text="✔"         prefWidth="38"/>
+                            <TableColumn fx:id="colMedName"   text="Medicine"  prefWidth="160"/>
+                            <TableColumn fx:id="colMedUnit"   text="Unit"      prefWidth="70"/>
+                            <TableColumn fx:id="colMedStock"  text="In Stock"  prefWidth="70"/>
+                            <TableColumn fx:id="colMedQty"    text="Qty"       prefWidth="80"/>
+                        </columns>
+                        <placeholder>
+                            <Label text="No medicines in inventory."
+                                   style="-fx-text-fill: #aaa; -fx-font-size: 12;"/>
+                        </placeholder>
+                    </TableView>
 
-                    <!-- Medicine chips display -->
-                    <FlowPane fx:id="medicineFlowPane"
-                              hgap="6" vgap="6"
-                              prefWrapLength="500"
-                              minHeight="36"
-                              style="-fx-background-color: white;
-                                 -fx-border-color: #e0e0e0;
-                                 -fx-border-radius: 6;
-                                 -fx-background-radius: 6;
-                                 -fx-padding: 8;"/>
+                    <!-- Live feedback: queued medicines summary -->
+                    <Label fx:id="lblMedicineSummary"
+                           text=""
+                           wrapText="true"
+                           managed="false" visible="false"
+                           style="-fx-font-size: 12; -fx-text-fill: #27ae60; -fx-font-weight: bold;
+                                  -fx-background-color: #f0fff4; -fx-background-radius: 6;
+                                  -fx-border-color: #a5d6a7; -fx-border-radius: 6;
+                                  -fx-padding: 6 10 6 10;"/>
 
-                    <Label text="(Select a medicine and quantity, then click + Add. Each medicine appears as a chip above. They are deducted from stock when you save.)"
+                    <Label text="Check a medicine to include it in this visit. Greyed-out rows are out of stock."
                            wrapText="true"
                            style="-fx-font-size: 10; -fx-text-fill: #aaa; -fx-font-style: italic;"/>
 
@@ -327,7 +318,7 @@
                                style="-fx-background-color: white; -fx-border-color: #e0e0e0;
                                   -fx-border-radius: 5; -fx-background-radius: 5;">
                         <columnResizePolicy>
-                            <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
+                            <TableView fx:constant="CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN"/>
                         </columnResizePolicy>
                         <columns>
                             <TableColumn fx:id="colPrevDate"      text="Date"      prefWidth="90"/>
@@ -393,7 +384,7 @@
                                style="-fx-background-color: white; -fx-border-color: #e0e0e0;
                                   -fx-border-radius: 5; -fx-background-radius: 5;">
                         <columnResizePolicy>
-                            <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
+                            <TableView fx:constant="CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN"/>
                         </columnResizePolicy>
                         <columns>
                             <TableColumn fx:id="colFuScheduled" text="Scheduled"    prefWidth="75"/>
