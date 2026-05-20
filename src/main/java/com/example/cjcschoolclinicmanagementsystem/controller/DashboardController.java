@@ -72,7 +72,7 @@ public class DashboardController {
     @FXML private BarChart<String, Number>   chartIllnesses;
     @FXML private LineChart<String, Number>  chartMonthly;
     @FXML private BarChart<String, Number>   chartCollege;
-    @FXML private PieChart                   chartPurpose;
+    @FXML private BarChart<String, Number>   chartMedicineInventory;
 
     // ── UNIFIED period filter (controls Rows 2 & 3) ───────────────
     @FXML private ComboBox<String> cmbPeriod;
@@ -81,7 +81,9 @@ public class DashboardController {
     @FXML private Label lblIllnessSubtitle;
     @FXML private Label lblTrendSubtitle;
     @FXML private Label lblCollegeSubtitle;
-    @FXML private Label lblPurposeSubtitle;
+    // lblPurposeSubtitle removed — replaced by medicine inventory card
+    // ── Medicine inventory card (dashboard) ───────────────────────
+    @FXML private Label lblMedInventorySubtitle;
 
     // ── College color palette ─────────────────────────────────────
     private static final String[] COLLEGE_ORDER  =
@@ -237,7 +239,7 @@ public class DashboardController {
         loadIllnessChart(period, label);
         loadIllnessTrendChart(period, label);
         loadCollegeBarChart(period, label);
-        loadPurposeChart(period, label);
+        loadMedicineInventoryChart();
     }
 
     // ── ROW 1: Stat cards — Visits follows period; others fixed ───
@@ -254,9 +256,9 @@ public class DashboardController {
             default        -> "VISITS THIS WEEK";
         };
         String sub = switch (period) {
-            case "daily"   -> "check-ins today";
-            case "monthly" -> "this month";
-            default        -> "this week";
+            case "daily"   -> "Check-ins Today";
+            case "monthly" -> "This Month";
+            default        -> "This Week";
         };
         lblVisitsCardTitle.setText(title);
         lblVisitsCardSub.setText(sub);
@@ -634,7 +636,7 @@ public class DashboardController {
     private void loadIllnessChart(String period, String label) {
         chartIllnesses.getData().clear();
         chartIllnesses.setLegendVisible(false);
-        lblIllnessSubtitle.setText("Most frequent diagnoses — " + label);
+        lblIllnessSubtitle.setText("Most Frequent Diagnoses — " + label);
 
         Map<String, Integer> data = DatabaseManager.getTopIllnesses(period);
 
@@ -678,9 +680,9 @@ public class DashboardController {
         chartMonthly.getData().clear();
 
         String subtitleDetail = switch (period) {
-            case "daily"   -> "Hourly visits today";
-            case "monthly" -> "Monthly visits this year";
-            default        -> "Weekly visits over the past 8 weeks";
+            case "daily"   -> "Hourly Visits Today";
+            case "monthly" -> "Monthly Visits This Year";
+            default        -> "Weekly Visits Over the Past 8 weeks";
         };
         lblTrendSubtitle.setText(subtitleDetail);
         ((CategoryAxis) chartMonthly.getXAxis()).setLabel(
@@ -707,7 +709,7 @@ public class DashboardController {
     private void loadCollegeBarChart(String period, String label) {
         chartCollege.getData().clear();
         vboxCollegeBreakdown.getChildren().clear();
-        lblCollegeSubtitle.setText("Visits by department — " + label);
+        lblCollegeSubtitle.setText("Visits by Department — " + label);
 
         Map<String, Integer> data = DatabaseManager.getVisitsByCollegePeriod(period);
 
@@ -749,18 +751,63 @@ public class DashboardController {
         }
     }
 
-    // ── Purpose pie ───────────────────────────────────────────────
-    private void loadPurposeChart(String period, String label) {
-        chartPurpose.getData().clear();
-        lblPurposeSubtitle.setText("Health-Related vs Med Cert — " + label);
-        Map<String, Integer> data = DatabaseManager.getVisitPurposeCount(period);
-        if (data.isEmpty()) {
-            chartPurpose.getData().add(new PieChart.Data("No data yet", 1));
-            return;
-        }
-        data.forEach((purpose, count) ->
-                chartPurpose.getData().add(
-                        new PieChart.Data(purpose + " (" + count + ")", count)));
+    // ── Medicine inventory bar chart ──────────────────────────────
+    private void loadMedicineInventoryChart() {
+        if (chartMedicineInventory == null) return;
+        chartMedicineInventory.getData().clear();
+
+        java.util.List<java.util.Map<String, String>> medicines =
+                DatabaseManager.getAllMedicines();
+        if (medicines == null || medicines.isEmpty()) return;
+
+        // Single series — one bar per medicine, colored by stock level
+        XYChart.Series<String, Number> stockSeries = new XYChart.Series<>();
+        stockSeries.setName("Stock Level");
+
+        // Show at most 10 medicines, sorted by qty ascending (worst visible first)
+        medicines.stream()
+                .sorted((a, b) -> {
+                    int qa = parseIntSafe(a.getOrDefault("quantity", "0"));
+                    int qb = parseIntSafe(b.getOrDefault("quantity", "0"));
+                    return Integer.compare(qa, qb);
+                })
+                .limit(10)
+                .forEach(row -> {
+                    String name = row.getOrDefault("name", "?");
+                    int qty     = parseIntSafe(row.getOrDefault("quantity", "0"));
+                    // Ensure bar has at least height 1 so it's visible at qty=0
+                    stockSeries.getData().add(new XYChart.Data<>(name, Math.max(qty, 0)));
+                });
+
+        chartMedicineInventory.getData().add(stockSeries);
+
+        // Color each bar: red = low/at threshold, green = adequate
+        javafx.application.Platform.runLater(() -> {
+            for (XYChart.Data<String, Number> bar : stockSeries.getData()) {
+                // Find threshold for this medicine by name
+                String medName = bar.getXValue();
+                int threshold = medicines.stream()
+                        .filter(m -> m.getOrDefault("name","").equals(medName))
+                        .mapToInt(m -> parseIntSafe(m.getOrDefault("low_stock_qty","10")))
+                        .findFirst().orElse(10);
+                int stock = bar.getYValue().intValue();
+                String color = (stock <= threshold) ? "#c62828" : "#2e7d32";
+                if (bar.getNode() != null) {
+                    bar.getNode().setStyle("-fx-bar-fill: " + color + ";");
+                    // Tooltip: show exact qty and threshold
+                    Tooltip tip = new Tooltip(
+                            medName + "\nIn Stock: " + stock + "\nLow-stock threshold: " + threshold);
+                    Tooltip.install(bar.getNode(), tip);
+                }
+            }
+        });
+
+        if (lblMedInventorySubtitle != null)
+            lblMedInventorySubtitle.setText("Stock by Medicine");
+    }
+
+    private int parseIntSafe(String s) {
+        try { return Integer.parseInt(s.trim()); } catch (Exception e) { return 0; }
     }
 
     // ── FXML event handlers ───────────────────────────────────────

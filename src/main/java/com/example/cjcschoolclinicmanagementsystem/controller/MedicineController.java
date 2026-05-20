@@ -34,16 +34,37 @@ public class MedicineController {
     @FXML private TableColumn<Map<String, String>, String> colStatus;
     @FXML private TableColumn<Map<String, String>, String> colAction;
 
-    // ── Search ────────────────────────────────────────────────────
+    // ── Search & Sort ─────────────────────────────────────────────
     @FXML private TextField txtSearch;
+    @FXML private ComboBox<String> cmbSort;
+
+    // ── Pagination ────────────────────────────────────────────────
+    @FXML private Button btnPrev;
+    @FXML private Button btnNext;
+    @FXML private Label  lblPage;
+    private static final int PAGE_SIZE = 30;
+    private int currentPage = 0;
 
     private List<Map<String, String>> allMedicines;
 
     // ─────────────────────────────────────────────────────────────
     @FXML
     public void initialize() {
+        setupSortCombo();
         setupTable();
         refreshTable();
+    }
+
+    private void setupSortCombo() {
+        if (cmbSort == null) return;
+        cmbSort.getItems().addAll(
+                "Name (A–Z)",
+                "Name (Z–A)",
+                "Stock: Low to High",
+                "Stock: High to Low",
+                "Expiry: Soonest First"
+        );
+        cmbSort.setValue("Name (A–Z)");
     }
 
     // ── Table setup ───────────────────────────────────────────────
@@ -143,23 +164,80 @@ public class MedicineController {
     }
 
     // ── Data ─────────────────────────────────────────────────────
-    @FXML
-    public void refreshTable() {
+    @FXML public void refreshTable() {
         allMedicines = DatabaseManager.getAllMedicines();
+        currentPage = 0;
         updateStatCards();
         applySearch();
     }
 
-    @FXML private void onSearch() { applySearch(); }
+    @FXML private void onSearch() { currentPage = 0; applySearch(); }
+
+    @FXML private void onSortChanged() { currentPage = 0; applySearch(); }
 
     private void applySearch() {
         String q = txtSearch.getText().trim().toLowerCase();
-        List<Map<String, String>> filtered = allMedicines.stream()
+        java.util.List<Map<String, String>> filtered = allMedicines.stream()
                 .filter(r -> q.isEmpty()
                         || r.getOrDefault("name", "").toLowerCase().contains(q)
                         || r.getOrDefault("description", "").toLowerCase().contains(q))
-                .toList();
-        tblMedicines.setItems(FXCollections.observableArrayList(filtered));
+                .collect(java.util.stream.Collectors.toList());
+
+        // Apply sort
+        String sort = (cmbSort != null && cmbSort.getValue() != null)
+                ? cmbSort.getValue() : "Name (A–Z)";
+        switch (sort) {
+            case "Name (A–Z)" ->
+                    filtered.sort((a, b) -> a.getOrDefault("name","").compareToIgnoreCase(b.getOrDefault("name","")));
+            case "Name (Z–A)" ->
+                    filtered.sort((a, b) -> b.getOrDefault("name","").compareToIgnoreCase(a.getOrDefault("name","")));
+            case "Stock: Low to High" ->
+                    filtered.sort((a, b) -> parseInt(a.get("quantity")) - parseInt(b.get("quantity")));
+            case "Stock: High to Low" ->
+                    filtered.sort((a, b) -> parseInt(b.get("quantity")) - parseInt(a.get("quantity")));
+            case "Expiry: Soonest First" ->
+                    filtered.sort((a, b) -> {
+                        String ea = a.getOrDefault("expiry_date", "9999");
+                        String eb = b.getOrDefault("expiry_date", "9999");
+                        if (ea.isEmpty()) ea = "9999";
+                        if (eb.isEmpty()) eb = "9999";
+                        return ea.compareTo(eb);
+                    });
+        }
+
+        applyPagination(filtered);
+    }
+
+    private void applyPagination(List<Map<String, String>> data) {
+        int total      = data.size();
+        int totalPages = Math.max(1, (int) Math.ceil((double) total / PAGE_SIZE));
+        currentPage    = Math.max(0, Math.min(currentPage, totalPages - 1));
+
+        int from = currentPage * PAGE_SIZE;
+        int to   = Math.min(from + PAGE_SIZE, total);
+
+        tblMedicines.setItems(javafx.collections.FXCollections.observableArrayList(
+                data.subList(from, to)));
+
+        if (lblPage != null)
+            lblPage.setText("Page " + (currentPage + 1) + " of " + totalPages);
+        if (btnPrev != null)
+            btnPrev.setDisable(currentPage == 0);
+        if (btnNext != null)
+            btnNext.setDisable(currentPage >= totalPages - 1);
+    }
+
+    @FXML private void goToPrevPage() {
+        if (currentPage > 0) { currentPage--; applySearch(); }
+    }
+
+    @FXML private void goToNextPage() {
+        String q = txtSearch.getText().trim().toLowerCase();
+        long total = allMedicines.stream().filter(r -> q.isEmpty()
+                || r.getOrDefault("name","").toLowerCase().contains(q)
+                || r.getOrDefault("description","").toLowerCase().contains(q)).count();
+        int totalPages = Math.max(1, (int) Math.ceil((double) total / PAGE_SIZE));
+        if (currentPage < totalPages - 1) { currentPage++; applySearch(); }
     }
 
     private void updateStatCards() {

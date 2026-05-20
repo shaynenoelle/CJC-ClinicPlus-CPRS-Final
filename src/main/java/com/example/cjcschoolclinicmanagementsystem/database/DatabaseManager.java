@@ -1541,6 +1541,28 @@ public class DatabaseManager {
     }
 
     /**
+     * Convenience bundle for the dashboard medicine card.
+     * Returns a map with keys: "total", "lowStock", "expiringSoon".
+     * All three values come from a single DB round-trip each — no new queries needed.
+     */
+    public static java.util.Map<String, Integer> getMedicineInventoryStats() {
+        ensureMedicineTables();
+        java.util.Map<String, Integer> stats = new java.util.HashMap<>();
+        // Total active medicines
+        String sqlTotal = "SELECT COUNT(*) FROM medicines WHERE is_active=1";
+        try (Connection conn = connect();
+             Statement stmt  = conn.createStatement();
+             ResultSet rs    = stmt.executeQuery(sqlTotal)) {
+            stats.put("total", rs.next() ? rs.getInt(1) : 0);
+        } catch (SQLException e) {
+            stats.put("total", 0);
+        }
+        stats.put("lowStock",     getLowStockCount());
+        stats.put("expiringSoon", getExpiringSoonCount(30)); // within 30 days
+        return stats;
+    }
+
+    /**
      * Exports current medicine inventory + dispense log to two CSV files.
      * @param inventoryPath  path for the inventory CSV
      * @param dispensePath   path for the dispense log CSV

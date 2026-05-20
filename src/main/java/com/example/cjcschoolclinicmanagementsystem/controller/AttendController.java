@@ -89,6 +89,8 @@ public class AttendController {
 
     // Internal list: each entry = "id|name|unit|qty"
     private final List<String> selectedMedicines = new ArrayList<>();
+    // Tracks entries that were loaded from dispense_log (already saved) — skip these on save
+    private final java.util.Set<String> preExistingMedicines = new java.util.HashSet<>();
 
     // ─────────────────────────────────────────────────────────────
     @FXML
@@ -130,6 +132,16 @@ public class AttendController {
     private void setupMedicineCombo() {
         if (comboMedicine == null) return;
         refreshMedicineCombo();
+        // Attach Enter key handler to the medicine combo's editor so Enter adds a medicine,
+        // NOT a cue. This prevents the event from bubbling up to the comboCues handler.
+        comboMedicine.getEditor().setOnKeyPressed(e -> {
+            if (e.getCode() == KeyCode.ENTER) { e.consume(); onAddMedicine(); }
+        });
+    }
+
+    @FXML
+    private void onMedicineQtyKeyPressed(KeyEvent e) {
+        if (e.getCode() == KeyCode.ENTER) { e.consume(); onAddMedicine(); }
     }
 
     private void refreshMedicineCombo() {
@@ -148,15 +160,42 @@ public class AttendController {
 
     @FXML
     private void onAddMedicine() {
-        if (comboMedicine == null || comboMedicine.getValue() == null) return;
-        int selectedIndex = comboMedicine.getSelectionModel().getSelectedIndex();
-        if (selectedIndex < 0) return;
+        if (comboMedicine == null) return;
+
+        // 1. Get the exact text currently typed or selected
+        String text = comboMedicine.getEditor().getText();
+        if (text == null || text.trim().isEmpty()) {
+            text = comboMedicine.getValue();
+        }
+        if (text == null || text.trim().isEmpty()) return;
+        text = text.trim();
 
         @SuppressWarnings("unchecked")
         List<Map<String, String>> medicines = (List<Map<String, String>>) comboMedicine.getUserData();
-        if (medicines == null || selectedIndex >= medicines.size()) return;
+        if (medicines == null) return;
 
-        Map<String, String> med = medicines.get(selectedIndex);
+        int selectedIndex = comboMedicine.getSelectionModel().getSelectedIndex();
+        Map<String, String> med = null;
+
+        // 2. Identify medicine whether they clicked the dropdown OR typed it manually
+        if (selectedIndex >= 0 && selectedIndex < medicines.size()) {
+            med = medicines.get(selectedIndex);
+        } else {
+            for (Map<String, String> m : medicines) {
+                String displayText = m.get("name") + " (" + m.get("unit") + ") — stock: " + m.get("quantity");
+                if (text.equalsIgnoreCase(m.get("name")) || text.equalsIgnoreCase(displayText)) {
+                    med = m;
+                    break;
+                }
+            }
+        }
+
+        if (med == null) {
+            showStatus("⚠ Please select a valid medicine from the list.", false);
+            return;
+        }
+
+        // 3. Stock & Quantity Checks
         int stock = Integer.parseInt(med.getOrDefault("quantity", "0"));
         if (stock <= 0) {
             showStatus("⚠ " + med.get("name") + " is out of stock.", false);
@@ -173,7 +212,7 @@ public class AttendController {
             return;
         }
 
-        // Check for duplicate
+        // 4. Duplicate Check
         String medId = med.get("medicine_id");
         boolean dup = selectedMedicines.stream().anyMatch(s -> s.startsWith(medId + "|"));
         if (dup) {
@@ -181,12 +220,16 @@ public class AttendController {
             return;
         }
 
+        // 5. Add the medicine chip
         String entry = medId + "|" + med.get("name") + "|" + med.get("unit") + "|" + qty;
         selectedMedicines.add(entry);
         addMedicineChip(med.get("name"), med.get("unit"), qty, entry);
 
+        // 6. CRITICAL FIX: Fully wipe the memory so the dropdown choices work again!
         comboMedicine.getSelectionModel().clearSelection();
         comboMedicine.setValue(null);
+        comboMedicine.getEditor().clear();
+
         if (txtMedicineQty != null) txtMedicineQty.setText("1");
     }
 
@@ -289,15 +332,28 @@ public class AttendController {
     // ── Add a cue chip ────────────────────────────────────────────
     @FXML
     private void onAddCue() {
-        String value = comboCues.getValue() != null
-                ? comboCues.getValue().trim()
-                : comboCues.getEditor().getText().trim();
-        if (value.isEmpty()) return;
-        boolean duplicate = selectedCues.stream().anyMatch(c -> c.equalsIgnoreCase(value));
-        if (duplicate) { comboCues.getEditor().clear(); comboCues.setValue(null); return; }
-        addCueChip(value);
-        comboCues.getEditor().clear();
+        if (comboCues == null) return;
+
+        // 1. Get the exact text currently typed or selected
+        String value = comboCues.getEditor().getText();
+        if (value == null || value.trim().isEmpty()) {
+            value = comboCues.getValue(); // Fallback
+        }
+        if (value == null || value.trim().isEmpty()) return;
+
+        value = value.trim();
+
+        // 2. Prevent duplicates and add chip
+        final String finalValue = value;
+        boolean duplicate = selectedCues.stream().anyMatch(c -> c.equalsIgnoreCase(finalValue));
+        if (!duplicate) {
+            addCueChip(value);
+        }
+
+        // 3. CRITICAL FIX: Fully wipe the memory so the dropdown choices work again!
+        comboCues.getSelectionModel().clearSelection();
         comboCues.setValue(null);
+        comboCues.getEditor().clear();
     }
 
     private void addCueChip(String cue) {
@@ -391,6 +447,7 @@ public class AttendController {
                 String key = d.get("medicine_id") + "|" + d.get("medicine_name") +
                         "|" + d.get("unit") + "|" + d.get("quantity_used");
                 selectedMedicines.add(key);
+                preExistingMedicines.add(key);  // ← mark as already dispensed
                 addMedicineChip(d.get("medicine_name"), d.get("unit"),
                         Integer.parseInt(d.getOrDefault("quantity_used", "1")), key);
             }
@@ -814,23 +871,28 @@ public class AttendController {
         if (success) {
             String timeOut = txtTimeOut.getText() != null ? txtTimeOut.getText().trim() : "";
             if (!timeOut.isEmpty()) DatabaseManager.checkOutPatient(visitId, timeOut);
+
+            // Dispense newly added medicines BEFORE closing the window.
+            // Entries in preExistingMedicines were already saved on a previous save — skip them.
+            String attendedBy2 = (lblAttendedBy != null && !lblAttendedBy.getText().isBlank())
+                    ? lblAttendedBy.getText() : SessionManager.getCurrentUser();
+            for (String entry : selectedMedicines) {
+                if (preExistingMedicines.contains(entry)) continue; // already dispensed
+                String[] parts = entry.split("\\|", 4);
+                if (parts.length < 4) continue;
+                int medId      = Integer.parseInt(parts[0]);
+                String medName = parts[1];
+                String unit    = parts[2];
+                int qty        = Integer.parseInt(parts[3]);
+                boolean dispensed = DatabaseManager.dispenseMedicine(visitId, medId, medName, unit, qty, attendedBy2);
+                if (dispensed) preExistingMedicines.add(entry); // mark so double-save is safe too
+            }
+
             showStatus("✔ Record saved!", true);
             new Thread(() -> {
                 try { Thread.sleep(1000); } catch (InterruptedException ignored) {}
                 Platform.runLater(() -> ((Stage) lblSaveStatus.getScene().getWindow()).close());
             }).start();
-            // Dispense selected medicines
-            String attendedBy2 = (lblAttendedBy != null && !lblAttendedBy.getText().isBlank())
-                    ? lblAttendedBy.getText() : SessionManager.getCurrentUser();
-            for (String entry : selectedMedicines) {
-                String[] parts = entry.split("\\|", 4);
-                if (parts.length < 4) continue;
-                int medId  = Integer.parseInt(parts[0]);
-                String medName = parts[1];
-                String unit    = parts[2];
-                int qty        = Integer.parseInt(parts[3]);
-                DatabaseManager.dispenseMedicine(visitId, medId, medName, unit, qty, attendedBy2);
-            }
         } else {
             showStatus("Save failed. Try again.", false);
         }

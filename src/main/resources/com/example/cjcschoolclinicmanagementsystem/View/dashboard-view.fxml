@@ -157,7 +157,7 @@
                                    style="-fx-font-size: 10; -fx-text-fill: #888; -fx-font-weight: bold;"/>
                             <Label fx:id="lblTotalPatients" text="0"
                                    style="-fx-font-size: 22; -fx-font-weight: bold; -fx-text-fill: #1976D2;"/>
-                            <Label text="students &amp; employees"
+                            <Label text="Students &amp; Employees"
                                    style="-fx-font-size: 9; -fx-text-fill: #aaa;"/>
                         </VBox>
                         <!-- Unattended — always fixed to today -->
@@ -170,7 +170,7 @@
                                    style="-fx-font-size: 10; -fx-text-fill: #e65100; -fx-font-weight: bold;"/>
                             <Label fx:id="lblUnattended" text="0"
                                    style="-fx-font-size: 22; -fx-font-weight: bold; -fx-text-fill: #e65100;"/>
-                            <Label text="Today: waiting for care"
+                            <Label text="Today: Waiting for Care"
                                    style="-fx-font-size: 9; -fx-text-fill: #bf360c;"/>
                         </VBox>
                         <!-- Pending Re-checks — always fixed to today -->
@@ -183,7 +183,7 @@
                                    style="-fx-font-size: 10; -fx-text-fill: #c0392b; -fx-font-weight: bold;"/>
                             <Label fx:id="lblPendingRechecks" text="0"
                                    style="-fx-font-size: 22; -fx-font-weight: bold; -fx-text-fill: #c0392b;"/>
-                            <Label text="Today: follow-ups due"
+                            <Label text="Today: Follow-ups Due"
                                    style="-fx-font-size: 9; -fx-text-fill: #c0392b;"/>
                         </VBox>
                     </HBox>
@@ -293,15 +293,31 @@
                                  -fx-border-color: #e0e0e0; -fx-border-radius: 10;
                                  -fx-effect: dropshadow(gaussian,rgba(0,0,0,0.06),8,0,0,2);">
                             <padding><Insets top="14" bottom="14" left="14" right="14"/></padding>
-                            <Label text="Purpose of Visit"
+                            <Label text="Medicine Inventory Status"
                                    style="-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #333;"/>
-                            <Label fx:id="lblPurposeSubtitle"
-                                   text="Health-Related vs Med Cert — This Week"
+                            <Label fx:id="lblMedInventorySubtitle"
+                                   text="Stock levels by medicine"
                                    style="-fx-font-size: 10; -fx-text-fill: #999;"/>
-                            <PieChart fx:id="chartPurpose" prefHeight="260" minHeight="240"
-                                      VBox.vgrow="ALWAYS" animated="true" legendVisible="true"
-                                      labelsVisible="true" labelLineLength="20"
-                                      style="-fx-label-line-length: 20;"/>
+                            <!-- Custom legend row -->
+                            <HBox spacing="16" alignment="CENTER_LEFT" style="-fx-padding: 2 0 0 4;">
+                                <HBox spacing="5" alignment="CENTER_LEFT">
+                                    <Label text="&#x25A0;"
+                                           style="-fx-text-fill: #c62828; -fx-font-size: 13;"/>
+                                    <Label text="At / below threshold"
+                                           style="-fx-font-size: 11; -fx-text-fill: #555;"/>
+                                </HBox>
+                                <HBox spacing="5" alignment="CENTER_LEFT">
+                                    <Label text="&#x25A0;"
+                                           style="-fx-text-fill: #2e7d32; -fx-font-size: 13;"/>
+                                    <Label text="Adequate stock"
+                                           style="-fx-font-size: 11; -fx-text-fill: #555;"/>
+                                </HBox>
+                            </HBox>
+                            <BarChart fx:id="chartMedicineInventory" prefHeight="240" minHeight="200"
+                                      VBox.vgrow="ALWAYS" animated="true" legendVisible="false">
+                                <xAxis><CategoryAxis label="Medicine"/></xAxis>
+                                <yAxis><NumberAxis label="Units"/></yAxis>
+                            </BarChart>
                         </VBox>
                     </HBox>
 
