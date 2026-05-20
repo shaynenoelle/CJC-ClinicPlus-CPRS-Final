@@ -42,6 +42,7 @@ public class MedicineController {
     @FXML private Button btnPrev;
     @FXML private Button btnNext;
     @FXML private Label  lblPage;
+    @FXML private Label  lblCount;   // optional — shows "X medicines" below the table
     private static final int PAGE_SIZE = 30;
     private int currentPage = 0;
 
@@ -219,8 +220,10 @@ public class MedicineController {
         tblMedicines.setItems(javafx.collections.FXCollections.observableArrayList(
                 data.subList(from, to)));
 
-        if (lblPage != null)
+        if (lblPage  != null)
             lblPage.setText("Page " + (currentPage + 1) + " of " + totalPages);
+        if (lblCount != null)
+            lblCount.setText(total + " medicine" + (total != 1 ? "s" : ""));
         if (btnPrev != null)
             btnPrev.setDisable(currentPage == 0);
         if (btnNext != null)
@@ -263,13 +266,14 @@ public class MedicineController {
         dlg.getDialogPane().setPrefWidth(480);
         dlg.getDialogPane().setMinWidth(480);
 
-        // Get fields from the GridPane user data
-        TextField txtName     = (TextField) gp.getUserData();
-        TextArea  txtDesc     = (TextArea)  ((HBox)gp.getChildren().get(3)).getChildren().get(0);
-        TextField txtUnit     = (TextField) ((HBox)gp.getChildren().get(5)).getChildren().get(0);
-        TextField txtQty      = (TextField) ((HBox)gp.getChildren().get(7)).getChildren().get(0);
-        TextField txtLow      = (TextField) ((HBox)gp.getChildren().get(9)).getChildren().get(0);
-        DatePicker dpExpiry   = (DatePicker)((HBox)gp.getChildren().get(11)).getChildren().get(0);
+        // Get fields from the named record stored in UserData
+        MedicineFormFields fields = (MedicineFormFields) gp.getUserData();
+        TextField  txtName  = fields.txtName;
+        TextArea   txtDesc  = fields.txtDesc;
+        TextField  txtUnit  = fields.txtUnit;
+        TextField  txtQty   = fields.txtQty;
+        TextField  txtLow   = fields.txtLow;
+        DatePicker dpExpiry = fields.dpExpiry;
 
         Button saveBtn = (Button) dlg.getDialogPane().lookupButton(btnSave);
         saveBtn.disableProperty().bind(txtName.textProperty().isEmpty());
@@ -301,12 +305,13 @@ public class MedicineController {
         dlg.getDialogPane().setContent(gp);
         dlg.getDialogPane().setPrefWidth(480);
 
-        TextField txtName   = (TextField) gp.getUserData();
-        TextArea  txtDesc   = (TextArea)  ((HBox)gp.getChildren().get(3)).getChildren().get(0);
-        TextField txtUnit   = (TextField) ((HBox)gp.getChildren().get(5)).getChildren().get(0);
-        TextField txtQty    = (TextField) ((HBox)gp.getChildren().get(7)).getChildren().get(0);
-        TextField txtLow    = (TextField) ((HBox)gp.getChildren().get(9)).getChildren().get(0);
-        DatePicker dpExpiry = (DatePicker)((HBox)gp.getChildren().get(11)).getChildren().get(0);
+        MedicineFormFields fields = (MedicineFormFields) gp.getUserData();
+        TextField  txtName  = fields.txtName;
+        TextArea   txtDesc  = fields.txtDesc;
+        TextField  txtUnit  = fields.txtUnit;
+        TextField  txtQty   = fields.txtQty;
+        TextField  txtLow   = fields.txtLow;
+        DatePicker dpExpiry = fields.dpExpiry;
 
         Button saveBtn = (Button) dlg.getDialogPane().lookupButton(btnSave);
         saveBtn.disableProperty().bind(txtName.textProperty().isEmpty());
@@ -344,10 +349,18 @@ public class MedicineController {
 
     // ── Deactivate ────────────────────────────────────────────────
     private void confirmDeactivate(Map<String, String> row) {
+        int dispenseCount = DatabaseManager.getAllDispenseLog().stream()
+                .filter(d -> d.getOrDefault("medicine_id", "").equals(row.get("medicine_id")))
+                .mapToInt(d -> parseInt(d.get("quantity_used")))
+                .sum();
+        String dispenseNote = dispenseCount > 0
+                ? "\nThis medicine has been dispensed " + dispenseCount + " unit(s) in total. History will be kept."
+                : "\nThis medicine has no dispense history.";
+
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
         alert.setTitle("Remove Medicine");
         alert.setHeaderText("Remove \"" + row.get("name") + "\" from inventory?");
-        alert.setContentText("It will no longer appear in the dispense list. Dispense history is kept.");
+        alert.setContentText("It will no longer appear in the dispense list." + dispenseNote);
         alert.showAndWait().ifPresent(r -> {
             if (r == ButtonType.OK) {
                 DatabaseManager.deactivateMedicine(Integer.parseInt(row.get("medicine_id")));
@@ -384,10 +397,30 @@ public class MedicineController {
     }
 
     // ── Helper: shared form builder ───────────────────────────────
+
+    /** Simple holder so callers can retrieve form fields by name, not by child index. */
+    private static class MedicineFormFields {
+        final TextField  txtName;
+        final TextArea   txtDesc;
+        final TextField  txtUnit;
+        final TextField  txtQty;
+        final TextField  txtLow;
+        final DatePicker dpExpiry;
+        MedicineFormFields(TextField txtName, TextArea txtDesc, TextField txtUnit,
+                           TextField txtQty, TextField txtLow, DatePicker dpExpiry) {
+            this.txtName  = txtName;
+            this.txtDesc  = txtDesc;
+            this.txtUnit  = txtUnit;
+            this.txtQty   = txtQty;
+            this.txtLow   = txtLow;
+            this.dpExpiry = dpExpiry;
+        }
+    }
+
     /**
      * Builds a GridPane containing the medicine form fields.
      * If {@code existing} is non-null, fields are pre-filled.
-     * The name TextField is stored in gp.setUserData() for easy retrieval.
+     * All field references are stored in a {@link MedicineFormFields} via gp.setUserData().
      */
     private GridPane buildMedicineForm(Map<String, String> existing) {
         GridPane gp = new GridPane();
@@ -398,7 +431,6 @@ public class MedicineController {
         TextField txtName = new TextField(existing != null ? existing.get("name") : "");
         txtName.setPromptText("e.g. Paracetamol 500mg");
         txtName.setPrefWidth(320);
-        gp.setUserData(txtName);   // retrieved by caller
 
         TextArea txtDesc = new TextArea(existing != null ? existing.getOrDefault("description", "") : "");
         txtDesc.setPromptText("Optional description or dosage notes");
@@ -424,6 +456,9 @@ public class MedicineController {
                 try { dpExpiry.setValue(LocalDate.parse(exp)); } catch (Exception ignored) {}
             }
         }
+
+        // Store all fields in UserData so callers never rely on child indices
+        gp.setUserData(new MedicineFormFields(txtName, txtDesc, txtUnit, txtQty, txtLow, dpExpiry));
 
         // Build rows: Label row index is even (0, 2, 4, ...), field row is odd
         addFormRow(gp, "Medicine Name *", wrapInHBox(txtName), 0);

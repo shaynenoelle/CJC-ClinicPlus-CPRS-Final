@@ -1586,7 +1586,7 @@ public class DatabaseManager {
                         else if (!exp.isAfter(java.time.LocalDate.now().plusDays(30)))
                             status = "Expiring Soon";
                     }
-                    pw.printf("\"%s\",\"%s\",\"%s\",\"%s\",%s,%s,\"%s\",\"%s\"%n",
+                    pw.printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"%n",
                             m.get("medicine_id"), escape(m.get("name")),
                             escape(m.get("description")), escape(m.get("unit")),
                             qty, lowStock, expiry, status);
@@ -1597,7 +1597,7 @@ public class DatabaseManager {
                     new java.io.FileWriter(dispensePath))) {
                 pw.println("Log ID,Visit ID,Medicine,Qty Used,Unit,Dispensed By,Date/Time");
                 for (java.util.Map<String, String> d : getAllDispenseLog()) {
-                    pw.printf("%s,%s,\"%s\",%s,\"%s\",\"%s\",\"%s\"%n",
+                    pw.printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"%n",
                             d.get("log_id"), d.get("visit_id"),
                             escape(d.get("medicine_name")), d.get("quantity_used"),
                             escape(d.get("unit")), escape(d.get("dispensed_by")),
