@@ -263,6 +263,20 @@
                                style="-fx-font-size: 11; -fx-text-fill: #999; -fx-padding: 0 0 0 4;"/>
                     </HBox>
 
+                    <!-- Search bar for medicines -->
+                    <HBox spacing="8" alignment="CENTER_LEFT">
+                        <TextField fx:id="txtMedicineSearch"
+                                   promptText="🔍 Search medicines by name..."
+                                   style="-fx-font-size: 12; -fx-background-radius: 5;
+                                          -fx-border-color: #ddd; -fx-border-radius: 5;
+                                          -fx-padding: 8 12 8 12;"
+                                   HBox.hgrow="ALWAYS"/>
+                        <Button text="Clear" onAction="#onClearMedicineSearch"
+                                style="-fx-font-size: 11; -fx-padding: 6 14;
+                                       -fx-background-radius: 5; -fx-background-color: #e0e0e0;
+                                       -fx-cursor: hand;"/>
+                    </HBox>
+
                     <!-- Medicine selector: all medicines shown as a checkable table -->
                     <TableView fx:id="tblMedicineSelector"
                                prefHeight="160"

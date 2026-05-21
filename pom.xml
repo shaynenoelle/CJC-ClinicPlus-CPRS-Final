@@ -157,7 +157,9 @@
                             <outfile>${project.build.directory}/CJCClinicPlus.exe</outfile>
                             <downloadUrl>https://www.oracle.com/java/technologies/downloads/</downloadUrl>
                             <jre>
-                                <minVersion>17.0.0</minVersion>
+                                <path>jre</path>
+                                <bundledJre64Bit>true</bundledJre64Bit>
+                                <minVersion>21</minVersion>
                             </jre>
                         </configuration>
                     </execution>

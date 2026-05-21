@@ -1086,7 +1086,32 @@ public class DatabaseManager {
     public static boolean completeFollowUp(int followUpId, String actualTime,
                                            String vitalsSnapshot, String remarks,
                                            String attendedBy) {
+        return completeFollowUp(followUpId, actualTime, vitalsSnapshot, remarks, attendedBy, "");
+    }
+
+    /**
+     * Marks a follow-up as done and records actual time, vitals snapshot,
+     * nurse remarks, and who attended. Also updates the Visits table with respiratory rate if provided.
+     */
+    public static boolean completeFollowUp(int followUpId, String actualTime,
+                                           String vitalsSnapshot, String remarks,
+                                           String attendedBy, String respiratoryRate) {
         ensureFollowUpsTable();
+
+        // First, get the visit_id from the FollowUps table
+        String getVisitIdSql = "SELECT visit_id FROM FollowUps WHERE followup_id = ?";
+        int visitId = 0;
+        try (Connection conn = connect(); PreparedStatement ps = conn.prepareStatement(getVisitIdSql)) {
+            ps.setInt(1, followUpId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                visitId = rs.getInt("visit_id");
+            }
+        } catch (SQLException e) {
+            System.err.println("Error getting visit_id from followup: " + e.getMessage());
+        }
+
+        // Update FollowUps table
         String sql = "UPDATE FollowUps SET status='done', actual_time=?, " +
                 "vitals_snapshot=?, recheck_remarks=?, attended_by=? " +
                 "WHERE followup_id=?";
@@ -1097,6 +1122,17 @@ public class DatabaseManager {
             p.setString(4, attendedBy     == null ? "" : attendedBy.trim());
             p.setInt(5, followUpId);
             p.executeUpdate();
+
+            // Also update respiratory_rate in Visits table if provided and visit_id is valid
+            if (visitId > 0 && respiratoryRate != null && !respiratoryRate.trim().isEmpty()) {
+                String updateVisitSql = "UPDATE Visits SET respiratory_rate = ? WHERE visit_id = ?";
+                try (PreparedStatement pv = conn.prepareStatement(updateVisitSql)) {
+                    pv.setString(1, respiratoryRate.trim());
+                    pv.setInt(2, visitId);
+                    pv.executeUpdate();
+                }
+            }
+
             return true;
         } catch (SQLException e) {
             System.err.println("completeFollowUp Error: " + e.getMessage());

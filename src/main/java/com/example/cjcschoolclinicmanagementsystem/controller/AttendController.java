@@ -94,10 +94,12 @@ public class AttendController {
     @FXML private TableColumn<Map<String, Object>, String>  colMedUnit;
     @FXML private TableColumn<Map<String, Object>, String>  colMedStock;
     @FXML private TableColumn<Map<String, Object>, String>  colMedQty;
+    @FXML private TextField txtMedicineSearch;
 
     @FXML private Label lblMedicineSummary;
 
     // Internal list: each entry = "id|name|unit|qty"
+    private javafx.collections.transformation.FilteredList<Map<String, Object>> filteredMedicines;
     private final List<String> selectedMedicines = new ArrayList<>();
     private final java.util.Set<String> preExistingMedicines = new java.util.HashSet<>();
     // ─────────────────────────────────────────────────────────────
@@ -332,7 +334,24 @@ public class AttendController {
         });
         colMedQty.setCellValueFactory(data -> new SimpleStringProperty(""));
 
-        tblMedicineSelector.setItems(rows);
+        // Create FilteredList from rows and bind to search field
+        filteredMedicines = new javafx.collections.transformation.FilteredList<>(rows, p -> true);
+        tblMedicineSelector.setItems(filteredMedicines);
+
+        // Add search listener
+        if (txtMedicineSearch != null) {
+            txtMedicineSearch.textProperty().addListener((obs, oldVal, newVal) -> {
+                String searchText = newVal.toLowerCase().trim();
+                filteredMedicines.setPredicate(row -> {
+                    if (searchText.isEmpty()) {
+                        return true;
+                    }
+                    String medicineName = ((String) row.get("name")).toLowerCase();
+                    return medicineName.contains(searchText);
+                });
+            });
+        }
+
         updateMedicineSummary();
 
         // Row click (outside checkbox) also toggles selection.
@@ -542,6 +561,17 @@ public class AttendController {
 
     private String getCuesString() {
         return selectedCues.stream().filter(s -> !s.isBlank()).collect(Collectors.joining(", "));
+    }
+
+    // ── Clear medicine search ─────────────────────────────────────
+    @FXML
+    private void onClearMedicineSearch() {
+        if (txtMedicineSearch != null) {
+            txtMedicineSearch.clear();
+            if (filteredMedicines != null) {
+                filteredMedicines.setPredicate(p -> true);
+            }
+        }
     }
 
     // ── Tab navigation ────────────────────────────────────────────
@@ -880,7 +910,7 @@ public class AttendController {
             if (snapshot.isEmpty()) snapshot = "—";
 
             boolean ok = DatabaseManager.completeFollowUp(
-                    fuId, actual, snapshot, rem, SessionManager.getCurrentUser());
+                    fuId, actual, snapshot, rem, SessionManager.getCurrentUser(), rr);
 
             if (ok) { showStatus("✔ Re-check saved at " + actual + ".", true); loadFollowUps(); }
             else    { showStatus("Failed to save re-check. Try again.", false); }
@@ -1172,3 +1202,4 @@ public class AttendController {
         txtTimeOut.setText(LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm")));
     }
 }
+

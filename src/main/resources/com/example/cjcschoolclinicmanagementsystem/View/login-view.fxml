@@ -57,7 +57,7 @@
             </Label>
 
             <!-- Developer Credits -->
-            <Label text="Developed by: Bangcailan, Shayne Noelle &amp; Ngojo, Prince Joshua"
+            <Label text="Developed by: Bangcailan, Shayne Noelle, Ngojo, Prince Joshua &amp; Sipalay, Macky"
                    textFill="#bbbbbb"
                    alignment="CENTER"
                    textAlignment="CENTER"

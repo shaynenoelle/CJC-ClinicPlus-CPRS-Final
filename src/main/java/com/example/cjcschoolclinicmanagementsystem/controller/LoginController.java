@@ -54,7 +54,7 @@ public class LoginController {
     private void tagwithCredits()
     {
         String credits = "CJC School Clinic Management System\n" +
-                "Developed by: Bangcailan, Shayne Noelle, Ngojo, Prince Joshua" +
+                "Developed by: Bangcailan, Shayne Noelle, Ngojo, Prince Joshua, Sipalay, Macky" +
                 "\n"  +
                 "Version: 1.0\n" +
                 "© 2024 CJC School Clinic. All rights reserved.";
